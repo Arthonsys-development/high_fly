@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1014216862088",
+    "project_id": "high-fly-21a85",
+    "storage_bucket": "high-fly-21a85.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1014216862088:android:ae680e4bb56d7f7e92723d",
+        "android_client_info": {
+          "package_name": "com.highfly.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDq9-BbPUNnGwoQQsy0rpsb-ugUbL10CPA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

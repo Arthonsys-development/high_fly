@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <!--
+    If you are serving your web app in a path other than the root, change the
+    href value below to reflect the base path you are serving from.
+
+    The path provided below has to start and end with a slash "/" in order for
+    it to work correctly.
+
+    For more details:
+    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
+
+    This is a placeholder for base href that will be replaced by the value of
+    the `--base-href` argument provided to `flutter build`.
+  -->
+  <base href="/">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="A new Flutter project.">
+
+  <!-- iOS meta tags & icons -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="highfly">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+  
+  <!-- Camera access for mobile web -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#000000">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png"/>
+
+  <title>HighFly</title>
+  <link rel="manifest" href="manifest.json">
+  
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-analytics-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-compat.js"></script>
+
+  <!-- Firebase Web Configuration -->
+  <script>
+    // Your web app's Firebase configuration
+   const firebaseConfig = {
+  apiKey: "AIzaSyDdnfmVWzbB0k7JMpc3KfUyGDdMX5KC7fE",
+  authDomain: "high-fly-21a85.firebaseapp.com",
+  projectId: "high-fly-21a85",
+  storageBucket: "high-fly-21a85.appspot.com",  // ✅ FIXED
+  messagingSenderId: "1014216862088",
+  appId: "1:1014216862088:web:af9c032fe727a84d92723d",
+  measurementId: "G-Z1B7S90QGE"
+};
+
+    
+    // Initialize Firebase
+    try {
+      firebase.initializeApp(firebaseConfig);
+      console.log('🔥 Firebase Web: Initialized successfully for project:', firebaseConfig.projectId);
+      
+      // Verify Firebase Auth is available
+      if (firebase.auth) {
+        console.log('🔥 Firebase Web: Auth service available');
+      } else {
+        console.error('🔥 Firebase Web: Auth service not available');
+      }
+    } catch (error) {
+      console.error('🔥 Firebase Web: Initialization error:', error);
+    }
+  </script>
+  
+  <!-- Camera access enhancement for mobile web -->
+  <script>
+    // Detect if user is on a mobile device
+    function isMobileDevice() {
+      return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    }
+    
+    // Add mobile-specific enhancements
+    document.addEventListener('DOMContentLoaded', function() {
+      if (isMobileDevice()) {
+        // Add class to body for mobile-specific styling
+        document.body.classList.add('mobile-web');
+        console.log('📱 Mobile web detected');
+      }
+    });
+  </script>
+  
+  <!-- Error handling for Flutter web -->
+  <script>
+    // Global error handler to prevent disposed view errors
+    window.addEventListener('error', function(e) {
+      console.error('Global error caught:', e.error);
+      console.error('Error message:', e.message);
+      console.error('Stack trace:', e.error.stack);
+      
+      // Prevent the error from crashing the app
+      e.preventDefault();
+      return true;
+    });
+    
+    // Handle unhandled promise rejections
+    window.addEventListener('unhandledrejection', function(event) {
+      console.error('Unhandled promise rejection:', event.reason);
+      // Prevent the error from crashing the app
+      event.preventDefault();
+      return true;
+    });
+    
+    // Add a timeout to detect if Flutter fails to load
+    setTimeout(function() {
+      if (!window.flutter_loaded) {
+        console.error('Flutter failed to load within 10 seconds');
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('error-message').style.display = 'flex';
+      }
+    }, 15000);
+  </script>
+  
+  <!-- Styles for reCAPTCHA container -->
+  <style>
+    #recaptcha-container {
+      display: none;
+      justify-content: center;
+      align-items: center;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 9999;
+      background: rgba(0, 0, 0, 0.5);
+    }
+    
+    #recaptcha-container > div {
+      background: white;
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      max-width: 90vw;
+      max-height: 90vh;
+      overflow: auto;
+    }
+    
+    .g-recaptcha {
+      display: flex;
+      justify-content: center;
+    }
+    
+    /* Loading animation */
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    /* Mobile web enhancements */
+    .mobile-web {
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      -khtml-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
+    
+    /* Error boundary styling */
+    .flutter-error-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #f0f0f0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 99999;
+      font-family: Arial, sans-serif;
+    }
+    
+    .flutter-error-content {
+      background: white;
+      padding: 24px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      max-width: 80%;
+      text-align: center;
+    }
+    
+    /* Loading and error display */
+    #loading {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: white;
+      z-index: 10000;
+    }
+    
+    #error-message {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: #f8f8f8;
+      z-index: 10000;
+      text-align: center;
+      padding: 20px;
+    }
+    
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #3498db;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin-bottom: 20px;
+    }
+    
+    /* Enhanced error message styling */
+    .error-container {
+      max-width: 500px;
+      text-align: center;
+      padding: 30px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+    
+    .error-title {
+      color: #e74c3c;
+      font-size: 24px;
+      margin-bottom: 15px;
+    }
+    
+    .error-description {
+      color: #555;
+      font-size: 16px;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+    
+    .error-button {
+      padding: 12px 24px;
+      background: #3498db;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background 0.3s;
+    }
+    
+    .error-button:hover {
+      background: #2980b9;
+    }
+  </style>
+</head>
+<body>
+  <!-- Loading indicator -->
+  <div id="loading">
+    <div class="spinner"></div>
+    <p>Loading application...</p>
+    <p style="font-size: 12px; color: #777; margin-top: 10px;">If this takes too long, please check your internet connection</p>
+  </div>
+  
+  <!-- Error message -->
+  <div id="error-message">
+    <div class="error-container">
+      <h2 class="error-title">Failed to Load Application</h2>
+      <p class="error-description">The application failed to load. This could be due to:</p>
+      <ul style="text-align: left; margin-bottom: 20px; color: #555;">
+        <li>Network connectivity issues</li>
+        <li>Missing or corrupted files</li>
+        <li>Browser compatibility problems</li>
+        <li>Server configuration issues</li>
+      </ul>
+      <button class="error-button" onclick="location.reload()">
+        Reload Application
+      </button>
+      <p style="font-size: 12px; color: #777; margin-top: 15px;">
+        If the problem persists, please contact support
+      </p>
+    </div>
+  </div>
+  
+  <!-- reCAPTCHA container for Firebase phone auth -->
+  <div id="recaptcha-container"></div>
+  
+  <!-- Error boundary for Flutter web -->
+  <div id="flutter-error-boundary" style="display: none;" class="flutter-error-container">
+    <div class="flutter-error-content">
+      <h2>Something went wrong</h2>
+      <p>The application encountered an error. Please try refreshing the page.</p>
+      <button onclick="location.reload()" style="padding: 12px 24px; background: #007AFF; color: white; border: none; border-radius: 6px; cursor: pointer;">
+        Refresh Page
+      </button>
+    </div>
+  </div>
+  
+  <script>
+    // Set flag when Flutter loads
+    window.addEventListener('load', function() {
+      // This event fires when the page loads, not when Flutter loads
+    });
+    
+    // Listen for Flutter initialization
+    window.addEventListener('flutter-first-frame', function() {
+      window.flutter_loaded = true;
+      document.getElementById('loading').style.display = 'none';
+      console.log('Flutter app loaded successfully');
+    });
+    
+    // Handle Flutter initialization errors
+    window.addEventListener('flutter-error', function(event) {
+      console.error('Flutter app failed to load:', event.detail);
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('error-message').style.display = 'flex';
+    });
+  </script>
+  
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>
