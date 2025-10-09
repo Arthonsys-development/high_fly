@@ -63,6 +63,14 @@
           <string>com.googleusercontent.apps.XXXXXXXXXXXX-XXXXXXXXXXXX</string>
         </array>
       </dict>
+      <dict>
+        <key>CFBundleTypeRole</key>
+        <string>Editor</string>
+        <key>CFBundleURLSchemes</key>
+        <array>
+          <string>app-1-1014216862088-ios-ae0e157b8658857f92723d</string>
+        </array>
+      </dict>
     </array>
 </dict>
 </plist>

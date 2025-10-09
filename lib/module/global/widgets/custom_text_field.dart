@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:highfly/config/constant/const_assets.dart';
 
-import '../../../config/constant/app_colors.dart';
 import '../../utils/app_fonts.dart';
 
 class CustomTextField extends StatelessWidget {
@@ -61,30 +60,30 @@ class CustomTextField extends StatelessWidget {
         prefixIcon: prefixIcon,
         counter: null,
         hintStyle: const TextStyle(
-          color: AppColors.secondaryTextColor,
+          color: Color(0xFF6A6A6A), // Placeholder color
           fontSize: 14,
         ),
         suffixIcon: suffixIcon,
-        fillColor: AppColors.textFieldBGColor,
+        fillColor: const Color(0xFFF9FBFF), // TextField background color
         filled: true,
         isDense: true,
         contentPadding: EdgeInsets.symmetric(
-          horizontal: 5,
+          horizontal: 20, // 20px padding on start and end
           vertical: verticalPadding,
         ),
         // Default border
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(borderRadius),
           borderSide: const BorderSide(
-            color: AppColors.primaryTextColor,
-            width: 0.5, // Thickness of the border
+            color: Color(0xFFDDDDDD), // TextField border color
+            width: 1,
           ),
         ),
         // Border when enabled but not focused
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(borderRadius),
           borderSide: const BorderSide(
-            color: Colors.black26,
+            color: Color(0xFFDDDDDD), // TextField border color
             width: 1,
           ),
         ),
@@ -92,7 +91,7 @@ class CustomTextField extends StatelessWidget {
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(borderRadius),
           borderSide: const BorderSide(
-            color: AppColors.primaryTextColor,
+            color: Color(0xFFDDDDDD), // TextField border color
             width: 1,
           ),
         ),
@@ -123,13 +122,13 @@ class CustomTextField extends StatelessWidget {
       maxLines: maxLines,
       maxLength: maxLength,
       enabled: enabled,
-      cursorColor: AppColors.primaryTextColor,
+      cursorColor: const Color(0xFF475569), // Entered text color
       inputFormatters: inputFormatters,
       onChanged: onChanged, // ✅ Pass the callback
       decoration: buildDecoration(),
       style: const TextStyle(
         fontSize: 14,
-        color: Colors.black,
+        color: Color(0xFF475569), // Entered text color
       ),
     );
 
@@ -144,7 +143,7 @@ class CustomTextField extends StatelessWidget {
                 titleText!,
                 style: labelStyle ?? AppFonts.getFont(
                   weight: AppFonts.medium,
-                  fontSize: 16,
+                  fontSize: 14,
                   color: Colors.black,
                 ),
               ),
@@ -162,7 +161,7 @@ class CustomTextField extends StatelessWidget {
               )
             ],
           ),
-          SizedBox(height: contentSpace ?? 4),
+          SizedBox(height: contentSpace ?? 12),
         ],
         textField,
       ],

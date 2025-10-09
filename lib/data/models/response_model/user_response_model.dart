@@ -22,7 +22,7 @@ class User {
     final id = json['id'] ?? json['user_id'] ?? 0;
     final firstName = json['first_name'] ?? json['firstName'] ?? '';
     final lastName = json['last_name'] ?? json['lastName'] ?? '';
-    final fullName = json['full_name'] ?? json['fullName'] ?? '${firstName} ${lastName}'.trim();
+    final fullName = json['full_name'] ?? json['fullName'] ?? '$firstName $lastName'.trim();
     final email = json['email'] ?? '';
     final profilePhoto = json['profile_photo'] ?? json['profilePhoto'];
     final isActive = json['is_active'] ?? json['isActive'] ?? false;

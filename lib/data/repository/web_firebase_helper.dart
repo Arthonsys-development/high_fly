@@ -20,7 +20,7 @@ class WebFirebaseAuth {
       if (container != null) {
         container.style.display = 'none'; // Initially hidden
         if (container is html.HtmlElement) {
-          (container as html.HtmlElement).innerHtml = ''; // Clear any existing content
+          (container).innerHtml = ''; // Clear any existing content
         }
         print('🔥 Web Firebase: reCAPTCHA container ready');
       } else {
@@ -55,7 +55,7 @@ class WebFirebaseAuth {
   static void _addLoadingIndicator() {
     final container = html.document.getElementById('recaptcha-container');
     if (container != null && container is html.HtmlElement) {
-      (container as html.HtmlElement).innerHtml = '''
+      (container).innerHtml = '''
         <div style="
           display: flex;
           flex-direction: column;
@@ -90,7 +90,7 @@ class WebFirebaseAuth {
   static void showError(String message) {
     final container = html.document.getElementById('recaptcha-container');
     if (container != null && container is html.HtmlElement) {
-      (container as html.HtmlElement).innerHtml = '''
+      (container).innerHtml = '''
         <div style="
           background: #fee;
           border: 1px solid #fcc;

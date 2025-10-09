@@ -907,7 +907,7 @@ class _AddVisitDialogState extends State<AddVisitDialog>
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Location obtained: ${_currentLatitude}, ${_currentLongitude}'),
+              content: Text('Location obtained: $_currentLatitude, $_currentLongitude'),
               backgroundColor: Colors.green,
               duration: const Duration(seconds: 3),
             ),

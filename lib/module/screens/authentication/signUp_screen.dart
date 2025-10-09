@@ -10,7 +10,6 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io' show File;
 import 'dart:typed_data' show Uint8List;
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:universal_html/html.dart' as html;
 import 'package:permission_handler/permission_handler.dart';
 import 'dart:io' show Platform;
 

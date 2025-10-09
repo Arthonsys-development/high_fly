@@ -98,20 +98,15 @@ class FirebaseAuthRepository {
         // This method automatically handles reCAPTCHA on web
         final confirmationResult = await _firebaseAuth.signInWithPhoneNumber(phoneNumber);
         
-        if (confirmationResult != null) {
-          print('🔥 Firebase Auth Web: SMS sent successfully');
-          _webConfirmationResult = confirmationResult;
-          _verificationId = 'web_verification_${DateTime.now().millisecondsSinceEpoch}';
-          
-          // Hide reCAPTCHA after successful verification
-          WebFirebaseAuth.hideRecaptcha();
-          
-          onCodeSent(_verificationId!);
-        } else {
-          WebFirebaseAuth.hideRecaptcha();
-          onError('Failed to send SMS verification code');
-        }
+        print('🔥 Firebase Auth Web: SMS sent successfully');
+        _webConfirmationResult = confirmationResult;
+        _verificationId = 'web_verification_${DateTime.now().millisecondsSinceEpoch}';
         
+        // Hide reCAPTCHA after successful verification
+        WebFirebaseAuth.hideRecaptcha();
+        
+        onCodeSent(_verificationId!);
+              
       } catch (e) {
         WebFirebaseAuth.hideRecaptcha();
         print('🔥 Firebase Auth Web: Phone verification error: $e');
@@ -193,32 +188,6 @@ class FirebaseAuthRepository {
     }
   }
   
-  // Handle web authentication errors
-  void _handleWebAuthError(dynamic error, Function(String) onError) {
-    String errorMessage;
-    if (error is FirebaseAuthException) {
-      switch (error.code) {
-        case 'invalid-phone-number':
-          errorMessage = 'The phone number entered is invalid.';
-          break;
-        case 'too-many-requests':
-          errorMessage = 'Too many requests. Please try again later.';
-          break;
-        case 'captcha-check-failed':
-          errorMessage = 'reCAPTCHA verification failed. Please try again.';
-          break;
-        case 'quota-exceeded':
-          errorMessage = 'SMS quota exceeded. Please try again later.';
-          break;
-        default:
-          errorMessage = 'Web authentication failed: ${error.message}';
-      }
-    } else {
-      errorMessage = 'Failed to send verification code: ${error.toString()}';
-    }
-    onError(errorMessage);
-  }
-  
   // Handle mobile authentication errors
   void _handleMobileAuthError(FirebaseAuthException e, Function(String) onError) {
     String errorMessage;
@@ -235,11 +204,20 @@ class FirebaseAuthRepository {
       case 'configuration-not-found':
         errorMessage = 'Firebase configuration error. Please:\n1. Enable Phone Authentication in Firebase Console\n2. Check GoogleService-Info.plist is properly configured\n3. Verify your bundle ID matches Firebase Console';
         break;
+      case 'web-network-request-failed':
+      case 'network-request-failed':
+        errorMessage = 'Phone verification failed due to APNs configuration.\n\niOS Phone Auth requires either:\n1. APNs certificates configured in Firebase Console, OR\n2. reCAPTCHA verification (automatic fallback)\n\nPlease try again. If the issue persists:\n• Check your internet connection\n• Ensure you have a valid phone number\n• Contact support for APNs setup assistance';
+        break;
+      case 'app-not-authorized':
+        errorMessage = 'App not authorized for Firebase Phone Auth.\n\nTo fix:\n1. Verify bundle ID in GoogleService-Info.plist matches your app\n2. Ensure Phone Auth is enabled in Firebase Console\n3. Check that your app is registered in Firebase';
+        break;
       case 'unknown':
         if (e.message?.contains('BILLING_NOT_ENABLED') == true) {
           errorMessage = 'Firebase billing is required for phone authentication.\n\nTo fix this:\n1. Go to Firebase Console\n2. Navigate to Project Settings > Usage and billing\n3. Upgrade to Blaze (Pay as you go) plan\n\nNote: Phone auth has generous free quotas.';
         } else if (e.message?.contains('CONFIGURATION_NOT_FOUND') == true) {
           errorMessage = 'Firebase configuration not found. Please check your Firebase setup.';
+        } else if (e.message?.contains('APNs') == true || e.message?.contains('push notification') == true) {
+          errorMessage = 'APNs (Apple Push Notifications) is required for iOS phone authentication.\n\nTo fix:\n1. Enable APNs in Firebase Console\n2. Upload APNs certificate or key\n3. Rebuild and retry\n\nFor development, reCAPTCHA fallback is available.';
         } else {
           errorMessage = 'An unknown error occurred. Please try again or contact support.';
         }
