@@ -355,7 +355,7 @@ class _VisitorsScreenState extends ConsumerState<VisitorsScreen>
                                       height: 30,
                                       width: 30,
                                       child: CircularProgressIndicator(
-                                        color: AppColors.primaryButtonColor,
+                                        color: AppColors.primaryColor,
                                         strokeWidth: 2,
                                         value: null, // Indeterminate progress
                                       ),

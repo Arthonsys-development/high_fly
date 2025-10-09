@@ -308,7 +308,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 ListTile(
-                  leading: Icon(Icons.camera_alt, color: AppColors.primaryButtonColor),
+                  leading: Icon(Icons.camera_alt, color: AppColors.primaryColor),
                   title: const Text('Take Photo'),
                   onTap: () {
                     Navigator.of(context).pop();
@@ -316,7 +316,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   },
                 ),
                 ListTile(
-                  leading: Icon(Icons.photo_library, color: AppColors.primaryButtonColor),
+                  leading: Icon(Icons.photo_library, color: AppColors.primaryColor),
                   title: const Text('Choose from Gallery'),
                   onTap: () {
                     Navigator.of(context).pop();
@@ -339,7 +339,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: Icon(Icons.camera_alt, color: AppColors.primaryButtonColor),
+                leading: Icon(Icons.camera_alt, color: AppColors.primaryColor),
                 title: const Text('Camera'),
                 onTap: () {
                   Navigator.of(context).pop();
@@ -347,7 +347,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                 },
               ),
               ListTile(
-                leading: Icon(Icons.photo_library, color: AppColors.primaryButtonColor),
+                leading: Icon(Icons.photo_library, color: AppColors.primaryColor),
                 title: const Text('Gallery'),
                 onTap: () {
                   Navigator.of(context).pop();

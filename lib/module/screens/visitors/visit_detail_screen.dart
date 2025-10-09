@@ -29,7 +29,7 @@ class VisitDetailScreen extends StatelessWidget {
                   width: 150,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.primaryButtonColor, width: 2),
+                    border: Border.all(color: AppColors.primaryColor, width: 2),
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(75),
@@ -48,7 +48,7 @@ class VisitDetailScreen extends StatelessWidget {
                             height: 30,
                             width: 30,
                             child: CircularProgressIndicator(
-                              color: AppColors.primaryButtonColor,
+                              color: AppColors.primaryColor,
                               strokeWidth: 2,
                             ),
                           ),
@@ -65,7 +65,7 @@ class VisitDetailScreen extends StatelessWidget {
                   width: 150,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.primaryButtonColor, width: 2),
+                    border: Border.all(color: AppColors.primaryColor, width: 2),
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(75),
@@ -176,7 +176,7 @@ class VisitDetailScreen extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 20, color: AppColors.primaryButtonColor),
+        Icon(icon, size: 20, color: AppColors.primaryColor),
         const SizedBox(width: 12),
         Expanded(
           child: Column(

@@ -385,7 +385,7 @@ class _AddVisitDialogState extends State<AddVisitDialog>
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: Icon(Icons.camera_alt, color: AppColors.primaryButtonColor),
+                leading: Icon(Icons.camera_alt, color: AppColors.primaryColor),
                 title: const Text('Camera'),
                 onTap: () {
                   debugPrint('Camera selected, setting isPickingImage flag');
@@ -396,7 +396,7 @@ class _AddVisitDialogState extends State<AddVisitDialog>
                 },
               ),
               ListTile(
-                leading: Icon(Icons.photo_library, color: AppColors.primaryButtonColor),
+                leading: Icon(Icons.photo_library, color: AppColors.primaryColor),
                 title: const Text('Gallery'),
                 onTap: () {
                   debugPrint('Gallery selected, setting isPickingImage flag');

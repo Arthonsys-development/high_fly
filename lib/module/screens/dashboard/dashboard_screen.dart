@@ -12,6 +12,7 @@ import 'package:highfly/data/models/response_model/project_response_model.dart';
 
 import '../../utils/responsive.dart';
 import '../../widgets/dashboard_side_menu.dart';
+import '../Booking/BookingScreen.dart';
 import '../visitors/visitors_screen.dart';
 import '../../widgets/add_visit_dialog.dart';
 
@@ -24,7 +25,7 @@ class DashboardScreen extends ConsumerStatefulWidget {
 
 class _DashboardScreenState extends ConsumerState<DashboardScreen>
     with WidgetsBindingObserver {
-  int selectedMenuIndex = 0;
+  int selectedMenuIndex = 2;
   bool sideMenuVisible = true;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
@@ -163,6 +164,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         ],
       ),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           if (isMobile)
             Builder(
@@ -189,7 +191,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               color: AppColors.primaryTextColor,
             ),
           ),
-          const Spacer(),
+          // const Spacer(),
           // Sign out button
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.orange),
@@ -218,7 +220,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       case 1:
         return 'HighFly - Visits';
       case 2:
-        return 'HighFly - Settings';
+        return 'HighFly - Booking';
       default:
         return 'HighFly Dashboard';
     }
@@ -232,7 +234,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       case 1:
         return _buildVisitorContent();
       case 2:
-        return _buildSettingContent();
+        return _buildBookingProcessorContent();
       default:
         return _buildProjectContent();
     }
@@ -250,46 +252,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     return const VisitorsScreen();
   }
 
-  Widget _buildSettingContent() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Settings',
-            style: TextStyle(
-              fontSize: Responsive.isMobile(context) ? 22 : 25,
-              fontWeight: FontWeight.w700,
-              color: AppColors.primaryTextColor,
-            ),
-          ),
-          const SizedBox(height: 20),
-          Expanded(
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.settings,
-                    size: 80,
-                    color: Colors.grey[400],
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Settings Panel Coming Soon',
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+  Widget _buildBookingProcessorContent() {
+    return BookingProcessorScreen();
   }
 
   Widget _buildMobileLayout() {
@@ -942,7 +906,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 icon: const Icon(Icons.add, size: 18),
                 label: const Text('Add Visit'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryButtonColor,
+                  backgroundColor: AppColors.primaryColor,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),

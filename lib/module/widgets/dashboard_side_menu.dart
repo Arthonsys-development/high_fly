@@ -34,6 +34,11 @@ class _DashboardSideMenuState extends State<DashboardSideMenu> {
       title: 'Visits',
       index: 1,
     ),
+    MenuItem(
+      icon: Icons.calendar_today_outlined,
+      title: 'Booking Processor',
+      index: 1,
+    ),
     // MenuItem(
     //   icon: Icons.settings,
     //   title: 'Setting',
@@ -432,6 +437,11 @@ class MobileSideMenuDrawer extends ConsumerWidget {
       icon: Icons.people,
       title: 'Visits',
       index: 1,
+    ),
+    MenuItem(
+      icon: Icons.calendar_today_outlined,
+      title: 'Booking Processor',
+      index: 2,
     ),
   ];
 

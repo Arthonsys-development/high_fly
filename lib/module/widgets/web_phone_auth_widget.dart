@@ -168,7 +168,7 @@ class _WebPhoneAuthWidgetState extends ConsumerState<WebPhoneAuthWidget> {
                     child: Text(
                       'Resend',
                       style: TextStyle(
-                        color: authState.isLoading ? Colors.grey : AppColors.primaryButtonColor,
+                        color: authState.isLoading ? Colors.grey : AppColors.primaryColor,
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                       ),
