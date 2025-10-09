@@ -433,7 +433,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
 
                 // Mobile Project Cards instead of DataTable (show FILTERED projects)
                 if (!projectsState.isLoading && projectsState.error == null)
-                  ...filteredProjects.map((project) => _buildMobileProjectCard(project)).toList(),
+                  ...filteredProjects.map((project) => _buildMobileProjectCard(project)),
               ],
             ),
           ),
@@ -971,7 +971,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               },
             ),
           ),
-        )).toList(),
+        )),
         const SizedBox(height: 15),
       ],
     );

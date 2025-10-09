@@ -1,0 +1,237 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import '../../../data/models/bank_details_model.dart';
+import '../../../config/constant/app_colors.dart';
+import '../../global/widgets/custom_text_field.dart';
+import 'header_icon_widget.dart';
+import 'action_buttons.dart';
+import 'bank_selection_dialog.dart';
+
+class BankDetailsSection extends StatefulWidget {
+  final String title;
+  final String nextButtonText;
+  final VoidCallback? onPrevious;
+  final Function(BankDetails?)? onNext;
+
+  const BankDetailsSection({
+    super.key,
+    required this.title,
+    required this.nextButtonText,
+    this.onPrevious,
+    this.onNext,
+  });
+
+  @override
+  State<BankDetailsSection> createState() => _BankDetailsSectionState();
+}
+
+class _BankDetailsSectionState extends State<BankDetailsSection> {
+  late BankDetails _bankDetails;
+  late TextEditingController _accountHolderNameController;
+  late TextEditingController _branchNameController;
+  late TextEditingController _accountNumberController;
+  late TextEditingController _ifscCodeController;
+  late TextEditingController _contactNumberController;
+
+  @override
+  void initState() {
+    super.initState();
+    _bankDetails = const BankDetails();
+    
+    _accountHolderNameController = TextEditingController();
+    _branchNameController = TextEditingController();
+    _accountNumberController = TextEditingController();
+    _ifscCodeController = TextEditingController();
+    _contactNumberController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _accountHolderNameController.dispose();
+    _branchNameController.dispose();
+    _accountNumberController.dispose();
+    _ifscCodeController.dispose();
+    _contactNumberController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.only(top: 20, bottom: 20),
+      child: Column(
+        children: [
+          // Header
+          HeaderIconWidget(
+            icon: Icons.account_balance,
+            title: widget.title,
+            subtitle: 'Enter bank information',
+          ),
+          
+          const SizedBox(height: 40),
+          
+          // Section title
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'Bank Details',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: AppColors.primaryTextColor,
+              ),
+            ),
+          ),
+          
+          const SizedBox(height: 20),
+          
+          // Account Holder Name field
+          CustomTextField(
+            titleText: 'Account Holder Name',
+            controller: _accountHolderNameController,
+            hintText: 'Enter account holder name',
+            isMandatory: true,
+            borderRadius: 6,
+            onChanged: (value) {
+              setState(() {
+                _bankDetails = _bankDetails.copyWith(accountHolderName: value);
+              });
+            },
+          ),
+          
+          const SizedBox(height: 24),
+          
+          // Branch Name field
+          CustomTextField(
+            titleText: 'Branch Name',
+            controller: _branchNameController,
+            hintText: 'Enter branch name',
+            isMandatory: true,
+            borderRadius: 6,
+            onChanged: (value) {
+              setState(() {
+                _bankDetails = _bankDetails.copyWith(branchName: value);
+              });
+            },
+          ),
+          
+          const SizedBox(height: 24),
+          
+          // Account Number field
+          CustomTextField(
+            titleText: 'Account Number',
+            controller: _accountNumberController,
+            hintText: 'Enter account number',
+            isMandatory: true,
+            keyboardType: TextInputType.number,
+            borderRadius: 6,
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+            ],
+            onChanged: (value) {
+              setState(() {
+                _bankDetails = _bankDetails.copyWith(accountNumber: value);
+              });
+            },
+          ),
+          
+          const SizedBox(height: 24),
+          
+          // IFSC Code field
+          CustomTextField(
+            titleText: 'IFSC Code',
+            controller: _ifscCodeController,
+            hintText: 'Enter IFSC Code',
+            isMandatory: true,
+            borderRadius: 6,
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[A-Z0-9]')),
+              LengthLimitingTextInputFormatter(11),
+            ],
+            onChanged: (value) {
+              setState(() {
+                _bankDetails = _bankDetails.copyWith(ifscCode: value.toUpperCase());
+              });
+            },
+          ),
+          
+          const SizedBox(height: 24),
+          
+          // Account Type field
+          GestureDetector(
+            onTap: _showAccountTypeDialog,
+            child: CustomTextField(
+              titleText: 'Account Type',
+              hintText: _bankDetails.accountType?.isNotEmpty == true 
+                  ? _bankDetails.accountType 
+                  : 'Select account type',
+              isMandatory: true,
+              borderRadius: 6,
+              enabled: false,
+              suffixIcon: const Icon(
+                Icons.keyboard_arrow_down,
+                color: AppColors.lightGreyColor,
+                size: 20,
+              ),
+            ),
+          ),
+          
+          const SizedBox(height: 24),
+          
+          // Contact Number field
+          CustomTextField(
+            titleText: 'Contact Number (linked with bank)',
+            controller: _contactNumberController,
+            hintText: 'Enter contact number',
+            isMandatory: true,
+            keyboardType: TextInputType.phone,
+            borderRadius: 6,
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(10),
+            ],
+            onChanged: (value) {
+              setState(() {
+                _bankDetails = _bankDetails.copyWith(contactNumber: value);
+              });
+            },
+          ),
+          
+          const SizedBox(height: 40),
+          
+          // Action buttons
+          ActionButtons(
+            onPrevious: widget.onPrevious,
+            onNext: _canProceed() ? () => widget.onNext?.call(_bankDetails) : null,
+            nextButtonText: widget.nextButtonText,
+          ),
+        ],
+      ),
+    );
+  }
+
+  bool _canProceed() {
+    return _bankDetails.accountHolderName?.isNotEmpty == true &&
+           _bankDetails.branchName?.isNotEmpty == true &&
+           _bankDetails.accountNumber?.isNotEmpty == true &&
+           _bankDetails.ifscCode?.isNotEmpty == true &&
+           _bankDetails.accountType?.isNotEmpty == true &&
+           _bankDetails.contactNumber?.isNotEmpty == true;
+  }
+
+  void _showAccountTypeDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => BankSelectionDialog(
+        title: 'Select Account Type',
+        options: BankConstants.accountTypes,
+        selectedOption: _bankDetails.accountType,
+        onOptionSelected: (value) {
+          setState(() {
+            _bankDetails = _bankDetails.copyWith(accountType: value);
+          });
+        },
+      ),
+    );
+  }
+}

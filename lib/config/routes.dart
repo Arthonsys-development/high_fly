@@ -123,7 +123,7 @@ final GoRouter router = GoRouter(
       path: Routes.visitDetailScreen,
       builder: (context, state) {
         final visit = state.extra as Visit; // Cast to your Visit type
-        debugPrint('Building VisitDetailScreen with visit: ${visit?.visitorName}');
+        debugPrint('Building VisitDetailScreen with visit: ${visit.visitorName}');
         return VisitDetailScreen(visit: visit); // Pass the retrieved visit
       },
     ),

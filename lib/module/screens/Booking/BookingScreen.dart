@@ -1,7 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:highfly/config/constant/const_assets.dart';
 
 import '../../../config/constant/app_colors.dart';
+import '../../../data/models/project_model.dart';
+import '../../../data/models/customer_model.dart';
+import '../../../data/models/payment_model.dart';
+import '../../../data/models/bank_details_model.dart';
+import '../../../data/models/booking_summary_model.dart';
+import '../../../data/providers/sample_data_provider.dart';
+import '../../widgets/booking/booking_form_section.dart';
+import '../../widgets/booking/customer_selection_section.dart';
+import '../../widgets/booking/payment_details_section.dart';
+import '../../widgets/booking/bank_details_section.dart';
+import '../../widgets/booking/review_confirm_section.dart';
 
 class BookingProcessorScreen extends StatefulWidget {
   const BookingProcessorScreen({super.key});
@@ -14,13 +24,17 @@ class _BookingProcessorScreenState extends State<BookingProcessorScreen>
     with SingleTickerProviderStateMixin {
 
   late TabController _tabController;
-  String selectedProject = '';
-
-  final List<String> projects = [
-    'Project Alpha',
-    'Project Beta',
-    'Project Gamma',
-  ];
+  final List<Project> projects = SampleDataProvider.getSampleProjects();
+  final List<Customer> customers = SampleDataProvider.getSampleCustomers();
+  int _currentStep = 0; // 0: Project & Plot, 1: Customer, 2: Payment, 3: Bank Details, 4: Review & Confirm
+  String _selectedPlotPrice = '85000'; // Default price, will be updated from plot selection
+  
+  // Booking data to pass to review section
+  Project? _selectedProject;
+  Plot? _selectedPlot;
+  Customer? _selectedCustomer;
+  PaymentDetails? _paymentDetails;
+  BankDetails? _bankDetails;
 
   @override
   void initState() {
@@ -34,68 +48,40 @@ class _BookingProcessorScreenState extends State<BookingProcessorScreen>
     super.dispose();
   }
 
+  void _handleBookingAction(String action) {
+    // Show confirmation dialog or navigate to next screen
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(action),
+        content: const Text('This action will be processed. Continue?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              // Handle the actual booking/hold logic here
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('$action completed successfully!')),
+              );
+            },
+            child: const Text('Confirm'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      /*appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(10),
-        child: AppBar(
-          title: const Text(
-            'HighFly - Booking',
-            style: TextStyle(fontWeight: FontWeight.w600, color: Colors.black),
-          ),
-          centerTitle: true,
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.black87,
-          elevation: 0,
-          // bottom: PreferredSize(
-          //   preferredSize: const Size.fromHeight(90),
-          //   child: Container(
-          //     decoration: const BoxDecoration(
-          //       border: Border(
-          //         bottom: BorderSide(color: Colors.grey, width: 0.5),
-          //       ),
-          //     ),
-          //     child: Column( crossAxisAlignment: CrossAxisAlignment.start,
-          //       children: [
-          //         const Text(
-          //           "Booking Processor",
-          //           style: TextStyle(fontSize: 18,  color: Colors.black54, fontWeight: FontWeight.w600),
-          //         ),
-          //         const SizedBox(height: 4),
-          //         const Text(
-          //           "Process bookings or holds using static data",
-          //           style: TextStyle(color: Colors.black54),
-          //         ),
-          //
-          //         const SizedBox(height: 40),
-          //
-          //         TabBar(
-          //           controller: _tabController,
-          //           indicatorColor: Colors.orange,
-          //           labelColor: Colors.orange,
-          //           unselectedLabelColor: Colors.black54,
-          //           indicatorSize: TabBarIndicatorSize.tab,
-          //           indicatorWeight: 2.5,
-          //           labelStyle: const TextStyle(
-          //             fontWeight: FontWeight.w600,
-          //           ),
-          //           tabs: const [
-          //             Tab(text: "Book Now"),
-          //             Tab(text: "Hold for 24 Hours"),
-          //           ],
-          //         ),
-          //       ],
-          //     ),
-          //   ),
-          // ),
-        ),
-      ),*/
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 22.0),
         child: Column(
           children: [
-
             const SizedBox(height: 30),
 
             Container(
@@ -104,7 +90,8 @@ class _BookingProcessorScreenState extends State<BookingProcessorScreen>
                   bottom: BorderSide(color: Colors.grey, width: 0.5),
                 ),
               ),
-              child: Column( crossAxisAlignment: CrossAxisAlignment.start,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     "Booking Processor",
@@ -138,7 +125,6 @@ class _BookingProcessorScreenState extends State<BookingProcessorScreen>
               ),
             ),
 
-
             Expanded(
               child: TabBarView(
                 controller: _tabController,
@@ -146,30 +132,12 @@ class _BookingProcessorScreenState extends State<BookingProcessorScreen>
                   // ----------------------------
                   // 🟠 Book Now Tab
                   // ----------------------------
-                  _BookingFormSection(
-                    title: "Book Now", 
-                    items: projects, 
-                    selectedProject: selectedProject,
-                    onProjectChanged: (value) {
-                      setState(() {
-                        selectedProject = value ?? '';
-                      });
-                    },
-                  ),
+                  _buildCurrentStep("Book Now"),
 
                   // ----------------------------
                   // ⚪ Hold for 24 Hours Tab
                   // ----------------------------
-                  _BookingFormSection(
-                    title: "Hold for 24 Hours", 
-                    items: projects, 
-                    selectedProject: selectedProject,
-                    onProjectChanged: (value) {
-                      setState(() {
-                        selectedProject = value ?? '';
-                      });
-                    },
-                  ),
+                  _buildCurrentStep("Hold for 24 Hours"),
                 ],
               ),
             ),
@@ -178,128 +146,97 @@ class _BookingProcessorScreenState extends State<BookingProcessorScreen>
       ),
     );
   }
-}
 
-class _BookingFormSection extends StatelessWidget {
-  final String title;
-  final List<String> items;
-  final String selectedProject;
-  final Function(String?) onProjectChanged;
-
-  const _BookingFormSection({
-    required this.title, 
-    required this.items, 
-    required this.selectedProject,
-    required this.onProjectChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(0.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-
-          const SizedBox(height: 40),
-
-          // Icon and heading
-          Center(
-            child: Column(
-              children: [
-                SizedBox(
-                    height: 70,
-                    width: 70,
-                    child: Image.asset(ImageAssets.selectProject)),
-                SizedBox(height: 10),
-                Text(
-                  "Select Project & Plot",
-                  style: TextStyle(
-                      fontSize: 18, color: AppColors.textColor, fontWeight: FontWeight.w600),
-                ),
-                SizedBox(height: 7),
-                Text(
-                  "Choose a project, then select a plot",
-                  style: TextStyle(fontSize: 16, color: AppColors.darkGreyColor, fontWeight: FontWeight.w400),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 32),
-
-          // Dropdown
-          Row(
-            children: [
-              const Text("Project",
-                  style: TextStyle(fontWeight: FontWeight.w500, fontSize: 14, color: AppColors.textColor)),
-              const Text(" *",
-                  style: TextStyle(fontWeight: FontWeight.w500, fontSize: 14, color: AppColors.primaryColor)),
-            ],
-          ),
-          const SizedBox(height: 8),
-          DropdownButtonFormField<String>(
-            value: selectedProject.isEmpty ? null : selectedProject,
-            items: items
-                .map((p) => DropdownMenuItem(
-              value: p,
-              child: Text(p),
-            ))
-                .toList(),
-            decoration: InputDecoration(
-              border: OutlineInputBorder(
-                borderSide: const BorderSide(color: AppColors.primaryColor),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            ),
-            icon: Icon(Icons.keyboard_arrow_down_outlined, color: AppColors.lightGreyColor),
-            onChanged: onProjectChanged,
-            hint: const Text("Select a project", style: TextStyle(color: AppColors.lightGreyColor, fontSize: 15, fontWeight: FontWeight.w400)),
-          ),
-
-          const Spacer(),
-
-          // Buttons
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () {
-
-                  },
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.grey,
-                    side: const BorderSide(color: Colors.grey),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: const Text("Previous"),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: ElevatedButton(
-                  // onPressed: selectedProject == null ? null : () {},
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange,
-                    disabledBackgroundColor: Colors.orange.withOpacity(0.5),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  onPressed: () { },
-                  child: const Text("Next →"),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
+  Widget _buildCurrentStep(String actionType) {
+    if (_currentStep == 0) {
+      // Project & Plot Selection Step
+      return BookingFormSection(
+        title: actionType,
+        projects: projects,
+        nextButtonText: "Next",
+        onNext: (selectedProject, selectedPlot) {
+          setState(() {
+            _selectedProject = selectedProject;
+            _selectedPlot = selectedPlot;
+            _selectedPlotPrice = selectedPlot?.price.toString() ?? '85000';
+            _currentStep = 1; // Move to customer selection
+          });
+        },
+      );
+    } else if (_currentStep == 1) {
+      // Customer Selection Step
+      return CustomerSelectionSection(
+        title: actionType,
+        customers: customers,
+        nextButtonText: "Next",
+        onPrevious: () {
+          setState(() {
+            _currentStep = 0; // Go back to project & plot selection
+          });
+        },
+        onNext: (selectedCustomer) {
+          setState(() {
+            _selectedCustomer = selectedCustomer;
+            _currentStep = 2; // Move to payment details
+          });
+        },
+      );
+    } else if (_currentStep == 2) {
+      // Payment Details Step
+      return PaymentDetailsSection(
+        title: actionType,
+        paymentAmount: _selectedPlotPrice,
+        nextButtonText: "Next",
+        onPrevious: () {
+          setState(() {
+            _currentStep = 1; // Go back to customer selection
+          });
+        },
+        onNext: (paymentDetails) {
+          setState(() {
+            _paymentDetails = paymentDetails;
+            _currentStep = 3; // Move to bank details
+          });
+        },
+      );
+    } else if (_currentStep == 3) {
+      // Bank Details Step
+      return BankDetailsSection(
+        title: actionType,
+        nextButtonText: "Next",
+        onPrevious: () {
+          setState(() {
+            _currentStep = 2; // Go back to payment details
+          });
+        },
+        onNext: (bankDetails) {
+          setState(() {
+            _bankDetails = bankDetails;
+            _currentStep = 4; // Move to review & confirm
+          });
+        },
+      );
+    } else {
+      // Review & Confirm Step
+      return ReviewConfirmSection(
+        title: "Review & Confirm",
+        nextButtonText: actionType,
+        onPrevious: () {
+          setState(() {
+            _currentStep = 3; // Go back to bank details
+          });
+        },
+        onNext: () {
+          _handleBookingAction(actionType);
+        },
+        bookingSummary: BookingSummary(
+          selectedProject: _selectedProject,
+          selectedPlot: _selectedPlot,
+          selectedCustomer: _selectedCustomer,
+          paymentDetails: _paymentDetails,
+          bankDetails: _bankDetails,
+        ),
+      );
+    }
   }
 }

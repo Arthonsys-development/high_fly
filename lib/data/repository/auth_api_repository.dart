@@ -140,7 +140,7 @@ class AuthApiRepository {
       if (response.data is List) {
         print('Parsing projects from list format, count: ${response.data.length}');
         projects = (response.data as List)
-            .where((item) => item is Map<String, dynamic>)
+            .whereType<Map<String, dynamic>>()
             .map((item) => Project.fromJson(item as Map<String, dynamic>))
             .toList();
       } else if (response.data is Map) {
@@ -148,19 +148,19 @@ class AuthApiRepository {
         if (response.data['results'] is List) {
           print('Parsing projects from paginated format');
           projects = (response.data['results'] as List)
-              .where((item) => item is Map<String, dynamic>)
+              .whereType<Map<String, dynamic>>()
               .map((item) => Project.fromJson(item as Map<String, dynamic>))
               .toList();
         } else if (response.data['data'] is List) {
           print('Parsing projects from data field format');
           projects = (response.data['data'] as List)
-              .where((item) => item is Map<String, dynamic>)
+              .whereType<Map<String, dynamic>>()
               .map((item) => Project.fromJson(item as Map<String, dynamic>))
               .toList();
         } else if (response.data['projects'] is List) {
           print('Parsing projects from projects field format');
           projects = (response.data['projects'] as List)
-              .where((item) => item is Map<String, dynamic>)
+              .whereType<Map<String, dynamic>>()
               .map((item) => Project.fromJson(item as Map<String, dynamic>))
               .toList();
         } else {
@@ -210,7 +210,7 @@ class AuthApiRepository {
       if (response.data is List) {
         print('Parsing active projects from list format, count: ${response.data.length}');
         projects = (response.data as List)
-            .where((item) => item is Map<String, dynamic>)
+            .whereType<Map<String, dynamic>>()
             .map((item) => Project.fromJson(item as Map<String, dynamic>))
             .toList();
       } else if (response.data is Map) {
@@ -218,19 +218,19 @@ class AuthApiRepository {
         if (response.data['results'] is List) {
           print('Parsing active projects from paginated format');
           projects = (response.data['results'] as List)
-              .where((item) => item is Map<String, dynamic>)
+              .whereType<Map<String, dynamic>>()
               .map((item) => Project.fromJson(item as Map<String, dynamic>))
               .toList();
         } else if (response.data['data'] is List) {
           print('Parsing active projects from data field format');
           projects = (response.data['data'] as List)
-              .where((item) => item is Map<String, dynamic>)
+              .whereType<Map<String, dynamic>>()
               .map((item) => Project.fromJson(item as Map<String, dynamic>))
               .toList();
         } else if (response.data['projects'] is List) {
           print('Parsing active projects from projects field format');
           projects = (response.data['projects'] as List)
-              .where((item) => item is Map<String, dynamic>)
+              .whereType<Map<String, dynamic>>()
               .map((item) => Project.fromJson(item as Map<String, dynamic>))
               .toList();
         } else {
@@ -308,7 +308,7 @@ class AuthApiRepository {
       if (response.data is List) {
         print('Parsing visits from list format, count: ${response.data.length}');
         visits = (response.data as List)
-            .where((item) => item is Map<String, dynamic>)
+            .whereType<Map<String, dynamic>>()
             .map((item) {
               try {
                 return Visit.fromJson(item as Map<String, dynamic>);
@@ -326,7 +326,7 @@ class AuthApiRepository {
         if (response.data['results'] is List) {
           print('Parsing visits from paginated format');
           visits = (response.data['results'] as List)
-              .where((item) => item is Map<String, dynamic>)
+              .whereType<Map<String, dynamic>>()
               .map((item) {
                 try {
                   return Visit.fromJson(item as Map<String, dynamic>);
@@ -342,7 +342,7 @@ class AuthApiRepository {
         } else if (response.data['data'] is List) {
           print('Parsing visits from data field format');
           visits = (response.data['data'] as List)
-              .where((item) => item is Map<String, dynamic>)
+              .whereType<Map<String, dynamic>>()
               .map((item) {
                 try {
                   return Visit.fromJson(item as Map<String, dynamic>);
@@ -358,7 +358,7 @@ class AuthApiRepository {
         } else if (response.data['visits'] is List) {
           print('Parsing visits from visits field format');
           visits = (response.data['visits'] as List)
-              .where((item) => item is Map<String, dynamic>)
+              .whereType<Map<String, dynamic>>()
               .map((item) {
                 try {
                   return Visit.fromJson(item as Map<String, dynamic>);

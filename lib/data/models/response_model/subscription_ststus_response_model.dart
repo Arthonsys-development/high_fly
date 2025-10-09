@@ -15,11 +15,11 @@ class SubscriptionStatusModel {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['status'] = this.status;
-    data['start_date'] = this.startDate;
-    data['end_date'] = this.endDate;
-    data['transaction_id'] = this.transactionId;
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['status'] = status;
+    data['start_date'] = startDate;
+    data['end_date'] = endDate;
+    data['transaction_id'] = transactionId;
     return data;
   }
 }
