@@ -9,6 +9,7 @@ import '../module/screens/authentication/signIn_screen.dart';
 import '../module/screens/authentication/signUp_screen.dart';
 import '../module/screens/dashboard/dashboard_screen.dart';
 import '../module/screens/visitors/visit_detail_screen.dart';
+import '../module/screens/profile/profile_screen.dart';
 import '../module/widgets/add_visit_dialog.dart';
 
 class Routes {
@@ -19,6 +20,7 @@ class Routes {
   static String dashboardScreen = '/dashboardScreen';
   static String addVisitScreen = '/addVisitScreen';
   static String visitDetailScreen = '/visitDetailScreen';
+  static String profileScreen = '/profileScreen';
   static bool isPickingImage = false;
 }
 
@@ -126,6 +128,11 @@ final GoRouter router = GoRouter(
         debugPrint('Building VisitDetailScreen with visit: ${visit?.visitorName}');
         return VisitDetailScreen(visit: visit); // Pass the retrieved visit
       },
+    ),
+    
+    GoRoute(
+      path: Routes.profileScreen,
+      builder: (context, state) => const ProfileScreen(),
     ),
   ],
 );

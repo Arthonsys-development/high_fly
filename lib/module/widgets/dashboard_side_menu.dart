@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:go_router/go_router.dart';
 import 'package:highfly/config/constant/app_colors.dart';
 import 'package:highfly/config/constant/const_assets.dart';
 import '../../config/constant/app_strings.dart';
+import '../../config/routes.dart';
 import '../utils/responsive.dart';
 
 class DashboardSideMenu extends StatefulWidget {
@@ -37,7 +39,12 @@ class _DashboardSideMenuState extends State<DashboardSideMenu> {
     MenuItem(
       icon: Icons.calendar_today_outlined,
       title: 'Booking Processor',
-      index: 1,
+      index: 2,
+    ),
+    MenuItem(
+      icon: Icons.person,
+      title: 'Profile',
+      index: 3,
     ),
     // MenuItem(
     //   icon: Icons.settings,
@@ -443,6 +450,11 @@ class MobileSideMenuDrawer extends ConsumerWidget {
       title: 'Booking Processor',
       index: 2,
     ),
+    // MenuItem(
+    //   icon: Icons.person,
+    //   title: 'Profile',
+    //   index: 3,
+    // ),
   ];
 
   @override
@@ -553,61 +565,97 @@ class MobileSideMenuDrawer extends ConsumerWidget {
           // Footer with user profile
           Container(
             padding: const EdgeInsets.all(20),
-            child: _buildUserProfile(),
+            child: _buildUserProfile(context),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildUserProfile() {
-    return FutureBuilder<Map<String, String?>>(
-      future: _getUserData(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        if (snapshot.hasError || !snapshot.hasData) {
-          return _buildDefaultUserProfile();
-        }
-
-        final userData = snapshot.data!;
-        final userName = userData['name'] ?? 'Guest User';
-        final profilePhoto = userData['photo'];
-
-        return Row(
-          children: [
-            // User profile image or default icon
-            CircleAvatar(
-              radius: 30,
-              backgroundColor: Colors.orange.withOpacity(0.2),
-              backgroundImage: profilePhoto != null && profilePhoto.isNotEmpty
-                  ? NetworkImage(profilePhoto)
-                  : null,
-              child: (profilePhoto == null || profilePhoto.isEmpty)
-                  ? const Icon(
-                      Icons.person,
-                      color: Colors.orange,
-                      size: 24,
-                    )
-                  : null,
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Text(
-                userName,
-                style: const TextStyle(
-                  color: AppColors.primaryTextColor,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        );
+  Widget _buildUserProfile(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        onMenuItemSelected(3);
+        Navigator.of(context).pop();
       },
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.orange.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: Colors.orange.withOpacity(0.2),
+            width: 1,
+          ),
+        ),
+        child: FutureBuilder<Map<String, String?>>(
+          future: _getUserData(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            if (snapshot.hasError || !snapshot.hasData) {
+              return _buildDefaultUserProfile(context);
+            }
+
+            final userData = snapshot.data!;
+            final userName = userData['name'] ?? 'Guest User';
+            final profilePhoto = userData['photo'];
+
+            return Row(
+              children: [
+                // User profile image or default icon
+                CircleAvatar(
+                  radius: 24,
+                  backgroundColor: Colors.orange.withOpacity(0.2),
+                  backgroundImage: profilePhoto != null && profilePhoto.isNotEmpty
+                      ? NetworkImage(profilePhoto)
+                      : null,
+                  child: (profilePhoto == null || profilePhoto.isEmpty)
+                      ? const Icon(
+                          Icons.person,
+                          color: Colors.orange,
+                          size: 20,
+                        )
+                      : null,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        userName,
+                        style: const TextStyle(
+                          color: AppColors.primaryTextColor,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'View Profile',
+                        style: TextStyle(
+                          color: Colors.orange.withOpacity(0.8),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios,
+                  size: 16,
+                  color: Colors.orange.withOpacity(0.6),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
     );
   }
 
@@ -622,30 +670,68 @@ class MobileSideMenuDrawer extends ConsumerWidget {
     };
   }
 
-  Widget _buildDefaultUserProfile() {
-    return Row(
-      children: [
-        CircleAvatar(
-          radius: 20,
-          backgroundColor: Colors.orange,
-          child: const Icon(
-            Icons.person,
-            color: Colors.white,
-            size: 24,
+  Widget _buildDefaultUserProfile(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        // Navigator.of(context).pop(); // Close drawer first
+        // context.go(Routes.profileScreen);
+        onMenuItemSelected(3);
+        Navigator.of(context).pop(); // Close drawer
+      },
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.orange.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: Colors.orange.withOpacity(0.2),
+            width: 1,
           ),
         ),
-        const SizedBox(width: 16),
-        const Expanded(
-          child: Text(
-            'Guest User',
-            style: TextStyle(
-              color: AppColors.primaryTextColor,
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 24,
+              backgroundColor: Colors.orange.withOpacity(0.2),
+              child: const Icon(
+                Icons.person,
+                color: Colors.orange,
+                size: 20,
+              ),
             ),
-          ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Guest User',
+                    style: TextStyle(
+                      color: AppColors.primaryTextColor,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'View Profile',
+                    style: TextStyle(
+                      color: Colors.orange.withOpacity(0.8),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color: Colors.orange.withOpacity(0.6),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }

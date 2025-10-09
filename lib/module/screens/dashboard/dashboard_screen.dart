@@ -9,6 +9,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
 import 'package:highfly/config/routes.dart';
 import 'package:highfly/data/models/response_model/project_response_model.dart';
+import 'package:highfly/module/screens/profile/profile_screen.dart';
 
 import '../../utils/responsive.dart';
 import '../../widgets/dashboard_side_menu.dart';
@@ -55,7 +56,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         ref.read(projectsControllerProvider.notifier).loadProjects();
       }
     });
-    
+
     // Add listener to search controller
     _searchController.addListener(_onSearchChanged);
   }
@@ -94,12 +95,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     if (query.isEmpty) {
       return projects;
     }
-    
+
     return projects.where((project) {
       return project.name.toLowerCase().contains(query) ||
-             project.location.toLowerCase().contains(query) ||
-             project.description.toLowerCase().contains(query) ||
-             project.status.toLowerCase().contains(query);
+          project.location.toLowerCase().contains(query) ||
+          project.description.toLowerCase().contains(query) ||
+          project.status.toLowerCase().contains(query);
     }).toList();
   }
 
@@ -134,9 +135,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                   if (isMobile || !sideMenuVisible) _buildTopAppBar(),
 
                   // Main Content Area
-                  Expanded(
-                    child: _buildMainContent(),
-                  ),
+                  Expanded(child: _buildMainContent()),
                 ],
               ),
             ),
@@ -221,6 +220,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         return 'HighFly - Visits';
       case 2:
         return 'HighFly - Booking';
+      case 3:
+        return 'HighFly - Profile';
       default:
         return 'HighFly Dashboard';
     }
@@ -235,6 +236,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         return _buildVisitorContent();
       case 2:
         return _buildBookingProcessorContent();
+      case 3:
+        return _buildProfileContent();
       default:
         return _buildProjectContent();
     }
@@ -256,9 +259,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     return BookingProcessorScreen();
   }
 
+  Widget _buildProfileContent() {
+    debugPrint("Open Profile");
+    return ProfileScreen();
+  }
+
   Widget _buildMobileLayout() {
     final projectsState = ref.watch(projectsControllerProvider);
-    final filteredProjects = _filterProjects(projectsState.projects, _searchQuery);
+    final filteredProjects = _filterProjects(
+      projectsState.projects,
+      _searchQuery,
+    );
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
@@ -309,9 +320,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               ),
             ],
           ),
+
           // Stats Cards - Stacked vertically on mobile
-
-
           const SizedBox(height: 20),
 
           // Mobile Projects List
@@ -329,21 +339,30 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                   child: TextField(
                     controller: _searchController,
                     cursorColor: AppColors.primaryTextColor,
-                    style: const TextStyle(fontSize: 14, color: AppColors.primaryTextColor),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: AppColors.primaryTextColor,
+                    ),
                     decoration: InputDecoration(
                       hintText: "Search projects...",
-                      prefixIcon: const Icon(Icons.search, size: 20, color: AppColors.primaryTextColor,),
+                      prefixIcon: const Icon(
+                        Icons.search,
+                        size: 20,
+                        color: AppColors.primaryTextColor,
+                      ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                         borderSide: BorderSide(
-                          color: AppColors.secondaryTextColor, // Normal border color
+                          color: AppColors
+                              .secondaryTextColor, // Normal border color
                           width: 1.5,
                         ),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                         borderSide: BorderSide(
-                          color: AppColors.secondaryTextColor, // Border color when focused
+                          color: AppColors
+                              .secondaryTextColor, // Border color when focused
                           width: 1,
                         ),
                       ),
@@ -387,8 +406,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                         const SizedBox(height: 16),
                         ElevatedButton(
                           onPressed: () {
-                            ref.read(projectsControllerProvider.notifier).loadProjects();
-                            ref.read(projectsControllerProvider.notifier).loadActiveProjects();
+                            ref
+                                .read(projectsControllerProvider.notifier)
+                                .loadProjects();
+                            ref
+                                .read(projectsControllerProvider.notifier)
+                                .loadActiveProjects();
                           },
                           child: const Text('Retry'),
                         ),
@@ -397,26 +420,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                   ),
 
                 // Show empty state if no projects and no errors
-                if (!projectsState.isLoading && 
-                    projectsState.error == null && 
+                if (!projectsState.isLoading &&
+                    projectsState.error == null &&
                     filteredProjects.isEmpty)
                   const Padding(
                     padding: EdgeInsets.all(16.0),
                     child: Center(
                       child: Column(
                         children: [
-                          Icon(
-                            Icons.search_off,
-                            size: 48,
-                            color: Colors.grey,
-                          ),
+                          Icon(Icons.search_off, size: 48, color: Colors.grey),
                           SizedBox(height: 16),
                           Text(
                             'No projects found',
-                            style: TextStyle(
-                              color: Colors.grey,
-                              fontSize: 16,
-                            ),
+                            style: TextStyle(color: Colors.grey, fontSize: 16),
                           ),
                           // SizedBox(height: 8),
                           // Text(
@@ -433,7 +449,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
 
                 // Mobile Project Cards instead of DataTable (show FILTERED projects)
                 if (!projectsState.isLoading && projectsState.error == null)
-                  ...filteredProjects.map((project) => _buildMobileProjectCard(project)).toList(),
+                  ...filteredProjects
+                      .map((project) => _buildMobileProjectCard(project))
+                      .toList(),
               ],
             ),
           ),
@@ -446,7 +464,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     final isTablet = Responsive.isTablet(context);
     final isDesktop = Responsive.isDesktop(context);
     final projectsState = ref.watch(projectsControllerProvider);
-    final filteredProjects = _filterProjects(projectsState.projects, _searchQuery);
+    final filteredProjects = _filterProjects(
+      projectsState.projects,
+      _searchQuery,
+    );
 
     return SingleChildScrollView(
       padding: EdgeInsets.all(isTablet ? 12.0 : 16.0),
@@ -472,7 +493,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 icon: const Icon(Icons.refresh, color: Colors.orange),
                 onPressed: () {
                   ref.read(projectsControllerProvider.notifier).loadProjects();
-                  ref.read(projectsControllerProvider.notifier).loadActiveProjects();
+                  ref
+                      .read(projectsControllerProvider.notifier)
+                      .loadActiveProjects();
                 },
               ),
             ],
@@ -552,21 +575,30 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                     child: TextField(
                       controller: _searchController,
                       cursorColor: AppColors.primaryTextColor,
-                      style: const TextStyle(fontSize: 14, color: AppColors.primaryTextColor),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: AppColors.primaryTextColor,
+                      ),
                       decoration: InputDecoration(
                         hintText: "Search projects...",
-                        prefixIcon: const Icon(Icons.search, size: 20, color: AppColors.primaryTextColor,),
+                        prefixIcon: const Icon(
+                          Icons.search,
+                          size: 20,
+                          color: AppColors.primaryTextColor,
+                        ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
                           borderSide: BorderSide(
-                            color: AppColors.secondaryTextColor, // Normal border color
+                            color: AppColors
+                                .secondaryTextColor, // Normal border color
                             width: 1.5,
                           ),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
                           borderSide: BorderSide(
-                            color: AppColors.secondaryTextColor, // Border color when focused
+                            color: AppColors
+                                .secondaryTextColor, // Border color when focused
                             width: 1,
                           ),
                         ),
@@ -611,8 +643,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                         const SizedBox(height: 16),
                         ElevatedButton(
                           onPressed: () {
-                            ref.read(projectsControllerProvider.notifier).loadProjects();
-                            ref.read(projectsControllerProvider.notifier).loadActiveProjects();
+                            ref
+                                .read(projectsControllerProvider.notifier)
+                                .loadProjects();
+                            ref
+                                .read(projectsControllerProvider.notifier)
+                                .loadActiveProjects();
                           },
                           child: const Text('Retry'),
                         ),
@@ -621,26 +657,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                   ),
 
                 // Show empty state if no projects and no errors
-                if (!projectsState.isLoading && 
-                    projectsState.error == null && 
+                if (!projectsState.isLoading &&
+                    projectsState.error == null &&
                     filteredProjects.isEmpty)
                   const Padding(
                     padding: EdgeInsets.all(16.0),
                     child: Center(
                       child: Column(
                         children: [
-                          Icon(
-                            Icons.search_off,
-                            size: 48,
-                            color: Colors.grey,
-                          ),
+                          Icon(Icons.search_off, size: 48, color: Colors.grey),
                           SizedBox(height: 16),
                           Text(
                             'No projects found',
-                            style: TextStyle(
-                              color: Colors.grey,
-                              fontSize: 16,
-                            ),
+                            style: TextStyle(color: Colors.grey, fontSize: 16),
                           ),
                           // SizedBox(height: 8),
                           // Text(
@@ -656,8 +685,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                   ),
 
                 // Projects Data - Responsive table (show FILTERED projects)
-                if (!projectsState.isLoading && 
-                    projectsState.error == null && 
+                if (!projectsState.isLoading &&
+                    projectsState.error == null &&
                     filteredProjects.isNotEmpty)
                   isTablet
                       ? _buildTabletProjectsList(filteredProjects)
@@ -681,16 +710,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     );
   }
 
-  Widget _statsCard(BuildContext context,
-      {required String title,
-        required String count,
-        String? subtitleLeft,
-        String? subtitleRight,
-        required IconData icon,
-        required Color color}) {
+  Widget _statsCard(
+    BuildContext context, {
+    required String title,
+    required String count,
+    String? subtitleLeft,
+    String? subtitleRight,
+    required IconData icon,
+    required Color color,
+  }) {
     final isTablet = Responsive.isTablet(context);
     final isMobile = Responsive.isMobile(context);
-    
+
     return Expanded(
       child: Card(
         color: Colors.white,
@@ -732,12 +763,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                       color: color.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Icon(
-                      icon,
-                      color: color,
-                      size: isMobile ? 20 : 28,
-                    ),
-                  )
+                    child: Icon(icon, color: color, size: isMobile ? 20 : 28),
+                  ),
                 ],
               ),
               const SizedBox(height: 10),
@@ -748,12 +775,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                         children: [
                           Text(
                             subtitleLeft,
-                            style: const TextStyle(color: Colors.grey, fontSize: 12),
+                            style: const TextStyle(
+                              color: Colors.grey,
+                              fontSize: 12,
+                            ),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             subtitleRight,
-                            style: const TextStyle(color: Colors.grey, fontSize: 12),
+                            style: const TextStyle(
+                              color: Colors.grey,
+                              fontSize: 12,
+                            ),
                           ),
                         ],
                       )
@@ -789,7 +822,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   }
 
   Widget _statusChip(String text) {
-    return Icon(Icons.circle, size: 15, color: text == 'active' ? Colors.green : Colors.red);
+    return Icon(
+      Icons.circle,
+      size: 15,
+      color: text == 'active' ? Colors.green : Colors.red,
+    );
 
     //   Chip(
     //   label: Text(text, style: const TextStyle(color: AppColors.primaryTextColor),),
@@ -813,35 +850,42 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           ClipRRect(
             borderRadius: BorderRadiusGeometry.all(Radius.circular(5)),
             child: Image.network(
-            project.projectPhoto, // sample image url
-            width: MediaQuery.of(context).size.width,
-            height: 150,
-            fit: BoxFit.cover,
-            loadingBuilder: (context, child, loadingProgress) {
-              if (loadingProgress == null) return child; // Image loaded
-              return Center(
-                child: CircularProgressIndicator(
-                  value: loadingProgress.expectedTotalBytes != null
-                      ? loadingProgress.cumulativeBytesLoaded /
-                      (loadingProgress.expectedTotalBytes ?? 1)
-                      : null,
-                ),
-              );
-            },
+              project.projectPhoto, // sample image url
+              width: MediaQuery.of(context).size.width,
+              height: 150,
+              fit: BoxFit.cover,
+              loadingBuilder: (context, child, loadingProgress) {
+                if (loadingProgress == null) return child; // Image loaded
+                return Center(
+                  child: CircularProgressIndicator(
+                    value: loadingProgress.expectedTotalBytes != null
+                        ? loadingProgress.cumulativeBytesLoaded /
+                              (loadingProgress.expectedTotalBytes ?? 1)
+                        : null,
+                  ),
+                );
+              },
               errorBuilder: (context, child, loadingProgress) {
-              return Center(child: Column(
-                children: [
-                  Icon(Icons.image, size: 80, color: Colors.grey),
-                  Text("No Image Available", style: TextStyle(color: Colors.grey, fontSize: 20, fontWeight: FontWeight.w600),)
-                ],
-              ));
+                return Center(
+                  child: Column(
+                    children: [
+                      Icon(Icons.image, size: 80, color: Colors.grey),
+                      Text(
+                        "No Image Available",
+                        style: TextStyle(
+                          color: Colors.grey,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
               },
             ),
           ),
 
-          SizedBox(
-            height: 15,
-          ),
+          SizedBox(height: 15),
 
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -858,9 +902,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 ),
               ),
 
-              SizedBox(
-                width: 8,
-              ),
+              SizedBox(width: 8),
 
               Padding(
                 padding: const EdgeInsets.only(top: 8.0),
@@ -894,12 +936,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             ),
           ),
           // Add Visit Button
-          if(project.status == 'active')...[
+          if (project.status == 'active') ...[
             const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: () => context.go(Routes.addVisitScreen, extra: project),
+                onPressed: () =>
+                    context.go(Routes.addVisitScreen, extra: project),
                 // onPressed: () => context.push(Routes.addVisitScreen, extra: project),
                 // onPressed: () => AddVisitDialog(project: project),
                 // onPressed: () => _showAddVisitDialog(project),
@@ -914,8 +957,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 ),
               ),
             ),
-          ]
-
+          ],
         ],
       ),
     );
@@ -926,52 +968,60 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     return Column(
       children: [
         const SizedBox(height: 15),
-        ...projects.map((project) => Container(
-          margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 4),
-          child: Card(
-            elevation: 0,
-            color: Colors.grey[50],
-            child: ListTile(
-              title: Text(
-                project.name,
-                style: const TextStyle(
-                  color: AppColors.primaryTextColor,
-                  fontWeight: FontWeight.w700,
+        ...projects
+            .map(
+              (project) => Container(
+                margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 4),
+                child: Card(
+                  elevation: 0,
+                  color: Colors.grey[50],
+                  child: ListTile(
+                    title: Text(
+                      project.name,
+                      style: const TextStyle(
+                        color: AppColors.primaryTextColor,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 4),
+                        Text(
+                          project.location,
+                          style: const TextStyle(
+                            color: AppColors.primaryTextColor,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          project.description,
+                          style: const TextStyle(
+                            color: AppColors.primaryTextColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _statusChip(project.status),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          icon: const Icon(Icons.add, color: Colors.orange),
+                          onPressed: () => AddVisitDialog(project: project),
+                          // onPressed: () => _showAddVisitDialog(project),
+                        ),
+                      ],
+                    ),
+                    onTap: () {
+                      debugPrint("Project tapped: ${project.name}");
+                    },
+                  ),
                 ),
               ),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 4),
-                  Text(
-                    project.location,
-                    style: const TextStyle(color: AppColors.primaryTextColor),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    project.description,
-                    style: const TextStyle(color: AppColors.primaryTextColor),
-                  ),
-                ],
-              ),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _statusChip(project.status),
-                  const SizedBox(width: 8),
-                  IconButton(
-                    icon: const Icon(Icons.add, color: Colors.orange),
-                    onPressed: () => AddVisitDialog(project: project),
-                    // onPressed: () => _showAddVisitDialog(project),
-                  ),
-                ],
-              ),
-              onTap: () {
-                debugPrint("Project tapped: ${project.name}");
-              },
-            ),
-          ),
-        )).toList(),
+            )
+            .toList(),
         const SizedBox(height: 15),
       ],
     );
@@ -1029,7 +1079,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               return DataRow(
                 onSelectChanged: (selected) {
                   if (selected ?? false) {
-                    debugPrint("Row tapped at index: $index, Project: ${project.name}");
+                    debugPrint(
+                      "Row tapped at index: $index, Project: ${project.name}",
+                    );
                   }
                 },
                 cells: [
@@ -1048,13 +1100,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                   DataCell(
                     Text(
                       project.location,
-                      style: const TextStyle(color: AppColors.primaryTextColor, fontSize: 15,),
+                      style: const TextStyle(
+                        color: AppColors.primaryTextColor,
+                        fontSize: 15,
+                      ),
                     ),
                   ),
                   DataCell(
                     Text(
                       project.description,
-                      style: const TextStyle(color: AppColors.primaryTextColor, fontSize: 15,),
+                      style: const TextStyle(
+                        color: AppColors.primaryTextColor,
+                        fontSize: 15,
+                      ),
                     ),
                   ),
                   DataCell(_statusChip(project.status)),

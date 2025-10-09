@@ -11,6 +11,7 @@ import '../../data/repository/auth_api_repository.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 // Add FCM provider import
 import '../providers/fcm_provider.dart';
+import '../providers/profile_provider.dart';
 
 // Firebase Auth Repository Provider
 final firebaseAuthRepositoryProvider = Provider<FirebaseAuthRepository>((ref) {
@@ -169,6 +170,17 @@ class AuthController extends Notifier<AuthState> {
 
         // Register device for notifications after successful sign-in
         await registerDeviceForNotifications();
+
+        // Load user profile after successful login
+        try {
+          print('🔄 AuthProvider: Loading user profile after login...');
+          final profileNotifier = ref.read(profileProvider.notifier);
+          await profileNotifier.loadProfile();
+          print('✅ AuthProvider: Profile loaded successfully');
+        } catch (e) {
+          print('⚠️ AuthProvider: Failed to load profile after login - $e');
+          // Don't fail the login if profile loading fails
+        }
 
         state = state.copyWith(isLoading: false);
         return true;

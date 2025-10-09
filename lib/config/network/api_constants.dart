@@ -6,4 +6,5 @@ class ApiConstants {
   static const String visits = 'agents/visits/';
   static const String createVisits = 'agents/visits/create/';
   static const String notificationRegisterDevice = 'agents/notifications/register-device/';
+  static const String profileData = 'agents/profile/';
 }
