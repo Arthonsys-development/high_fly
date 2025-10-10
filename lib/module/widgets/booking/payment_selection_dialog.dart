@@ -66,6 +66,7 @@ class PaymentSelectionDialog extends StatelessWidget {
                 ],
               ),
             ),
+            SizedBox(height: 16),
             Flexible(
               child: ListView.builder(
                 shrinkWrap: true,
@@ -114,6 +115,7 @@ class PaymentSelectionDialog extends StatelessWidget {
                 },
               ),
             ),
+            SizedBox(height: 16),
           ],
         ),
       ),

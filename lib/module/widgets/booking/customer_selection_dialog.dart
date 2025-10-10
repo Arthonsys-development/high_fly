@@ -106,8 +106,16 @@ class _CustomerSelectionDialogState extends State<CustomerSelectionDialog> {
                   TextField(
                     controller: _searchController,
                     onChanged: _filterCustomers,
+                    style: const TextStyle(
+                      fontSize: 14, // 👈 Set your desired font size here
+                      color: Colors.black, // optional
+                    ),
                     decoration: InputDecoration(
-                      hintText: 'Search customers by name, email, phone, or location...',
+                      hintText: 'Search customers',
+                      hintStyle: const TextStyle(
+                        fontSize: 14, // 👈 Match the hint font size if you want consistency
+                        color: AppColors.lightGreyColor,
+                      ),
                       prefixIcon: const Icon(
                         Icons.search,
                         color: AppColors.lightGreyColor,
@@ -268,6 +276,7 @@ class _CustomerSelectionDialogState extends State<CustomerSelectionDialog> {
                       },
                     ),
             ),
+            SizedBox(height: 16),
           ],
         ),
       ),

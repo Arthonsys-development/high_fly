@@ -86,7 +86,7 @@ class _PlotSelectionDialogState extends State<PlotSelectionDialog> {
                       const Text(
                         'Select Plot',
                         style: TextStyle(
-                          fontSize: 18,
+                          fontSize: 16,
                           fontWeight: FontWeight.bold,
                           color: AppColors.headingTextColor,
                         ),
@@ -105,8 +105,16 @@ class _PlotSelectionDialogState extends State<PlotSelectionDialog> {
                   TextField(
                     controller: _searchController,
                     onChanged: _filterPlots,
+                    style: const TextStyle(
+                      fontSize: 15, // 👈 Set your desired font size here
+                      color: Colors.black, // optional
+                    ),
                     decoration: InputDecoration(
-                      hintText: 'Search plots by number, facing, or remark...',
+                      hintText: 'Search plots...',
+                      hintStyle: const TextStyle(
+                        fontSize: 15, // 👈 Match the hint font size if you want consistency
+                        color: AppColors.lightGreyColor,
+                      ),
                       prefixIcon: const Icon(
                         Icons.search,
                         color: AppColors.lightGreyColor,
@@ -276,6 +284,7 @@ class _PlotSelectionDialogState extends State<PlotSelectionDialog> {
                       },
                     ),
             ),
+            SizedBox(height: 16),
           ],
         ),
       ),

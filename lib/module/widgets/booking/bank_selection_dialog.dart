@@ -237,7 +237,9 @@ class _BankSelectionDialogState extends State<BankSelectionDialog> {
                       },
                     ),
             ),
+            SizedBox(height: 16),
           ],
+          
         ),
       ),
     );
