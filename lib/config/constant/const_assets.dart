@@ -18,4 +18,6 @@ class IconsAssets {
   static const holdTimeIcon = "${assetsIconPath}hold_time.png";
   static const personIcon = "${assetsIconPath}person.png";
   static const locationIcon = "${assetsIconPath}location.png";
+  static const totalProjectIcon = "${assetsIconPath}total_project.png";
+  static const activeProjectIcon = "${assetsIconPath}active.png";
 }

@@ -66,3 +66,4 @@ class ProfilePicture extends StatelessWidget {
     );
   }
 }
+

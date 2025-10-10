@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:highfly/config/constant/app_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:highfly/config/constant/const_assets.dart';
 import 'package:highfly/module/providers/projects_provider.dart';
 import 'package:highfly/module/providers/user_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -9,6 +10,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
 import 'package:highfly/config/routes.dart';
 import 'package:highfly/data/models/response_model/project_response_model.dart';
+import 'package:highfly/module/screens/profile/profile_screen.dart';
 
 import '../../utils/responsive.dart';
 import '../../widgets/dashboard_side_menu.dart';
@@ -25,7 +27,7 @@ class DashboardScreen extends ConsumerStatefulWidget {
 
 class _DashboardScreenState extends ConsumerState<DashboardScreen>
     with WidgetsBindingObserver {
-  int selectedMenuIndex = 2;
+  int selectedMenuIndex = 0;
   bool sideMenuVisible = true;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
@@ -221,6 +223,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         return 'Vistarak - Visits';
       case 2:
         return 'Vistarak - Booking';
+      case 3:
+        return 'Vistarak - Profile';
       default:
         return 'Vistarak Dashboard';
     }
@@ -235,6 +239,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         return _buildVisitorContent();
       case 2:
         return _buildBookingProcessorContent();
+      case 3:
+        return _buildProfileContent();
       default:
         return _buildProjectContent();
     }
@@ -250,6 +256,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
 
   Widget _buildVisitorContent() {
     return const VisitorsScreen();
+  }
+
+  Widget _buildProfileContent() {
+    return const ProfileScreen();
   }
 
   Widget _buildBookingProcessorContent() {
@@ -297,14 +307,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 count: projectsState.projects.length.toString(),
                 // subtitleLeft: "Planning: 0",
                 // subtitleRight: "Completed: 0",
-                icon: Icons.insert_chart_outlined,
+                icon: IconsAssets.totalProjectIcon,
                 color:  AppColors.primaryColor,
               ),
               _statsCard(
                 context,
                 title: "Active Projects",
                 count: projectsState.activeProjects.length.toString(),
-                icon: Icons.show_chart,
+                icon: IconsAssets.activeProjectIcon,
                 color: Colors.green,
               ),
             ],
@@ -490,7 +500,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                       count: projectsState.projects.length.toString(),
                       subtitleLeft: "Planning: 0",
                       subtitleRight: "Completed: 0",
-                      icon: Icons.insert_chart_outlined,
+                      icon: IconsAssets.totalProjectIcon,
                       color:  AppColors.primaryColor,
                     ),
                     const SizedBox(height: 12),
@@ -498,7 +508,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                       context,
                       title: "Active Projects",
                       count: projectsState.activeProjects.length.toString(),
-                      icon: Icons.show_chart,
+                      icon: IconsAssets.activeProjectIcon,
                       color: Colors.green,
                     ),
                   ],
@@ -513,7 +523,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                         count: projectsState.projects.length.toString(),
                         subtitleLeft: "Planning: 0",
                         subtitleRight: "Completed: 0",
-                        icon: Icons.insert_chart_outlined,
+                        icon: IconsAssets.totalProjectIcon,
                         color:  AppColors.primaryColor,
                       ),
                     ),
@@ -523,7 +533,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                         context,
                         title: "Active Projects",
                         count: projectsState.activeProjects.length.toString(),
-                        icon: Icons.show_chart,
+                        icon: IconsAssets.activeProjectIcon,
                         color: Colors.green,
                       ),
                     ),
@@ -686,7 +696,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         required String count,
         String? subtitleLeft,
         String? subtitleRight,
-        required IconData icon,
+        required String icon,
         required Color color}) {
     final isTablet = Responsive.isTablet(context);
     final isMobile = Responsive.isMobile(context);
@@ -732,11 +742,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                       color: color.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Icon(
-                      icon,
-                      color: color,
-                      size: isMobile ? 20 : 28,
-                    ),
+                    child: Image.asset(icon, width: 20, height: 20, color: color,),
                   )
                 ],
               ),

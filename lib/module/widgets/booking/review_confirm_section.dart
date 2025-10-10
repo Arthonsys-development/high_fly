@@ -45,7 +45,7 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
           
           // Customer Information Card
           _buildInfoCard(
-            icon: Icons.person,
+            icon: IconsAssets.personIcon,
             iconColor: AppColors.primaryColor,
             title: 'Customer Information',
             children: [
@@ -64,7 +64,7 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
           
           // Plot Information Card
           _buildInfoCard(
-            icon: Icons.location_on,
+            icon: IconsAssets.locationIcon,
             iconColor: Colors.red,
             title: 'Plot Information',
             children: [
@@ -91,7 +91,7 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
           
           // Payment Information Card
           _buildInfoCard(
-            icon: Icons.payment,
+            icon: IconsAssets.cardIcon,
             iconColor: AppColors.primaryColor,
             title: 'Payment Information',
             children: [
@@ -122,7 +122,7 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
           
           // Bank Details Card
           _buildInfoCard(
-            icon: Icons.account_balance,
+            icon: IconsAssets.bankIcon,
             iconColor: Colors.brown,
             title: 'Bank Details',
             children: [
@@ -171,8 +171,8 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
   }
 
   Widget _buildInfoCard({
-    required IconData icon,
-    required Color iconColor,
+    required String icon,
+    Color? iconColor,
     required String title,
     required List<Widget> children,
   }) {
@@ -195,7 +195,11 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
         children: [
           Row(
             children: [
-              Container(
+              SizedBox(
+                width: 22,
+                height: 22,
+                child: Image.asset(icon, color: iconColor ?? AppColors.primaryColor,)
+              ),/*Container(
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
@@ -207,7 +211,7 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
                   color: iconColor,
                   size: 20,
                 ),
-              ),
+              ),*/
               const SizedBox(width: 12),
               Text(
                 title,
