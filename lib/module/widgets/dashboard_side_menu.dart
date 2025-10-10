@@ -107,7 +107,7 @@ class _DashboardSideMenuState extends State<DashboardSideMenu> {
                       ),
                       /*const SizedBox(width: 12),
                       const Text(
-                        'HighFly',
+                        'Vistarak',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,

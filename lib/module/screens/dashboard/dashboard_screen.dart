@@ -216,13 +216,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   String _getPageTitle() {
     switch (selectedMenuIndex) {
       case 0:
-        return 'HighFly - Projects';
+        return 'Vistarak - Projects';
       case 1:
-        return 'HighFly - Visits';
+        return 'Vistarak - Visits';
       case 2:
-        return 'HighFly - Booking';
+        return 'Vistarak - Booking';
       default:
-        return 'HighFly Dashboard';
+        return 'Vistarak Dashboard';
     }
   }
 
@@ -851,7 +851,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 child: Text(
                   project.name,
                   style: const TextStyle(
-                    color: AppColors.buttonBorderColor,
+                    color: AppColors.primaryColor,
                     fontWeight: FontWeight.w700,
                     fontSize: 16,
                   ),

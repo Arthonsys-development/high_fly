@@ -177,7 +177,7 @@ class MyApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       key: navigatorKey,
       scaffoldMessengerKey: scaffoldMessengerKey,
-      title: 'HighFly',
+      title: 'Vistarak',
       theme: lightTheme,
       // Define light theme
       // darkTheme: darkTheme,
