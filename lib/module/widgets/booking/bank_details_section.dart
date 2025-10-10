@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:highfly/config/utils.dart';
 import '../../../data/models/bank_details_model.dart';
 import '../../../config/constant/app_colors.dart';
 import '../../global/widgets/custom_text_field.dart';
@@ -70,21 +71,6 @@ class _BankDetailsSectionState extends State<BankDetailsSection> {
           
           const SizedBox(height: 40),
           
-          // Section title
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              'Bank Details',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: AppColors.primaryTextColor,
-              ),
-            ),
-          ),
-          
-          const SizedBox(height: 20),
-          
           // Account Holder Name field
           CustomTextField(
             titleText: 'Account Holder Name',
@@ -138,14 +124,15 @@ class _BankDetailsSectionState extends State<BankDetailsSection> {
           const SizedBox(height: 24),
           
           // IFSC Code field
-          CustomTextField(
+         CustomTextField(
             titleText: 'IFSC Code',
             controller: _ifscCodeController,
             hintText: 'Enter IFSC Code',
             isMandatory: true,
             borderRadius: 6,
             inputFormatters: [
-              FilteringTextInputFormatter.allow(RegExp(r'[A-Z0-9]')),
+              FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9]')),
+              UpperCaseTextFormatter(),
               LengthLimitingTextInputFormatter(11),
             ],
             onChanged: (value) {
