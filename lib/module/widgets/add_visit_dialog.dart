@@ -504,7 +504,7 @@ class _AddVisitDialogState extends State<AddVisitDialog>
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('No image captured'),
-              backgroundColor: Colors.orange,
+              backgroundColor:  AppColors.primaryColor,
             ),
           );
         }
@@ -642,7 +642,7 @@ class _AddVisitDialogState extends State<AddVisitDialog>
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('No image selected'),
-              backgroundColor: Colors.orange,
+              backgroundColor:  AppColors.primaryColor,
             ),
           );
         }
@@ -920,7 +920,7 @@ class _AddVisitDialogState extends State<AddVisitDialog>
               content: Text(kIsWeb 
                 ? 'Location access denied or unavailable. Please allow location access in your browser settings.'
                 : 'Unable to get current location. Please check location permissions.'),
-              backgroundColor: Colors.orange,
+              backgroundColor:  AppColors.primaryColor,
               duration: const Duration(seconds: 5),
             ),
           );

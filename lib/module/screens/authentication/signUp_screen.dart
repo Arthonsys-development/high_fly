@@ -141,7 +141,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('No image captured'),
-              backgroundColor: Colors.orange,
+              backgroundColor:  AppColors.primaryColor,
             ),
           );
         }
@@ -262,7 +262,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('No image selected'),
-              backgroundColor: Colors.orange,
+              backgroundColor:  AppColors.primaryColor,
             ),
           );
         }

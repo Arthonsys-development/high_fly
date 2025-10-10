@@ -88,19 +88,19 @@ class _DashboardSideMenuState extends State<DashboardSideMenu> {
               children: [
                 // Header
                 Container(
-                  height: 100,
+                  // height: 100,
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: Colors.orange.withOpacity(0.1),
+                    color:  AppColors.primaryColor.withOpacity(0.1),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Container(
-                        width: 100,
-                        height: 100,
+                        // width: 150,
+                        // height: 100,
                         decoration: BoxDecoration(
-                          // color: Colors.orange,
+                          // color:  AppColors.primaryColor,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Image.asset(ImageAssets.highFlyLogo),
@@ -142,11 +142,11 @@ class _DashboardSideMenuState extends State<DashboardSideMenu> {
                             ),
                             decoration: BoxDecoration(
                               color: isSelected
-                                  ? Colors.orange.withOpacity(0.1)
+                                  ?  AppColors.primaryColor.withOpacity(0.1)
                                   : Colors.transparent,
                               borderRadius: BorderRadius.circular(8),
                               border: isSelected
-                                  ? Border.all(color: Colors.orange, width: 1)
+                                  ? Border.all(color:  AppColors.primaryColor, width: 1)
                                   : null,
                             ),
                             child: Row(
@@ -154,7 +154,7 @@ class _DashboardSideMenuState extends State<DashboardSideMenu> {
                                 Icon(
                                   item.icon,
                                   color: isSelected
-                                      ? Colors.orange
+                                      ?  AppColors.primaryColor
                                       : AppColors.primaryTextColor,
                                   size: isTablet ? 20 : 24,
                                 ),
@@ -164,7 +164,7 @@ class _DashboardSideMenuState extends State<DashboardSideMenu> {
                                     item.title,
                                     style: TextStyle(
                                       color: isSelected
-                                          ? Colors.orange
+                                          ?  AppColors.primaryColor
                                           : AppColors.primaryTextColor,
                                       fontWeight: isSelected
                                           ? FontWeight.w600
@@ -192,7 +192,7 @@ class _DashboardSideMenuState extends State<DashboardSideMenu> {
                         if (snapshot.connectionState == ConnectionState.waiting) {
                           return const CircleAvatar(
                             radius: 16,
-                            backgroundColor: Colors.orange,
+                            backgroundColor:  AppColors.primaryColor,
                             child: SizedBox(
                               width: 16,
                               height: 16,
@@ -207,7 +207,7 @@ class _DashboardSideMenuState extends State<DashboardSideMenu> {
                         if (snapshot.hasError || !snapshot.hasData) {
                           return const CircleAvatar(
                             radius: 16,
-                            backgroundColor: Colors.orange,
+                            backgroundColor:  AppColors.primaryColor,
                             child: Icon(
                               Icons.person,
                               color: Colors.white,
@@ -222,14 +222,14 @@ class _DashboardSideMenuState extends State<DashboardSideMenu> {
 
                         return CircleAvatar(
                           radius: 16,
-                          backgroundColor: Colors.orange.withOpacity(0.2),
+                          backgroundColor:  AppColors.primaryColor.withOpacity(0.2),
                           backgroundImage: profilePhoto != null && profilePhoto.isNotEmpty
                               ? NetworkImage(profilePhoto)
                               : null,
                           child: (profilePhoto == null || profilePhoto.isEmpty)
                               ? const Icon(
                                   Icons.person,
-                                  color: Colors.orange,
+                                  color:  AppColors.primaryColor,
                                   size: 18,
                                 )
                               : null,
@@ -309,7 +309,7 @@ class _DashboardSideMenuState extends State<DashboardSideMenu> {
                           children: [
                             CircleAvatar(
                               radius: 16,
-                              backgroundColor: Colors.orange,
+                              backgroundColor:  AppColors.primaryColor,
                               child: Icon(
                                 Icons.person,
                                 color: Colors.white,
@@ -338,7 +338,7 @@ class _DashboardSideMenuState extends State<DashboardSideMenu> {
                           children: [
                             CircleAvatar(
                               radius: 16,
-                              backgroundColor: Colors.orange,
+                              backgroundColor:  AppColors.primaryColor,
                               child: Icon(
                                 Icons.person,
                                 color: Colors.white,
@@ -366,7 +366,7 @@ class _DashboardSideMenuState extends State<DashboardSideMenu> {
                           // User profile image or initials
                           CircleAvatar(
                             radius: 16,
-                            backgroundColor: Colors.orange.withOpacity(0.2),
+                            backgroundColor:  AppColors.primaryColor.withOpacity(0.2),
                             backgroundImage: user.profilePhoto.isNotEmpty
                                 ? NetworkImage(
                                     user.profilePhoto,
@@ -380,7 +380,7 @@ class _DashboardSideMenuState extends State<DashboardSideMenu> {
                                 ? Text(
                                     user.initials,
                                     style: const TextStyle(
-                                      color: Colors.orange,
+                                      color:  AppColors.primaryColor,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 12,
                                     ),
@@ -466,32 +466,23 @@ class MobileSideMenuDrawer extends ConsumerWidget {
           // Header
           Container(
             height: 120,
-            padding: const EdgeInsets.all(20),
+            // padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.orange.withOpacity(0.1),
+              color:  AppColors.primaryColor.withOpacity(0.1),
             ),
             child: SafeArea(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Container(
-                    width: 100,
+                    width: 200,
                     height: 100,
                     decoration: BoxDecoration(
-                      // color: Colors.orange,
+                      // color:  AppColors.primaryColor,
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Image.asset(ImageAssets.highFlyLogo),
+                    child: Image.asset(ImageAssets.highFlyLogo, fit: BoxFit.cover,),
                   ),
-                  // const SizedBox(width: 16),
-                  // const Text(
-                  //   'HighFly',
-                  //   style: TextStyle(
-                  //     fontSize: 24,
-                  //     fontWeight: FontWeight.bold,
-                  //     color: AppColors.primaryTextColor,
-                  //   ),
-                  // ),
                 ],
               ),
             ),
@@ -524,11 +515,11 @@ class MobileSideMenuDrawer extends ConsumerWidget {
                       ),
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? Colors.orange.withOpacity(0.1)
+                            ?  AppColors.primaryColor.withOpacity(0.1)
                             : Colors.transparent,
                         borderRadius: BorderRadius.circular(8),
                         border: isSelected
-                            ? Border.all(color: Colors.orange, width: 1)
+                            ? Border.all(color:  AppColors.primaryColor, width: 1)
                             : null,
                       ),
                       child: Row(
@@ -536,7 +527,7 @@ class MobileSideMenuDrawer extends ConsumerWidget {
                           Icon(
                             item.icon,
                             color: isSelected
-                                ? Colors.orange
+                                ?  AppColors.primaryColor
                                 : AppColors.primaryTextColor,
                             size: 24,
                           ),
@@ -545,7 +536,7 @@ class MobileSideMenuDrawer extends ConsumerWidget {
                             item.title,
                             style: TextStyle(
                               color: isSelected
-                                  ? Colors.orange
+                                  ?  AppColors.primaryColor
                                   : AppColors.primaryTextColor,
                               fontWeight: isSelected
                                   ? FontWeight.w600
@@ -581,10 +572,10 @@ class MobileSideMenuDrawer extends ConsumerWidget {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.orange.withOpacity(0.05),
+          color:  AppColors.primaryColor.withOpacity(0.05),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: Colors.orange.withOpacity(0.2),
+            color:  AppColors.primaryColor.withOpacity(0.2),
             width: 1,
           ),
         ),
@@ -608,14 +599,14 @@ class MobileSideMenuDrawer extends ConsumerWidget {
                 // User profile image or default icon
                 CircleAvatar(
                   radius: 24,
-                  backgroundColor: Colors.orange.withOpacity(0.2),
+                  backgroundColor:  AppColors.primaryColor.withOpacity(0.2),
                   backgroundImage: profilePhoto != null && profilePhoto.isNotEmpty
                       ? NetworkImage(profilePhoto)
                       : null,
                   child: (profilePhoto == null || profilePhoto.isEmpty)
                       ? const Icon(
                           Icons.person,
-                          color: Colors.orange,
+                          color:  AppColors.primaryColor,
                           size: 20,
                         )
                       : null,
@@ -638,7 +629,7 @@ class MobileSideMenuDrawer extends ConsumerWidget {
                       Text(
                         'View Profile',
                         style: TextStyle(
-                          color: Colors.orange.withOpacity(0.8),
+                          color:  AppColors.primaryColor.withOpacity(0.8),
                           fontSize: 12,
                           fontWeight: FontWeight.w400,
                         ),
@@ -649,7 +640,7 @@ class MobileSideMenuDrawer extends ConsumerWidget {
                 Icon(
                   Icons.arrow_forward_ios,
                   size: 16,
-                  color: Colors.orange.withOpacity(0.6),
+                  color:  AppColors.primaryColor.withOpacity(0.6),
                 ),
               ],
             );
@@ -681,10 +672,10 @@ class MobileSideMenuDrawer extends ConsumerWidget {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.orange.withOpacity(0.05),
+          color:  AppColors.primaryColor.withOpacity(0.05),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: Colors.orange.withOpacity(0.2),
+            color:  AppColors.primaryColor.withOpacity(0.2),
             width: 1,
           ),
         ),
@@ -692,10 +683,10 @@ class MobileSideMenuDrawer extends ConsumerWidget {
           children: [
             CircleAvatar(
               radius: 24,
-              backgroundColor: Colors.orange.withOpacity(0.2),
+              backgroundColor:  AppColors.primaryColor.withOpacity(0.2),
               child: const Icon(
                 Icons.person,
-                color: Colors.orange,
+                color:  AppColors.primaryColor,
                 size: 20,
               ),
             ),
@@ -716,7 +707,7 @@ class MobileSideMenuDrawer extends ConsumerWidget {
                   Text(
                     'View Profile',
                     style: TextStyle(
-                      color: Colors.orange.withOpacity(0.8),
+                      color:  AppColors.primaryColor.withOpacity(0.8),
                       fontSize: 12,
                       fontWeight: FontWeight.w400,
                     ),
@@ -727,7 +718,7 @@ class MobileSideMenuDrawer extends ConsumerWidget {
             Icon(
               Icons.arrow_forward_ios,
               size: 16,
-              color: Colors.orange.withOpacity(0.6),
+              color:  AppColors.primaryColor.withOpacity(0.6),
             ),
           ],
         ),

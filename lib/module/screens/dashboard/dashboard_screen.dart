@@ -169,7 +169,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           if (isMobile)
             Builder(
               builder: (context) => IconButton(
-                icon: const Icon(Icons.list, color: Colors.orange),
+                icon: const Icon(Icons.list, color:  AppColors.primaryColor),
                 onPressed: () => Scaffold.of(context).openDrawer(),
               ),
             )
@@ -194,7 +194,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           // const Spacer(),
           // Sign out button
           IconButton(
-            icon: const Icon(Icons.logout, color: Colors.orange),
+            icon: const Icon(Icons.logout, color: AppColors.primaryColor),
             onPressed: () async {
               // Sign out from Firebase
               await FirebaseAuth.instance.signOut();
@@ -278,7 +278,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 ),
               ),
               // IconButton(
-              //   icon: const Icon(Icons.refresh, color: Colors.orange),
+              //   icon: const Icon(Icons.refresh, color:  AppColors.primaryColor),
               //   onPressed: () {
               //     ref.read(projectsControllerProvider.notifier).loadProjects();
               //     ref.read(projectsControllerProvider.notifier).loadActiveProjects();
@@ -298,7 +298,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 // subtitleLeft: "Planning: 0",
                 // subtitleRight: "Completed: 0",
                 icon: Icons.insert_chart_outlined,
-                color: Colors.orange,
+                color:  AppColors.primaryColor,
               ),
               _statsCard(
                 context,
@@ -469,7 +469,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.refresh, color: Colors.orange),
+                icon: const Icon(Icons.refresh, color:  AppColors.primaryColor),
                 onPressed: () {
                   ref.read(projectsControllerProvider.notifier).loadProjects();
                   ref.read(projectsControllerProvider.notifier).loadActiveProjects();
@@ -491,7 +491,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                       subtitleLeft: "Planning: 0",
                       subtitleRight: "Completed: 0",
                       icon: Icons.insert_chart_outlined,
-                      color: Colors.orange,
+                      color:  AppColors.primaryColor,
                     ),
                     const SizedBox(height: 12),
                     _statsCard(
@@ -514,7 +514,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                         subtitleLeft: "Planning: 0",
                         subtitleRight: "Completed: 0",
                         icon: Icons.insert_chart_outlined,
-                        color: Colors.orange,
+                        color:  AppColors.primaryColor,
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -960,7 +960,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                   _statusChip(project.status),
                   const SizedBox(width: 8),
                   IconButton(
-                    icon: const Icon(Icons.add, color: Colors.orange),
+                    icon: const Icon(Icons.add, color:  AppColors.primaryColor),
                     onPressed: () => AddVisitDialog(project: project),
                     // onPressed: () => _showAddVisitDialog(project),
                   ),
@@ -1060,7 +1060,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                   DataCell(_statusChip(project.status)),
                   DataCell(
                     IconButton(
-                      icon: const Icon(Icons.add, color: Colors.orange),
+                      icon: const Icon(Icons.add, color:  AppColors.primaryColor),
                       onPressed: () => AddVisitDialog(project: project),
                       // onPressed: () => _showAddVisitDialog(project),
                     ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../config/constant/app_colors.dart';
 import '../widgets/web_phone_auth_widget.dart';
 
 class TestWebAuthScreen extends ConsumerWidget {
@@ -24,9 +25,9 @@ class TestWebAuthScreen extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: kIsWeb ? Colors.green.shade50 : Colors.orange.shade50,
+                  color: kIsWeb ? Colors.green.shade50 :  AppColors.primaryColor.withAlpha(5),
                   border: Border.all(
-                    color: kIsWeb ? Colors.green : Colors.orange,
+                    color: kIsWeb ? Colors.green :  AppColors.primaryColor,
                   ),
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -35,13 +36,13 @@ class TestWebAuthScreen extends ConsumerWidget {
                   children: [
                     Icon(
                       kIsWeb ? Icons.web : Icons.phone_android,
-                      color: kIsWeb ? Colors.green : Colors.orange,
+                      color: kIsWeb ? Colors.green :  AppColors.primaryColor,
                     ),
                     const SizedBox(width: 8),
                     Text(
                       kIsWeb ? 'Running on Web Platform' : 'Running on Mobile Platform',
                       style: TextStyle(
-                        color: kIsWeb ? Colors.green.shade700 : Colors.orange.shade700,
+                        color: kIsWeb ? Colors.green.shade700 :  AppColors.primaryColor.withAlpha(7),
                         fontWeight: FontWeight.w600,
                       ),
                     ),
