@@ -60,7 +60,7 @@ class CustomTextField extends StatelessWidget {
         prefixIcon: prefixIcon,
         counter: null,
         hintStyle: const TextStyle(
-          color: Color(0xFF6A6A6A), // Placeholder color
+          color: Color.fromARGB(255, 178, 178, 178), // Placeholder color
           fontSize: 14,
         ),
         suffixIcon: suffixIcon,

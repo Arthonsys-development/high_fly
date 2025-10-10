@@ -29,6 +29,13 @@ class CustomerSelectionSection extends StatefulWidget {
 
 class _CustomerSelectionSectionState extends State<CustomerSelectionSection> {
   Customer? _selectedCustomer;
+  final TextEditingController _customerController = TextEditingController();
+
+  @override
+  void dispose() {
+    _customerController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -52,7 +59,8 @@ class _CustomerSelectionSectionState extends State<CustomerSelectionSection> {
             onTap: _showCustomerSelectionDialog,
             child: CustomTextField(
               titleText: 'Customer',
-              hintText: _selectedCustomer?.displayText ?? 'Select Customer',
+              controller: _customerController,
+              hintText: 'Select Customer',
               isMandatory: true,
               borderRadius: 6,
               enabled: false,
@@ -101,6 +109,7 @@ class _CustomerSelectionSectionState extends State<CustomerSelectionSection> {
         onCustomerSelected: (customer) {
           setState(() {
             _selectedCustomer = customer;
+            _customerController.text = customer?.displayText ?? '';
           });
         },
       ),

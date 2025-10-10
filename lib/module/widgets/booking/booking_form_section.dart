@@ -31,6 +31,15 @@ class BookingFormSection extends StatefulWidget {
 class _BookingFormSectionState extends State<BookingFormSection> {
   Project? _selectedProject;
   Plot? _selectedPlot;
+  final TextEditingController _projectController = TextEditingController();
+  final TextEditingController _plotController = TextEditingController();
+
+  @override
+  void dispose() {
+    _projectController.dispose();
+    _plotController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -54,7 +63,8 @@ class _BookingFormSectionState extends State<BookingFormSection> {
             onTap: _showProjectSelectionDialog,
             child: CustomTextField(
               titleText: 'Project',
-              hintText: _selectedProject?.name ?? 'Select Project',
+              controller: _projectController,
+              hintText: 'Select Project',
               isMandatory: true,
               borderRadius: 6,
               enabled: false,
@@ -74,7 +84,8 @@ class _BookingFormSectionState extends State<BookingFormSection> {
               onTap: _showPlotSelectionDialog,
               child: CustomTextField(
                 titleText: 'Available Plot',
-                hintText: _selectedPlot?.displayText ?? 'Select Plot',
+                controller: _plotController,
+                hintText: 'Select Plot',
                 isMandatory: true,
                 borderRadius: 6,
                 enabled: false,
@@ -165,6 +176,8 @@ class _BookingFormSectionState extends State<BookingFormSection> {
           setState(() {
             _selectedProject = project;
             _selectedPlot = null; // Reset plot selection when project changes
+            _projectController.text = project?.name ?? '';
+            _plotController.clear(); // Clear plot field when project changes
           });
         },
       ),
@@ -182,6 +195,7 @@ class _BookingFormSectionState extends State<BookingFormSection> {
         onPlotSelected: (plot) {
           setState(() {
             _selectedPlot = plot;
+            _plotController.text = plot?.displayText ?? '';
           });
         },
       ),
