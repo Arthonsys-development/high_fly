@@ -106,7 +106,10 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                 alignment: Alignment.center,
                 child: Image.asset(
                   ImageAssets.highFlyLogo,
-                  width: 100,
+                  fit: BoxFit.fill,
+                  width: 250,
+                  height: 150,
+                  // h
                 ),
               ),
               SizedBox(height: 30),

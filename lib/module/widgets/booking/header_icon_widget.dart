@@ -2,14 +2,18 @@ import 'package:flutter/material.dart';
 import '../../../config/constant/app_colors.dart';
 
 class HeaderIconWidget extends StatelessWidget {
-  final IconData icon;
+  final String icon;
   final String title;
+  final Color? bgColor;
+  final Color? iconColor;
   final String subtitle;
 
   const HeaderIconWidget({
     super.key,
     required this.icon,
     required this.title,
+    this.bgColor,
+    this.iconColor,
     required this.subtitle,
   });
 
@@ -18,20 +22,19 @@ class HeaderIconWidget extends StatelessWidget {
     return Column(
       children: [
         Container(
-          width: 65,
-          height: 65,
+          width: 70,
+          height: 70,
           decoration: BoxDecoration(
-            color: AppColors.primaryColor.withOpacity(0.1),
+            color: bgColor ?? AppColors.primaryColor.withOpacity(0.1),
             shape: BoxShape.circle,
             border: Border.all(
               color: const Color.fromARGB(0, 240, 89, 34),
               width: 2,
             ),
           ),
-          child: Icon(
-            icon,
-            size: 35,
-            color: AppColors.primaryColor,
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Image.asset(icon, color: iconColor ?? AppColors.primaryColor),
           ),
         ),
         const SizedBox(height: 16),

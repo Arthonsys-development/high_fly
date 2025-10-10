@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:highfly/config/constant/const_assets.dart';
 import 'package:highfly/config/utils.dart';
 import '../../../data/models/bank_details_model.dart';
 import '../../../config/constant/app_colors.dart';
@@ -67,7 +68,7 @@ class _BankDetailsSectionState extends State<BankDetailsSection> {
         children: [
           // Header
           HeaderIconWidget(
-            icon: Icons.account_balance,
+            icon:IconsAssets.bankIcon,
             title: widget.title,
             subtitle: 'Enter bank information',
           ),

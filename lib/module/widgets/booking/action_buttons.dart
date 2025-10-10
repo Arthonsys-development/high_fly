@@ -20,12 +20,17 @@ class ActionButtons extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Expanded(
+        SizedBox(
+          width: 116,
+          height: 40,
           child: _buildPreviousButton(),
         ),
         const SizedBox(width: 16),
-        Expanded(
+        SizedBox(
+          width: 116,
+          height: 40,
           child: _buildNextButton(),
         ),
       ],
@@ -39,9 +44,9 @@ class ActionButtons extends StatelessWidget {
         backgroundColor: Colors.white,
         foregroundColor: AppColors.lightGreyColor,
         elevation: 0,
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        padding: const EdgeInsets.symmetric(vertical: 8), // Adjusted padding for new height
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(4),
           side: BorderSide(
             color: isPreviousEnabled 
                 ? AppColors.lightGreyBorderColor 
@@ -54,7 +59,7 @@ class ActionButtons extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.arrow_back_ios,
+            Icons.arrow_back_sharp,
             size: 16,
             color: isPreviousEnabled 
                 ? AppColors.lightGreyColor 
@@ -64,7 +69,7 @@ class ActionButtons extends StatelessWidget {
           Text(
             'Previous',
             style: TextStyle(
-              fontSize: 16,
+              fontSize: 12,
               fontWeight: FontWeight.w500,
               color: isPreviousEnabled 
                   ? AppColors.lightGreyColor 
@@ -85,9 +90,9 @@ class ActionButtons extends StatelessWidget {
             : AppColors.primaryColor.withOpacity(0.5),
         foregroundColor: Colors.white,
         elevation: 0,
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        padding: const EdgeInsets.symmetric(vertical: 8), // Adjusted padding for new height
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(4),
         ),
       ),
       child: Row(
@@ -103,7 +108,7 @@ class ActionButtons extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           const Icon(
-            Icons.arrow_forward_ios,
+            Icons.arrow_forward_sharp,
             size: 16,
             color: Colors.white,
           ),

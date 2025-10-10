@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../config/constant/const_assets.dart';
 import '../../../data/models/payment_model.dart';
 import '../../../config/constant/app_colors.dart';
 import '../../global/widgets/custom_text_field.dart';
@@ -76,8 +77,8 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
           const SizedBox(height: 20),
           
           // Header with icon
-          const HeaderIconWidget(
-            icon: Icons.credit_card,
+          HeaderIconWidget(
+            icon: IconsAssets.cardIcon,
             title: 'Payment Details',
             subtitle: 'Enter payment information',
           ),
@@ -176,6 +177,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
           // Salaried Individual checkbox (only visible if Payment Type is Loan)
           if (_paymentDetails.paymentType == PaymentType.loan) ...[
             Row(
+              mainAxisSize: MainAxisSize.max,
               children: [
                 Checkbox(
                   value: _paymentDetails.isSalariedIndividual,
@@ -186,13 +188,31 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                       );
                     });
                   },
-                  activeColor: const Color.fromARGB(229, 171, 171, 171),
-                  checkColor: Colors.red,
-                  fillColor: MaterialStateProperty.resolveWith<Color>((Set<MaterialState> states) {
-                    return Colors.transparent;
-                  }),
-                  side: const BorderSide(color: Colors.grey, width: 1),
+                  activeColor: AppColors.textFieldBGColor,
+                  checkColor: AppColors.primaryColor,
+                  fillColor: MaterialStateProperty.resolveWith<Color>(
+                        (Set<MaterialState> states) {
+                      if (states.contains(MaterialState.selected)) {
+                        return AppColors.textFieldBGColor;
+                      }
+                      return Colors.white;
+                    },
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  side: MaterialStateBorderSide.resolveWith(
+                        (Set<MaterialState> states) {
+                      if (states.contains(MaterialState.selected)) {
+                        return const BorderSide(color: AppColors.dropDownBorderColor, width: 1.5);
+                      }
+                      return const BorderSide(color: AppColors.dropDownBorderColor, width: 1);
+                    },
+                  ),
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap, // 👈 removes default padding
+                  visualDensity: VisualDensity.compact, // 👈 tightens layout
                 ),
+                const SizedBox(width: 4), // optional spacing
                 const Text(
                   'Salaried Individual',
                   style: TextStyle(

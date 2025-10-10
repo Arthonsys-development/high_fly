@@ -6,8 +6,8 @@ class AppFontFamily {
 }
 
 class GlobalStrings{
-  static String appName = 'PigeonM';
-  static String appNameCapital = 'PIGEONM';
+  static String appName = 'Vistarak';
+  static String appNameCapital = appName.toUpperCase();
 
   // static String baseUrlNew = 'https://dev.pigeonm.com/api/uisp-accounts';
   // static String baseUrlOld = 'https://dev.uisp.pigeonm.com/crm/api/v1.0/client-zone';
@@ -15,13 +15,13 @@ class GlobalStrings{
 
 
 class SignInScreenString {
-  static String heading1 = "HIGH_FLY VISITS";
-  static String heading2 = "Sign in to access your High fly real estate management dashboard";
+  static String heading1 = "${GlobalStrings.appNameCapital} VISITS";
+  static String heading2 = "Sign in to access your Vistarak real estate management dashboard";
 }
 
 class SignUpScreenString {
-  static String heading1 = "HIGH_FLY VISITS";
-  static String heading2 = "Sign in to access your High fly real estate management dashboard";
+  static String heading1 = "${GlobalStrings.appNameCapital} VISITS";
+  static String heading2 = "Sign in to access your Vistarak real estate management dashboard";
 }
 
 class SharedPreferenceStrings{

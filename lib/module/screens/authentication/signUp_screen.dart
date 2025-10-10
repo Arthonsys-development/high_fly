@@ -476,9 +476,13 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
               alignment: Alignment.center,
               child: Image.asset(
                 ImageAssets.highFlyLogo,
-                width: 100,
+                fit: BoxFit.fill,
+                width: 250,
+                height: 150,
+                // h
               ),
             ),
+
             SizedBox(height: 30),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 30.0),

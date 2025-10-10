@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:highfly/config/constant/const_assets.dart';
 import '../../../data/models/project_model.dart';
 import '../../../config/constant/app_colors.dart';
 import '../../global/widgets/custom_text_field.dart';
@@ -50,8 +51,8 @@ class _BookingFormSectionState extends State<BookingFormSection> {
           const SizedBox(height: 20),
           
           // Header with icon
-          const HeaderIconWidget(
-            icon: Icons.home_work_outlined,
+          HeaderIconWidget(
+            icon: IconsAssets.projectIcon,
             title: 'Select Project & Plot',
             subtitle: 'Choose a project, then select a plot',
           ),

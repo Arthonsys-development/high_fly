@@ -20,14 +20,14 @@ class PlotDetailsCard extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      // padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: AppColors.lightGreyBorderColor,
-          width: 1,
-        ),
+        // border: Border.all(
+        //   color: AppColors.lightGreyBorderColor,
+        //   width: 1,
+        // ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -35,8 +35,8 @@ class PlotDetailsCard extends StatelessWidget {
           const Text(
             'Plot Details',
             style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
               color: AppColors.headingTextColor,
             ),
           ),
@@ -45,18 +45,18 @@ class PlotDetailsCard extends StatelessWidget {
             children: [
               Expanded(
                 child: _buildDetailColumn([
-                  _DetailItem('Project', selectedProjectName ?? ''),
-                  _DetailItem('Dimensions', selectedPlot!.dimensions),
-                  _DetailItem('Area', '${selectedPlot!.area.toInt()} sq ft'),
-                  _DetailItem('Price', '\$${selectedPlot!.price.toInt()}', isHighlighted: true),
+                  _DetailItem('Project:', selectedProjectName ?? ''),
+                  _DetailItem('Dimensions:', selectedPlot!.dimensions),
+                  _DetailItem('Area:', '${selectedPlot!.area.toInt()} sq ft'),
+                  _DetailItem('Price:', '\$${selectedPlot!.price.toInt()}', isHighlighted: true),
                 ]),
               ),
               const SizedBox(width: 20),
               Expanded(
                 child: _buildDetailColumn([
-                  _DetailItem('Plot number', selectedPlot!.plotNumber),
-                  _DetailItem('Facing', selectedPlot!.facing),
-                  _DetailItem('Remark', selectedPlot!.remark),
+                  _DetailItem('Plot number:', selectedPlot!.plotNumber),
+                  _DetailItem('Facing:', selectedPlot!.facing),
+                  _DetailItem('Remark:', selectedPlot!.remark),
                   const _DetailItem('', ''), // Empty item for spacing
                 ]),
               ),
@@ -83,7 +83,7 @@ class PlotDetailsCard extends StatelessWidget {
           Text(
             item.label,
             style: const TextStyle(
-              fontSize: 14,
+              fontSize: 16,
               color: AppColors.darkGreyColor,
             ),
           ),
@@ -92,10 +92,10 @@ class PlotDetailsCard extends StatelessWidget {
             item.value,
             style: TextStyle(
               fontSize: 16,
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w400,
               color: item.isHighlighted 
                   ? AppColors.primaryColor 
-                  : AppColors.headingTextColor,
+                  : AppColors.textColor,
             ),
           ),
         ],

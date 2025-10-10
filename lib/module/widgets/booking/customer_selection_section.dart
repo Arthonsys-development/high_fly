@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../config/constant/const_assets.dart';
 import '../../../data/models/customer_model.dart';
 import '../../../config/constant/app_colors.dart';
 import '../../global/widgets/custom_text_field.dart';
@@ -46,8 +47,8 @@ class _CustomerSelectionSectionState extends State<CustomerSelectionSection> {
           const SizedBox(height: 20),
           
           // Header with icon
-          const HeaderIconWidget(
-            icon: Icons.people_outline,
+          HeaderIconWidget(
+            icon: IconsAssets.personsIcon,
             title: 'Select Customer',
             subtitle: 'Choose a customer from our static database',
           ),

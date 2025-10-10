@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../config/constant/app_colors.dart';
+import '../../../config/constant/const_assets.dart';
 import '../../../data/models/booking_summary_model.dart';
 import 'header_icon_widget.dart';
 import 'action_buttons.dart';
@@ -33,7 +34,9 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
         children: [
           // Header
           HeaderIconWidget(
-            icon: Icons.check_circle,
+            icon: IconsAssets.roundTickIcon,
+            bgColor: AppColors.successColor.withAlpha((0.1 * 255).toInt()),
+            iconColor: AppColors.successColor,
             title: widget.title,
             subtitle: 'Please review all details',
           ),

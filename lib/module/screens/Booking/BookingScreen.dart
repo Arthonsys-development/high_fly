@@ -86,7 +86,7 @@ class _BookingProcessorScreenState extends State<BookingProcessorScreen>
         padding: const EdgeInsets.symmetric(horizontal: 22.0),
         child: Column(
           children: [
-            const SizedBox(height: 10),
+            const SizedBox(height: 30),
 
             Container(
               decoration: const BoxDecoration(
@@ -107,7 +107,7 @@ class _BookingProcessorScreenState extends State<BookingProcessorScreen>
                     style: TextStyle(fontSize: 15, color: AppColors.lightGreyColor, fontWeight: FontWeight.w500),
                   ),
 
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 40),
 
                   TabBar(
                     controller: _tabController,

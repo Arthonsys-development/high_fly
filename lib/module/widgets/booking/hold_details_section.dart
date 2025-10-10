@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../config/constant/const_assets.dart';
 import '../../../data/models/hold_details_model.dart';
 import '../../global/widgets/custom_text_field.dart';
 import 'header_icon_widget.dart';
@@ -67,8 +68,8 @@ class _HoldDetailsSectionState extends State<HoldDetailsSection> {
           const SizedBox(height: 20),
           
           // Header with icon
-          const HeaderIconWidget(
-            icon: Icons.schedule,
+          HeaderIconWidget(
+            icon: IconsAssets.holdTimeIcon,
             title: 'Hold Details',
             subtitle: 'Enter details to hold the plot for 24 hours',
           ),
