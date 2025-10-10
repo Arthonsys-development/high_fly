@@ -33,6 +33,7 @@ class _BankDetailsSectionState extends State<BankDetailsSection> {
   late TextEditingController _accountNumberController;
   late TextEditingController _ifscCodeController;
   late TextEditingController _contactNumberController;
+  late TextEditingController _accountTypeController;
 
   @override
   void initState() {
@@ -44,6 +45,7 @@ class _BankDetailsSectionState extends State<BankDetailsSection> {
     _accountNumberController = TextEditingController();
     _ifscCodeController = TextEditingController();
     _contactNumberController = TextEditingController();
+    _accountTypeController = TextEditingController();
   }
 
   @override
@@ -53,6 +55,7 @@ class _BankDetailsSectionState extends State<BankDetailsSection> {
     _accountNumberController.dispose();
     _ifscCodeController.dispose();
     _contactNumberController.dispose();
+    _accountTypeController.dispose();
     super.dispose();
   }
 
@@ -149,9 +152,8 @@ class _BankDetailsSectionState extends State<BankDetailsSection> {
             onTap: _showAccountTypeDialog,
             child: CustomTextField(
               titleText: 'Account Type',
-              hintText: _bankDetails.accountType?.isNotEmpty == true 
-                  ? _bankDetails.accountType 
-                  : 'Select account type',
+              controller: _accountTypeController,
+              hintText: 'Select account type',
               isMandatory: true,
               borderRadius: 6,
               enabled: false,
@@ -216,6 +218,7 @@ class _BankDetailsSectionState extends State<BankDetailsSection> {
         onOptionSelected: (value) {
           setState(() {
             _bankDetails = _bankDetails.copyWith(accountType: value);
+            _accountTypeController.text = value ?? '';
           });
         },
       ),

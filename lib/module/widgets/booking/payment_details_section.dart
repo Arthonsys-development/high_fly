@@ -33,6 +33,8 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
   late TextEditingController _panNumberController;
   late TextEditingController _aadharNumberController;
   late TextEditingController _additionalNotesController;
+  late TextEditingController _paymentMethodController;
+  late TextEditingController _paymentTypeController;
 
   @override
   void initState() {
@@ -50,6 +52,8 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
     _panNumberController = TextEditingController();
     _aadharNumberController = TextEditingController();
     _additionalNotesController = TextEditingController();
+    _paymentMethodController = TextEditingController();
+    _paymentTypeController = TextEditingController();
   }
 
   @override
@@ -58,6 +62,8 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
     _panNumberController.dispose();
     _aadharNumberController.dispose();
     _additionalNotesController.dispose();
+    _paymentMethodController.dispose();
+    _paymentTypeController.dispose();
     super.dispose();
   }
 
@@ -100,9 +106,8 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
             onTap: _showPaymentMethodDialog,
             child: CustomTextField(
               titleText: 'Payment Method',
-              hintText: _paymentDetails.paymentMethod.isNotEmpty 
-                  ? _paymentDetails.paymentMethod 
-                  : 'Select Payment Method',
+              controller: _paymentMethodController,
+              hintText: 'Select Payment Method',
               isMandatory: true,
               borderRadius: 6,
               enabled: false,
@@ -121,9 +126,8 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
             onTap: _showPaymentTypeDialog,
             child: CustomTextField(
               titleText: 'Payment Type',
-              hintText: _paymentDetails.paymentType.isNotEmpty 
-                  ? _paymentDetails.paymentType 
-                  : 'Select Payment Type',
+              controller: _paymentTypeController,
+              hintText: 'Select Payment Type',
               isMandatory: true,
               borderRadius: 6,
               enabled: false,
@@ -300,6 +304,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
         onSelected: (method) {
           setState(() {
             _paymentDetails = _paymentDetails.copyWith(paymentMethod: method);
+            _paymentMethodController.text = method;
           });
         },
       ),
@@ -319,6 +324,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
               paymentType: type,
               isSalariedIndividual: false, // Reset when changing payment type
             );
+            _paymentTypeController.text = type;
           });
         },
       ),

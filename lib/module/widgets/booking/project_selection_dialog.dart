@@ -103,8 +103,16 @@ class _ProjectSelectionDialogState extends State<ProjectSelectionDialog> {
                   TextField(
                     controller: _searchController,
                     onChanged: _filterProjects,
+                    style: const TextStyle(
+                      fontSize: 15, // 👈 Set your desired font size here
+                      color: Colors.black, // optional
+                    ),
                     decoration: InputDecoration(
                       hintText: 'Search projects...',
+                      hintStyle: const TextStyle(
+                        fontSize: 15, // 👈 Match the hint font size if you want consistency
+                        color: AppColors.lightGreyColor,
+                      ),
                       prefixIcon: const Icon(
                         Icons.search,
                         color: AppColors.lightGreyColor,
@@ -243,6 +251,7 @@ class _ProjectSelectionDialogState extends State<ProjectSelectionDialog> {
                       },
                     ),
             ),
+            SizedBox(height: 16),
           ],
         ),
       ),
