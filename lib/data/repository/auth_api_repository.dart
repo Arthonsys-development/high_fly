@@ -269,7 +269,8 @@ class AuthApiRepository {
   Future<Map<String, dynamic>> getPlotsByProjectId(String projectId) async {
     print('Fetching plots for project ID: $projectId');
     try {
-      final response = await _apiClient.get('${ApiConstants.projects}$projectId/plots/');
+      // final response = await _apiClient.get('${ApiConstants.projects}$projectId/plots/');
+      final response = await _apiClient.get('${ApiConstants.availablePlotsData}?project=$projectId&status=available');
       print('Plots API response status: ${response.statusCode}');
       print('Plots API response data type: ${response.data.runtimeType}');
       print('Plots API response data: $response.data');
