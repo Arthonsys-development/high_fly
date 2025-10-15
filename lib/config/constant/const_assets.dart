@@ -20,4 +20,6 @@ class IconsAssets {
   static const locationIcon = "${assetsIconPath}location.png";
   static const totalProjectIcon = "${assetsIconPath}total_project.png";
   static const activeProjectIcon = "${assetsIconPath}active.png";
+  static const gridViewIcon = "${assetsIconPath}grid_view.png";
+  static const listViewIcon = "${assetsIconPath}list_view.png";
 }

@@ -336,28 +336,76 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 // Search Bar - Full width on mobile
                 Padding(
                   padding: const EdgeInsets.all(15.0),
-                  child: TextField(
-                    controller: _searchController,
-                    cursorColor: AppColors.primaryTextColor,
-                    style: const TextStyle(fontSize: 14, color: AppColors.primaryTextColor),
-                    decoration: InputDecoration(
-                      hintText: "Search projects...",
-                      prefixIcon: const Icon(Icons.search, size: 20, color: AppColors.primaryTextColor,),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(
-                          color: AppColors.secondaryTextColor, // Normal border color
-                          width: 1.5,
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _searchController,
+                          cursorColor: AppColors.primaryTextColor,
+                          style: const TextStyle(fontSize: 14, color: AppColors.primaryTextColor),
+                          decoration: InputDecoration(
+                            hintText: "Search projects...",
+                            prefixIcon: const Icon(Icons.search, size: 20, color: AppColors.primaryTextColor,),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide(
+                                color: AppColors.secondaryTextColor, // Normal border color
+                                width: 1.5,
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide(
+                                color: AppColors.secondaryTextColor, // Border color when focused
+                                width: 1,
+                              ),
+                            ),
+                          ),
                         ),
                       ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(
-                          color: AppColors.secondaryTextColor, // Border color when focused
-                          width: 1,
-                        ),
-                      ),
-                    ),
+
+                      /*Row(
+                        children: [
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryColor.withOpacity(0.1),
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: const Color.fromARGB(0, 240, 89, 34),
+                                width: 2,
+                              ),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(5.0),
+                              child: Image.asset(IconsAssets.listViewIcon, color: AppColors.primaryColor),
+                            ),
+                          ),
+
+                          SizedBox(
+                            width: 5,
+                          ),
+
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryColor.withOpacity(0.1),
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: const Color.fromARGB(0, 240, 89, 34),
+                                width: 2,
+                              ),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(5.0),
+                              child: Image.asset(IconsAssets.listViewIcon, color: AppColors.primaryColor),
+                            ),
+                          ),
+                        ],
+                      )*/
+                    ],
                   ),
                 ),
 
@@ -795,12 +843,26 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   }
 
   Widget _statusChip(String text) {
-    return Icon(Icons.circle, size: 15, color: text == 'active' ? Colors.green : Colors.red);
-
-    //   Chip(
-    //   label: Text(text, style: const TextStyle(color: AppColors.primaryTextColor),),
-    //   backgroundColor: Colors.green,
-    // );
+    return /*Icon(Icons.circle, size: 15, color: text == 'active' ? Colors.green : Colors.red);*/
+      Container(
+        // height: 25,
+        decoration: BoxDecoration(
+          color: AppColors.successColor,
+          borderRadius: BorderRadius.all(Radius.circular(25)),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 13.0, vertical: 5),
+          child: Text(
+            'Available',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w500
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
   }
 
   // Mobile Project Card Widget
@@ -816,33 +878,46 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ClipRRect(
-            borderRadius: BorderRadiusGeometry.all(Radius.circular(5)),
-            child: Image.network(
-            project.projectPhoto, // sample image url
-            width: MediaQuery.of(context).size.width,
-            height: 150,
-            fit: BoxFit.cover,
-            loadingBuilder: (context, child, loadingProgress) {
-              if (loadingProgress == null) return child; // Image loaded
-              return Center(
-                child: CircularProgressIndicator(
-                  value: loadingProgress.expectedTotalBytes != null
-                      ? loadingProgress.cumulativeBytesLoaded /
-                      (loadingProgress.expectedTotalBytes ?? 1)
-                      : null,
+          Stack(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadiusGeometry.all(Radius.circular(5)),
+                child: Image.network(
+                project.projectPhoto, // sample image url
+                width: MediaQuery.of(context).size.width,
+                height: 150,
+                fit: BoxFit.cover,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child; // Image loaded
+                  return Center(
+                    child: CircularProgressIndicator(
+                      value: loadingProgress.expectedTotalBytes != null
+                          ? loadingProgress.cumulativeBytesLoaded /
+                          (loadingProgress.expectedTotalBytes ?? 1)
+                          : null,
+                    ),
+                  );
+                },
+                  errorBuilder: (context, child, loadingProgress) {
+                  return Center(child: Column(
+                    children: [
+                      Icon(Icons.image, size: 80, color: Colors.grey),
+                      Text("No Image Available", style: TextStyle(color: Colors.grey, fontSize: 20, fontWeight: FontWeight.w600),)
+                    ],
+                  ));
+                  },
                 ),
-              );
-            },
-              errorBuilder: (context, child, loadingProgress) {
-              return Center(child: Column(
-                children: [
-                  Icon(Icons.image, size: 80, color: Colors.grey),
-                  Text("No Image Available", style: TextStyle(color: Colors.grey, fontSize: 20, fontWeight: FontWeight.w600),)
-                ],
-              ));
-              },
-            ),
+              ),
+
+
+              Align(
+                alignment: Alignment.topRight,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 8.0, right: 8.0),
+                  child: _statusChip(project.status),
+                ),
+              ),
+            ],
           ),
 
           SizedBox(
@@ -857,48 +932,48 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 child: Text(
                   project.name,
                   style: const TextStyle(
-                    color: AppColors.primaryColor,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 16,
+                    color: AppColors.primaryTextColor,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 18,
                   ),
                 ),
               ),
 
-              SizedBox(
-                width: 8,
-              ),
-
-              Padding(
-                padding: const EdgeInsets.only(top: 8.0),
-                child: _statusChip(project.status),
-              ),
             ],
           ),
           const SizedBox(height: 8),
           Row(
             children: [
+              Image.asset(IconsAssets.locationIcon, width: 12, color: AppColors.darkGreyColor),
               // const Icon(Icons.location_on, size: 16, color: Colors.grey),
-              // const SizedBox(width: 4),
+              const SizedBox(width: 4),
               Expanded(
                 child: Text(
                   project.location,
                   style: const TextStyle(
-                    color: AppColors.primaryTextColor,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14,
+                    color: AppColors.darkGreyColor,
+                    fontWeight: FontWeight.normal,
+                    fontSize: 16,
                   ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 8),
-          Text(
-            project.description,
-            style: const TextStyle(
-              color: AppColors.primaryTextColor,
-              fontSize: 14,
-            ),
-          ),
+
+    RichText(
+    text: TextSpan(
+    text: 'Description: ',
+    style: const TextStyle(color: AppColors.darkGreyColor,  fontSize: 16, fontWeight: FontWeight.w500),
+    children: [
+    TextSpan(
+    text: project.description,
+      style: const TextStyle(color: AppColors.darkGreyColor,  fontSize: 16, fontWeight: FontWeight.w400),
+    ),
+    ],
+    ),
+    ),
+
           // Add Visit Button
           if(project.status == 'active')...[
             const SizedBox(height: 12),

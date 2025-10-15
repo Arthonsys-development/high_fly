@@ -8,6 +8,7 @@ import 'package:highfly/data/models/request_models/notification_register_request
 import 'package:highfly/data/models/response_model/project_response_model.dart';
 import 'package:highfly/data/models/response_model/user_response_model.dart';
 import 'package:highfly/data/models/response_model/visit_response_model.dart';
+import 'package:highfly/data/models/project_model.dart' as local_model;
 import 'package:dio/dio.dart';
 
 class AuthApiRepository {
@@ -264,6 +265,76 @@ class AuthApiRepository {
     }
   }
 
+  // Get plots by project ID
+  Future<Map<String, dynamic>> getPlotsByProjectId(String projectId) async {
+    print('Fetching plots for project ID: $projectId');
+    try {
+      final response = await _apiClient.get('${ApiConstants.projects}$projectId/plots/');
+      print('Plots API response status: ${response.statusCode}');
+      print('Plots API response data type: ${response.data.runtimeType}');
+      print('Plots API response data: $response.data');
+      
+      // Parse plots from response
+      List<Plot> plots = [];
+      
+      // Handle different response formats
+      if (response.data is List) {
+        print('Parsing plots from list format, count: ${response.data.length}');
+        plots = (response.data as List)
+            .whereType<Map<String, dynamic>>()
+            .map((item) => Plot.fromJson(item as Map<String, dynamic>))
+            .toList();
+      } else if (response.data is Map) {
+        // Check if it's a paginated response
+        if (response.data['results'] is List) {
+          print('Parsing plots from paginated format');
+          plots = (response.data['results'] as List)
+              .whereType<Map<String, dynamic>>()
+              .map((item) => Plot.fromJson(item as Map<String, dynamic>))
+              .toList();
+        } else if (response.data['data'] is List) {
+          print('Parsing plots from data field format');
+          plots = (response.data['data'] as List)
+              .whereType<Map<String, dynamic>>()
+              .map((item) => Plot.fromJson(item as Map<String, dynamic>))
+              .toList();
+        } else if (response.data['plots'] is List) {
+          print('Parsing plots from plots field format');
+          plots = (response.data['plots'] as List)
+              .whereType<Map<String, dynamic>>()
+              .map((item) => Plot.fromJson(item as Map<String, dynamic>))
+              .toList();
+        } else {
+          // Try to parse the entire map as a single plot
+          print('Attempting to parse response as single plot object');
+          try {
+            final plot = Plot.fromJson(response.data);
+            plots = [plot];
+          } catch (e) {
+            print('Failed to parse response as single plot: $e');
+          }
+        }
+      } else {
+        print('Unexpected response format: ${response.data.runtimeType}');
+      }
+      
+      print('Successfully parsed ${plots.length} plots');
+      return {
+        'success': true,
+        'data': plots,
+        'message': 'Plots fetched successfully',
+      };
+    } catch (e, stackTrace) {
+      print('Error fetching plots: $e');
+      print('Stack trace: $stackTrace');
+      return {
+        'success': false,
+        'error': e.toString(),
+        'message': 'Failed to fetch plots',
+      };
+    }
+  }
+
   // Create visit
   Future<Map<String, dynamic>> createVisit(CreateVisitRequest request) async {
     try {
@@ -428,5 +499,72 @@ class AuthApiRepository {
         'message': 'Failed to register device for notifications',
       };
     }
+  }
+}
+
+// Plot model for API response
+class Plot {
+  final int id;
+  final String plotNumber;
+  final int projectId;
+  final double area;
+  final double price;
+  final String dimensions;
+  final String facing;
+  final String remark;
+  final String status;
+
+  Plot({
+    required this.id,
+    required this.plotNumber,
+    required this.projectId,
+    required this.area,
+    required this.price,
+    required this.dimensions,
+    required this.facing,
+    required this.remark,
+    required this.status,
+  });
+
+  factory Plot.fromJson(Map<String, dynamic> json) {
+    return Plot(
+      id: json['id'] ?? json['plot_id'] ?? 0,
+      plotNumber: json['plot_number'] ?? json['plotNumber'] ?? '',
+      projectId: json['project_id'] ?? json['projectId'] ?? 0,
+      area: (json['area'] as num?)?.toDouble() ?? 0.0,
+      price: (json['price'] as num?)?.toDouble() ?? 0.0,
+      dimensions: json['dimensions'] ?? '',
+      facing: json['facing'] ?? '',
+      remark: json['remark'] ?? '',
+      status: json['status'] ?? 'available',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'plot_number': plotNumber,
+      'project_id': projectId,
+      'area': area,
+      'price': price,
+      'dimensions': dimensions,
+      'facing': facing,
+      'remark': remark,
+      'status': status,
+    };
+  }
+
+  // Convert to local model Plot
+  local_model.Plot toLocalModel() {
+    return local_model.Plot(
+      id: id.toString(),
+      plotNumber: plotNumber,
+      projectId: projectId.toString(),
+      area: area,
+      price: price,
+      dimensions: dimensions,
+      facing: facing,
+      remark: remark,
+    );
   }
 }

@@ -47,5 +47,4 @@ class AppColors {
   static const Color lightGreyBorderColor = Color(0xffDBDBDB);
   static const Color dropDownBorderColor = Color(0xffDDDDDD);
   static const Color successColor = Color(0xff10B981);
-
 }

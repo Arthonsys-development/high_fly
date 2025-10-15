@@ -7,4 +7,7 @@ class ApiConstants {
   static const String createVisits = 'agents/visits/create/';
   static const String notificationRegisterDevice = 'agents/notifications/register-device/';
   static const String profileData = 'agents/profile/';
+  static const String documentUpload = 'agents/documents/upload/';
+  static const String availablePlotsData = '/plots/?status=available';
+  // static const String availablePlotsData = '/plots/?status=available';
 }

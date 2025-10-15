@@ -42,7 +42,6 @@ class _PlotSelectionDialogState extends State<PlotSelectionDialog> {
         _filteredPlots = widget.plots
             .where((plot) =>
                 plot.plotNumber.toLowerCase().contains(query.toLowerCase()) ||
-                plot.facing.toLowerCase().contains(query.toLowerCase()) ||
                 plot.remark.toLowerCase().contains(query.toLowerCase()))
             .toList();
       }
@@ -54,7 +53,7 @@ class _PlotSelectionDialogState extends State<PlotSelectionDialog> {
     return Dialog(
       backgroundColor: Colors.transparent,
       child: Container(
-        constraints: const BoxConstraints(maxHeight: 500),
+        constraints: const BoxConstraints(maxHeight: 400),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
@@ -86,7 +85,7 @@ class _PlotSelectionDialogState extends State<PlotSelectionDialog> {
                       const Text(
                         'Select Plot',
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: 18,
                           fontWeight: FontWeight.bold,
                           color: AppColors.headingTextColor,
                         ),
@@ -106,13 +105,13 @@ class _PlotSelectionDialogState extends State<PlotSelectionDialog> {
                     controller: _searchController,
                     onChanged: _filterPlots,
                     style: const TextStyle(
-                      fontSize: 15, // 👈 Set your desired font size here
-                      color: Colors.black, // optional
+                      fontSize: 15,
+                      color: Colors.black,
                     ),
                     decoration: InputDecoration(
                       hintText: 'Search plots...',
                       hintStyle: const TextStyle(
-                        fontSize: 15, // 👈 Match the hint font size if you want consistency
+                        fontSize: 15,
                         color: AppColors.lightGreyColor,
                       ),
                       prefixIcon: const Icon(
@@ -225,49 +224,18 @@ class _PlotSelectionDialogState extends State<PlotSelectionDialog> {
                               plot.plotNumber,
                               style: TextStyle(
                                 fontSize: 16,
-                                fontWeight: FontWeight.w600,
+                                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                                 color: isSelected 
                                     ? AppColors.primaryColor 
                                     : AppColors.headingTextColor,
                               ),
                             ),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const SizedBox(height: 4),
-                                Text(
-                                  '${plot.area.toInt()} sq ft • ${plot.dimensions}',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: isSelected 
-                                        ? AppColors.darkGreyColor.withOpacity(0.8)
-                                        : AppColors.darkGreyColor,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  '\$${plot.price.toInt()}',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: isSelected 
-                                        ? AppColors.primaryColor 
-                                        : AppColors.primaryColor,
-                                  ),
-                                ),
-                                if (plot.facing.isNotEmpty) ...[
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    'Facing: ${plot.facing}',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: isSelected 
-                                          ? AppColors.darkGreyColor.withOpacity(0.8)
-                                          : AppColors.darkGreyColor,
-                                    ),
-                                  ),
-                                ],
-                              ],
+                            subtitle: Text(
+                              plot.displayText,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: AppColors.darkGreyColor,
+                              ),
                             ),
                             trailing: isSelected
                                 ? const Icon(

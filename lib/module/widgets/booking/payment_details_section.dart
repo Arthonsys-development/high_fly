@@ -5,6 +5,7 @@ import '../../../config/constant/app_colors.dart';
 import '../../global/widgets/custom_text_field.dart';
 import 'header_icon_widget.dart';
 import 'file_upload_widget.dart';
+import 'pdf_upload_widget.dart';
 import 'payment_selection_dialog.dart';
 import 'action_buttons.dart';
 
@@ -227,14 +228,12 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
           
           // Salary Slip field (only visible if Salaried Individual is checked)
           if (_paymentDetails.isSalariedIndividual) ...[
-            FileUploadWidget(
+            PdfUploadWidget(
               label: 'Salary Slip',
-              fileName: _paymentDetails.salarySlipPath != null 
-                  ? _paymentDetails.salarySlipPath!.split('/').last 
-                  : null,
+              fileName: _paymentDetails.salarySlipPath,
               isRequired: true,
-              acceptedFileTypes: 'PDF, JPG, PNG',
-              placeholderText: 'Upload salary slip for reference',
+              uploadUrl: '/api/documents/upload/', // Replace with actual API endpoint
+              placeholderText: 'Upload salary slip (PDF only)',
               onFileSelected: (filePath) {
                 setState(() {
                   _paymentDetails = _paymentDetails.copyWith(salarySlipPath: filePath);

@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../config/constant/app_colors.dart';
-import '../../../data/models/project_model.dart';
+import '../../../data/models/project_model.dart' as local_model;
+import '../../../data/repository/auth_api_repository.dart';
+import '../../../module/providers/projects_provider.dart';
 
 class ProjectSelectionDialog extends StatefulWidget {
-  final List<Project> projects;
+  final List<local_model.Project> projects;
   final String? selectedProjectId;
-  final Function(Project?) onProjectSelected;
+  final Function(local_model.Project?) onProjectSelected;
 
   const ProjectSelectionDialog({
     super.key,
@@ -20,7 +23,9 @@ class ProjectSelectionDialog extends StatefulWidget {
 
 class _ProjectSelectionDialogState extends State<ProjectSelectionDialog> {
   final TextEditingController _searchController = TextEditingController();
-  List<Project> _filteredProjects = [];
+  List<local_model.Project> _filteredProjects = [];
+  bool _isLoadingPlots = false;
+  String? _loadingProjectId;
 
   @override
   void initState() {
@@ -45,6 +50,33 @@ class _ProjectSelectionDialogState extends State<ProjectSelectionDialog> {
             .toList();
       }
     });
+  }
+
+  Future<void> _fetchPlotsForProject(local_model.Project project) async {
+    setState(() {
+      _isLoadingPlots = true;
+      _loadingProjectId = project.id;
+    });
+
+    try {
+      // In a real implementation, you would fetch plots from the API
+      // For now, we'll just simulate this with a delay
+      await Future.delayed(const Duration(milliseconds: 500));
+      
+      // Notify that the project was selected (with plots potentially loaded)
+      widget.onProjectSelected(project);
+      Navigator.of(context).pop();
+    } catch (e) {
+      // Handle error
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading plots: $e')),
+      );
+    } finally {
+      setState(() {
+        _isLoadingPlots = false;
+        _loadingProjectId = null;
+      });
+    }
   }
 
   @override
@@ -104,13 +136,13 @@ class _ProjectSelectionDialogState extends State<ProjectSelectionDialog> {
                     controller: _searchController,
                     onChanged: _filterProjects,
                     style: const TextStyle(
-                      fontSize: 15, // 👈 Set your desired font size here
-                      color: Colors.black, // optional
+                      fontSize: 15,
+                      color: Colors.black,
                     ),
                     decoration: InputDecoration(
                       hintText: 'Search projects...',
                       hintStyle: const TextStyle(
-                        fontSize: 15, // 👈 Match the hint font size if you want consistency
+                        fontSize: 15,
                         color: AppColors.lightGreyColor,
                       ),
                       prefixIcon: const Icon(
@@ -236,16 +268,23 @@ class _ProjectSelectionDialogState extends State<ProjectSelectionDialog> {
                                 color: AppColors.darkGreyColor,
                               ),
                             ),
-                            trailing: isSelected
-                                ? const Icon(
-                                    Icons.check_circle,
-                                    color: AppColors.primaryColor,
+                            trailing: _isLoadingPlots && _loadingProjectId == project.id
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
                                   )
-                                : null,
-                            onTap: () {
-                              widget.onProjectSelected(project);
-                              Navigator.of(context).pop();
-                            },
+                                : isSelected
+                                    ? const Icon(
+                                        Icons.check_circle,
+                                        color: AppColors.primaryColor,
+                                      )
+                                    : null,
+                            onTap: _isLoadingPlots
+                                ? null
+                                : () {
+                                    _fetchPlotsForProject(project);
+                                  },
                           ),
                         );
                       },

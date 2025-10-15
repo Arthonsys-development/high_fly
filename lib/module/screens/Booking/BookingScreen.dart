@@ -1,19 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../config/constant/app_colors.dart';
-import '../../../data/models/project_model.dart';
+import '../../../data/models/project_model.dart' as local_model;
+import '../../../data/models/response_model/project_response_model.dart';
 import '../../../data/models/customer_model.dart';
 import '../../../data/models/payment_model.dart';
 import '../../../data/models/bank_details_model.dart';
 import '../../../data/models/booking_summary_model.dart';
 import '../../../data/models/hold_details_model.dart';
 import '../../../data/providers/sample_data_provider.dart';
+import '../../providers/projects_provider.dart';
 import '../../widgets/booking/booking_form_section.dart';
 import '../../widgets/booking/customer_selection_section.dart';
 import '../../widgets/booking/hold_details_section.dart';
 import '../../widgets/booking/payment_details_section.dart';
 import '../../widgets/booking/bank_details_section.dart';
 import '../../widgets/booking/review_confirm_section.dart';
+
+// Extension to convert API Project model to local Project model
+extension ProjectConversion on Project {
+  local_model.Project toLocalModel() {
+    // Since the API model doesn't have plots, we'll create an empty list
+    return local_model.Project(
+      id: id.toString(),
+      name: name,
+      plots: [], // API doesn't provide plots directly, they might be fetched separately
+    );
+  }
+}
 
 class BookingProcessorScreen extends StatefulWidget {
   const BookingProcessorScreen({super.key});
@@ -26,15 +41,14 @@ class _BookingProcessorScreenState extends State<BookingProcessorScreen>
     with SingleTickerProviderStateMixin {
 
   late TabController _tabController;
-  final List<Project> projects = SampleDataProvider.getSampleProjects();
   final List<Customer> customers = SampleDataProvider.getSampleCustomers();
   int _currentStep = 0; // 0: Project & Plot, 1: Customer, 2: Payment, 3: Bank Details, 4: Review & Confirm
   int _currentHoldStep = 0; // 0: Project & Plot, 1: Customer, 2: Hold Details, 4: Bank Details, 5: Review & Confirm
   String _selectedPlotPrice = '85000'; // Default price, will be updated from plot selection
   
   // Booking data to pass to review section
-  Project? _selectedProject;
-  Plot? _selectedPlot;
+  local_model.Project? _selectedProject;
+  local_model.Plot? _selectedPlot;
   Customer? _selectedCustomer;
   HoldDetails? _holdDetails;
   PaymentDetails? _paymentDetails;
@@ -154,17 +168,47 @@ class _BookingProcessorScreenState extends State<BookingProcessorScreen>
   Widget _buildCurrentStep(String actionType) {
     if (_currentStep == 0) {
       // Project & Plot Selection Step
-      return BookingFormSection(
-        title: actionType,
-        projects: projects,
-        nextButtonText: "Next",
-        onNext: (selectedProject, selectedPlot) {
-          setState(() {
-            _selectedProject = selectedProject;
-            _selectedPlot = selectedPlot;
-            _selectedPlotPrice = selectedPlot?.price.toString() ?? '85000';
-            _currentStep = 1; // Move to customer selection
-          });
+      return Consumer(
+        builder: (context, ref, child) {
+          final projectsState = ref.watch(projectsControllerProvider);
+          
+          if (projectsState.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          
+          if (projectsState.error != null) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('Error loading projects: ${projectsState.error}'),
+                  ElevatedButton(
+                    onPressed: () => ref.read(projectsControllerProvider.notifier).loadProjects(),
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
+            );
+          }
+          
+          // Convert API Project models to local Project models
+          final localProjects = projectsState.projects
+              .map((project) => project.toLocalModel())
+              .toList();
+          
+          return BookingFormSection(
+            title: actionType,
+            projects: localProjects,
+            nextButtonText: "Next",
+            onNext: (selectedProject, selectedPlot) {
+              setState(() {
+                _selectedProject = selectedProject;
+                _selectedPlot = selectedPlot;
+                _selectedPlotPrice = selectedPlot?.price.toString() ?? '85000';
+                _currentStep = 1; // Move to customer selection
+              });
+            },
+          );
         },
       );
     } else if (_currentStep == 1) {
@@ -248,17 +292,47 @@ class _BookingProcessorScreenState extends State<BookingProcessorScreen>
   Widget _buildHoldStep(String actionType) {
     if (_currentHoldStep == 0) {
       // Project & Plot Selection Step
-      return BookingFormSection(
-        title: actionType,
-        projects: projects,
-        nextButtonText: "Next",
-        onNext: (selectedProject, selectedPlot) {
-          setState(() {
-            _selectedProject = selectedProject;
-            _selectedPlot = selectedPlot;
-            _selectedPlotPrice = selectedPlot?.price.toString() ?? '85000';
-            _currentHoldStep = 1; // Move to customer selection
-          });
+      return Consumer(
+        builder: (context, ref, child) {
+          final projectsState = ref.watch(projectsControllerProvider);
+          
+          if (projectsState.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          
+          if (projectsState.error != null) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('Error loading projects: ${projectsState.error}'),
+                  ElevatedButton(
+                    onPressed: () => ref.read(projectsControllerProvider.notifier).loadProjects(),
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
+            );
+          }
+          
+          // Convert API Project models to local Project models
+          final localProjects = projectsState.projects
+              .map((project) => project.toLocalModel())
+              .toList();
+          
+          return BookingFormSection(
+            title: actionType,
+            projects: localProjects,
+            nextButtonText: "Next",
+            onNext: (selectedProject, selectedPlot) {
+              setState(() {
+                _selectedProject = selectedProject;
+                _selectedPlot = selectedPlot;
+                _selectedPlotPrice = selectedPlot?.price.toString() ?? '85000';
+                _currentHoldStep = 1; // Move to customer selection
+              });
+            },
+          );
         },
       );
     } else if (_currentHoldStep == 1) {

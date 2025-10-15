@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:highfly/config/constant/const_assets.dart';
-import '../../../data/models/project_model.dart';
+import 'package:highfly/data/repository/auth_api_repository.dart';
+import '../../../data/models/project_model.dart' as local_model;
 import '../../../config/constant/app_colors.dart';
 import '../../global/widgets/custom_text_field.dart';
 import 'header_icon_widget.dart';
@@ -11,9 +12,9 @@ import 'plot_selection_dialog.dart';
 
 class BookingFormSection extends StatefulWidget {
   final String title;
-  final List<Project> projects;
+  final List<local_model.Project> projects;
   final VoidCallback? onPrevious;
-  final Function(Project?, Plot?)? onNext;
+  final Function(local_model.Project?, local_model.Plot?)? onNext;
   final String? nextButtonText;
 
   const BookingFormSection({
@@ -30,16 +31,57 @@ class BookingFormSection extends StatefulWidget {
 }
 
 class _BookingFormSectionState extends State<BookingFormSection> {
-  Project? _selectedProject;
-  Plot? _selectedPlot;
+  local_model.Project? _selectedProject;
+  local_model.Plot? _selectedPlot;
   final TextEditingController _projectController = TextEditingController();
   final TextEditingController _plotController = TextEditingController();
+  List<local_model.Plot> _availablePlots = [];
+  bool _isLoadingPlots = false;
 
   @override
   void dispose() {
     _projectController.dispose();
     _plotController.dispose();
     super.dispose();
+  }
+
+  Future<void> _fetchPlotsForProject(local_model.Project project) async {
+    setState(() {
+      _isLoadingPlots = true;
+      _availablePlots = [];
+      _selectedPlot = null;
+      _plotController.clear();
+    });
+
+    try {
+      final apiRepository = AuthApiRepository();
+      final result = await apiRepository.getPlotsByProjectId(project.id);
+      
+      if (result['success']) {
+        // Convert API Plot models to local Plot models
+        final apiPlots = result['data'] as List<Plot>;
+        final localPlots = apiPlots.map((plot) => plot.toLocalModel()).toList();
+        
+        setState(() {
+          _availablePlots = localPlots as List<local_model.Plot>;
+          _isLoadingPlots = false;
+        });
+      } else {
+        setState(() {
+          _isLoadingPlots = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading plots: ${result['message']}')),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _isLoadingPlots = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading plots: $e')),
+      );
+    }
   }
 
   @override
@@ -82,19 +124,31 @@ class _BookingFormSectionState extends State<BookingFormSection> {
           // Plot selection field - only visible after project selection
           if (_selectedProject != null) ...[
             GestureDetector(
-              onTap: _showPlotSelectionDialog,
+              onTap: _availablePlots.isEmpty && !_isLoadingPlots
+                  ? null
+                  : _showPlotSelectionDialog,
               child: CustomTextField(
                 titleText: 'Available Plot',
                 controller: _plotController,
-                hintText: 'Select Plot',
+                hintText: _isLoadingPlots
+                    ? 'Loading plots...'
+                    : _availablePlots.isEmpty
+                        ? 'No plots available'
+                        : 'Select Plot',
                 isMandatory: true,
                 borderRadius: 6,
                 enabled: false,
-                suffixIcon: const Icon(
-                  Icons.keyboard_arrow_down,
-                  color: AppColors.lightGreyColor,
-                  size: 20,
-                ),
+                suffixIcon: _isLoadingPlots
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(
+                        Icons.keyboard_arrow_down,
+                        color: AppColors.lightGreyColor,
+                        size: 20,
+                      ),
               ),
             ),
             const SizedBox(height: 32),
@@ -179,6 +233,11 @@ class _BookingFormSectionState extends State<BookingFormSection> {
             _selectedPlot = null; // Reset plot selection when project changes
             _projectController.text = project?.name ?? '';
             _plotController.clear(); // Clear plot field when project changes
+            
+            // Fetch plots for the selected project
+            if (project != null) {
+              _fetchPlotsForProject(project);
+            }
           });
         },
       ),
@@ -186,12 +245,12 @@ class _BookingFormSectionState extends State<BookingFormSection> {
   }
 
   void _showPlotSelectionDialog() {
-    if (_selectedProject == null) return;
+    if (_selectedProject == null || _availablePlots.isEmpty) return;
     
     showDialog(
       context: context,
       builder: (context) => PlotSelectionDialog(
-        plots: _selectedProject!.plots,
+        plots: _availablePlots,
         selectedPlotId: _selectedPlot?.id,
         onPlotSelected: (plot) {
           setState(() {
