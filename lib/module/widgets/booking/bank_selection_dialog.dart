@@ -3,7 +3,7 @@ import '../../../config/constant/app_colors.dart';
 
 class BankSelectionDialog extends StatefulWidget {
   final String title;
-  final List<String> options;
+  final Map<String, String> options;
   final String? selectedOption;
   final Function(String?) onOptionSelected;
 
@@ -21,12 +21,12 @@ class BankSelectionDialog extends StatefulWidget {
 
 class _BankSelectionDialogState extends State<BankSelectionDialog> {
   final TextEditingController _searchController = TextEditingController();
-  List<String> _filteredOptions = [];
+  List<MapEntry<String, String>> _filteredOptions = [];
 
   @override
   void initState() {
     super.initState();
-    _filteredOptions = widget.options;
+    _filteredOptions = widget.options.entries.toList();
   }
 
   @override
@@ -38,11 +38,11 @@ class _BankSelectionDialogState extends State<BankSelectionDialog> {
   void _filterOptions(String query) {
     setState(() {
       if (query.isEmpty) {
-        _filteredOptions = widget.options;
+        _filteredOptions = widget.options.entries.toList();
       } else {
-        _filteredOptions = widget.options
-            .where((option) =>
-                option.toLowerCase().contains(query.toLowerCase()))
+        _filteredOptions = widget.options.entries
+            .where((entry) =>
+                entry.value.toLowerCase().contains(query.toLowerCase()))
             .toList();
       }
     });
@@ -187,8 +187,10 @@ class _BankSelectionDialogState extends State<BankSelectionDialog> {
                       shrinkWrap: true,
                       itemCount: _filteredOptions.length,
                       itemBuilder: (context, index) {
-                        final option = _filteredOptions[index];
-                        final isSelected = option == widget.selectedOption;
+                        final entry = _filteredOptions[index];
+                        final key = entry.key;
+                        final value = entry.value;
+                        final isSelected = key == widget.selectedOption;
 
                         return Container(
                           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -213,7 +215,7 @@ class _BankSelectionDialogState extends State<BankSelectionDialog> {
                           ),
                           child: ListTile(
                             title: Text(
-                              option,
+                              value,
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
@@ -229,7 +231,7 @@ class _BankSelectionDialogState extends State<BankSelectionDialog> {
                                   )
                                 : null,
                             onTap: () {
-                              widget.onOptionSelected(option);
+                              widget.onOptionSelected(key);
                               Navigator.of(context).pop();
                             },
                           ),

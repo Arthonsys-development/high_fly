@@ -6,29 +6,29 @@ import '../../../config/constant/app_colors.dart';
 import '../../../config/constant/const_assets.dart';
 import '../../utils/app_fonts.dart';
 
-class PdfUploadWidget extends StatefulWidget {
+class FileUploadWidgetNew extends StatefulWidget {
   final String label;
   final String? fileName;
   final bool isRequired;
   final Function(String?) onFileSelected;
   final String? placeholderText;
-  final String uploadUrl;
+  final List<String> acceptedFileTypes;
 
-  const PdfUploadWidget({
+  const FileUploadWidgetNew({
     super.key,
     required this.label,
     this.fileName,
     this.isRequired = false,
     required this.onFileSelected,
     this.placeholderText,
-    required this.uploadUrl,
+    this.acceptedFileTypes = const ['pdf', 'jpg', 'jpeg', 'png'],
   });
 
   @override
-  State<PdfUploadWidget> createState() => _PdfUploadWidgetState();
+  State<FileUploadWidgetNew> createState() => _FileUploadWidgetNewState();
 }
 
-class _PdfUploadWidgetState extends State<PdfUploadWidget> {
+class _FileUploadWidgetNewState extends State<FileUploadWidgetNew> {
   String? _uploadStatus;
   String? _selectedFilePath;
 
@@ -68,7 +68,7 @@ class _PdfUploadWidgetState extends State<PdfUploadWidget> {
     }
   }
 
-  Future<void> _pickAndUploadPdf() async {
+  Future<void> _pickFile() async {
     try {
       setState(() {
         _uploadStatus = 'Requesting permissions...';
@@ -81,12 +81,32 @@ class _PdfUploadWidgetState extends State<PdfUploadWidget> {
         _uploadStatus = 'Selecting file...';
       });
 
-      // Pick PDF file
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['pdf'],
-        withData: false,
-      );
+      // Pick file based on accepted types
+      FilePickerResult? result;
+      
+      if (widget.acceptedFileTypes.contains('pdf') && 
+          widget.acceptedFileTypes.length == 1) {
+        // Only PDF files
+        result = await FilePicker.platform.pickFiles(
+          type: FileType.custom,
+          allowedExtensions: ['pdf'],
+          withData: false,
+        );
+      } else if (widget.acceptedFileTypes.every((type) => 
+          ['jpg', 'jpeg', 'png'].contains(type.toLowerCase()))) {
+        // Only image files
+        result = await FilePicker.platform.pickFiles(
+          type: FileType.image,
+          withData: false,
+        );
+      } else {
+        // Mixed file types - use custom with all extensions
+        result = await FilePicker.platform.pickFiles(
+          type: FileType.custom,
+          allowedExtensions: widget.acceptedFileTypes,
+          withData: false,
+        );
+      }
 
       if (result == null || result.files.isEmpty) {
         setState(() {
@@ -113,6 +133,17 @@ class _PdfUploadWidgetState extends State<PdfUploadWidget> {
         return;
       }
 
+      // Validate file extension
+      final fileExtension = file.extension?.toLowerCase();
+      if (fileExtension != null && 
+          !widget.acceptedFileTypes.any((type) => 
+              type.toLowerCase() == fileExtension)) {
+        setState(() {
+          _uploadStatus = 'File type not supported. Accepted: ${widget.acceptedFileTypes.join(', ')}';
+        });
+        return;
+      }
+
       // Set selected file path and notify parent widget
       setState(() {
         _selectedFilePath = file.path;
@@ -130,7 +161,6 @@ class _PdfUploadWidgetState extends State<PdfUploadWidget> {
       widget.onFileSelected(null);
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -166,7 +196,7 @@ class _PdfUploadWidgetState extends State<PdfUploadWidget> {
         
         // File upload field
         GestureDetector(
-          onTap: _pickAndUploadPdf,
+          onTap: _pickFile,
           child: Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -187,7 +217,7 @@ class _PdfUploadWidgetState extends State<PdfUploadWidget> {
                       child: Text(
                         _selectedFilePath != null 
                             ? _selectedFilePath!.split('/').last 
-                            : (widget.placeholderText ?? 'Upload PDF file'),
+                            : (widget.placeholderText ?? 'Upload file'),
                         style: TextStyle(
                           fontSize: 14,
                           color: _selectedFilePath != null 

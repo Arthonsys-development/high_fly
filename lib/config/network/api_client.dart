@@ -1,7 +1,10 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:talker_dio_logger/talker_dio_logger_interceptor.dart';
+import 'dart:developer' as dev;
+
 
 class ApiClient {
   static final ApiClient _instance = ApiClient._internal();
@@ -36,8 +39,8 @@ class ApiClient {
     
     _dio = Dio(BaseOptions(
       baseUrl: baseUrl,
-      connectTimeout: const Duration(seconds: 30),
-      receiveTimeout: const Duration(seconds: 30),
+      connectTimeout: const Duration(seconds: 60),
+      receiveTimeout: const Duration(seconds: 60),
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
@@ -50,11 +53,11 @@ class ApiClient {
     // Add interceptor to include access token in requests
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
-        print('Making API request to: ${options.uri}');
+        debugPrint('Making API request to: ${options.uri}');
         try {
           // Get access token from secure storage
           final accessToken = await _secureStorage.read(key: 'access_token');
-          print('Access token from secure storage: $accessToken');
+          debugPrint('Access token from secure storage: $accessToken');
           if (accessToken != null) {
             options.headers['Authorization'] = 'Bearer $accessToken';
             print('Added Authorization header to request');
@@ -67,9 +70,10 @@ class ApiClient {
         }
         return handler.next(options);
       },
-      onResponse: (response, handler) {
-        print('API response status: ${response.statusCode}');
-        print('API response data: ${response.data}');
+      onResponse: (response, handler) { 
+        dev.log('API URL: $baseUrl');
+        dev.log('API response status: ${response.statusCode}');
+        dev.log('API response data: ${response.data}');
         return handler.next(response);
       },
       onError: (DioException e, handler) {
@@ -116,6 +120,27 @@ class ApiClient {
       rethrow;
     } catch (e) {
       print('Unexpected error in POST request: $e');
+      rethrow;
+    }
+  }
+
+  // Multipart POST request for file uploads
+  Future<Response> postMultipart(String endpoint, {FormData? data, Map<String, dynamic>? queryParameters}) async {
+    try {
+      print('Making multipart POST request to: $endpoint');
+      return await _dio.post(
+        endpoint, 
+        data: data, 
+        queryParameters: queryParameters,
+        options: Options(
+          contentType: 'multipart/form-data',
+        ),
+      );
+    } on DioException catch (e) {
+      _handleError(e);
+      rethrow;
+    } catch (e) {
+      print('Unexpected error in multipart POST request: $e');
       rethrow;
     }
   }

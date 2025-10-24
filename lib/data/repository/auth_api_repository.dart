@@ -130,7 +130,7 @@ class AuthApiRepository {
     print('Fetching all projects from API...');
     try {
       final response = await _apiClient.get(ApiConstants.projects);
-      print('Projects API response status: ${response.statusCode}');
+    //  log('Projects API response status: ${response.statusCode}');
       print('Projects API response data type: ${response.data.runtimeType}');
       print('Projects API response data: $response.data');
       
@@ -270,7 +270,9 @@ class AuthApiRepository {
     print('Fetching plots for project ID: $projectId');
     try {
       // final response = await _apiClient.get('${ApiConstants.projects}$projectId/plots/');
-      final response = await _apiClient.get('${ApiConstants.availablePlotsData}?project=$projectId&status=available');
+      final url = '${ApiConstants.availablePlotsData}?project=$projectId&status=available';
+      print('Making API call to URL: $url');
+      final response = await _apiClient.get(url);
       print('Plots API response status: ${response.statusCode}');
       print('Plots API response data type: ${response.data.runtimeType}');
       print('Plots API response data: $response.data');
@@ -281,9 +283,27 @@ class AuthApiRepository {
       // Handle different response formats
       if (response.data is List) {
         print('Parsing plots from list format, count: ${response.data.length}');
-        plots = (response.data as List)
+        final responseList = response.data as List;
+        print('Response list items: $responseList');
+        
+        for (int i = 0; i < responseList.length; i++) {
+          print('Item $i type: ${responseList[i].runtimeType}');
+          print('Item $i data: ${responseList[i]}');
+        }
+        
+        plots = responseList
             .whereType<Map<String, dynamic>>()
-            .map((item) => Plot.fromJson(item as Map<String, dynamic>))
+            .map((item) {
+              print('Converting item to Plot: $item');
+              try {
+                final plot = Plot.fromJson(item as Map<String, dynamic>);
+                print('Successfully created plot: ${plot.id} - ${plot.plotNumber}');
+                return plot;
+              } catch (e) {
+                print('Error converting item to Plot: $e');
+                rethrow;
+              }
+            })
             .toList();
       } else if (response.data is Map) {
         // Check if it's a paginated response
@@ -320,6 +340,11 @@ class AuthApiRepository {
       }
       
       print('Successfully parsed ${plots.length} plots');
+      if (plots.isEmpty) {
+        print('WARNING: No plots were parsed from the response!');
+        print('Response data was: ${response.data}');
+        print('Response data type: ${response.data.runtimeType}');
+      }
       return {
         'success': true,
         'data': plots,
@@ -530,15 +555,23 @@ class Plot {
   factory Plot.fromJson(Map<String, dynamic> json) {
     return Plot(
       id: json['id'] ?? json['plot_id'] ?? 0,
-      plotNumber: json['plot_number'] ?? json['plotNumber'] ?? '',
-      projectId: json['project_id'] ?? json['projectId'] ?? 0,
-      area: (json['area'] as num?)?.toDouble() ?? 0.0,
-      price: (json['price'] as num?)?.toDouble() ?? 0.0,
-      dimensions: json['dimensions'] ?? '',
-      facing: json['facing'] ?? '',
-      remark: json['remark'] ?? '',
+      plotNumber: json['plot_number'] ?? json['plot_number'] ?? json['plotNumber'] ?? '',
+      projectId: json['project'] ?? json['project_id'] ?? json['projectId'] ?? 0,
+      area: _parseDouble(json['total_area']) ?? _parseDouble(json['area']) ?? 0.0,
+      price: _parseDouble(json['price']) ?? 0.0,
+      dimensions: json['dimensions'] ?? '${json['width'] ?? 0} x ${json['length'] ?? 0}',
+      facing: json['facing_display'] ?? json['facing'] ?? '',
+      remark: json['status_display'] ?? json['remark'] ?? json['status'] ?? '',
       status: json['status'] ?? 'available',
     );
+  }
+
+  // Helper method to parse double values from either string or number
+  static double? _parseDouble(dynamic value) {
+    if (value == null) return null;
+    if (value is num) return value.toDouble();
+    if (value is String) return double.tryParse(value);
+    return null;
   }
 
   Map<String, dynamic> toJson() {

@@ -221,7 +221,7 @@ class _PlotSelectionDialogState extends State<PlotSelectionDialog> {
                           ),
                           child: ListTile(
                             title: Text(
-                              plot.plotNumber,
+                              "Plot No. ${plot.plotNumber}",
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
@@ -231,7 +231,7 @@ class _PlotSelectionDialogState extends State<PlotSelectionDialog> {
                               ),
                             ),
                             subtitle: Text(
-                              plot.displayText,
+                              plot.displayTextOnPopup,
                               style: const TextStyle(
                                 fontSize: 14,
                                 color: AppColors.darkGreyColor,

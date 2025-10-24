@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'dart:io';
 
 import '../../../config/constant/app_colors.dart';
 import '../../utils/app_fonts.dart';
@@ -31,20 +29,41 @@ class ProfilePicture extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: const Color(0xff475569), // Dark grey background
-                image: imageUrl != null && imageUrl!.isNotEmpty
-                    ? DecorationImage(
-                        image: FileImage(File(imageUrl!)),
-                        fit: BoxFit.cover,
-                      )
-                    : null,
               ),
-              child: imageUrl == null || imageUrl!.isEmpty
-                  ? const Icon(
-                      Icons.person,
-                      size: 60,
-                      color: Colors.white,
-                    )
-                  : null,
+              child: ClipOval(
+                child: imageUrl != null && imageUrl!.isNotEmpty
+                    ? Image.network(
+                        imageUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          // Fallback to default icon if network image fails
+                          return const Icon(
+                            Icons.person,
+                            size: 60,
+                            color: Colors.white,
+                          );
+                        },
+                        loadingBuilder: (context, child, loadingProgress) {
+                          // Show loading indicator while image is loading
+                          if (loadingProgress == null) return child;
+                          return const Center(
+                            child: SizedBox(
+                              height: 30,
+                              width: 30,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            ),
+                          );
+                        },
+                      )
+                    : const Icon(
+                        Icons.person,
+                        size: 60,
+                        color: Colors.white,
+                      ),
+              ),
             ),
           ],
         ),

@@ -2,11 +2,13 @@ class Project {
   final String id;
   final String name;
   final List<Plot> plots;
+  final int availablePlotCount;
 
   const Project({
     required this.id,
     required this.name,
     required this.plots,
+    this.availablePlotCount = 0,
   });
 
   factory Project.fromJson(Map<String, dynamic> json) {
@@ -16,6 +18,7 @@ class Project {
       plots: (json['plots'] as List<dynamic>)
           .map((plotJson) => Plot.fromJson(plotJson as Map<String, dynamic>))
           .toList(),
+      availablePlotCount: json['available_plot_count'] ?? 0,
     );
   }
 
@@ -24,6 +27,7 @@ class Project {
       'id': id,
       'name': name,
       'plots': plots.map((plot) => plot.toJson()).toList(),
+      'available_plot_count': availablePlotCount,
     };
   }
 }
@@ -75,5 +79,6 @@ class Plot {
     };
   }
 
-  String get displayText => '$plotNumber - ${area.toInt()} sq ft - \$${price.toInt()}';
+  String get displayText => '$plotNumber - ${area.toInt()} sq ft - ₹${price.toInt()}';
+  String get displayTextOnPopup => '$dimensions - ${area.toInt()} sq ft - ₹${price.toInt()}';
 }

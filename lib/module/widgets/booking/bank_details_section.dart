@@ -47,6 +47,11 @@ class _BankDetailsSectionState extends State<BankDetailsSection> {
     _ifscCodeController = TextEditingController();
     _contactNumberController = TextEditingController();
     _accountTypeController = TextEditingController();
+    
+    // Initialize account type display text if there's a selected value
+    if (_bankDetails.accountType != null) {
+      _accountTypeController.text = BankConstants.accountTypes[_bankDetails.accountType] ?? '';
+    }
   }
 
   @override
@@ -194,6 +199,7 @@ class _BankDetailsSectionState extends State<BankDetailsSection> {
             onPrevious: widget.onPrevious,
             onNext: _canProceed() ? () => widget.onNext?.call(_bankDetails) : null,
             nextButtonText: widget.nextButtonText,
+            isPreviousEnabled: widget.onPrevious != null,
           ),
         ],
       ),
@@ -219,7 +225,8 @@ class _BankDetailsSectionState extends State<BankDetailsSection> {
         onOptionSelected: (value) {
           setState(() {
             _bankDetails = _bankDetails.copyWith(accountType: value);
-            _accountTypeController.text = value ?? '';
+            // Display the value (not the key) in the text field
+            _accountTypeController.text = BankConstants.accountTypes[value] ?? '';
           });
         },
       ),

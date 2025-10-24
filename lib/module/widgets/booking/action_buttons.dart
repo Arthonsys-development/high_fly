@@ -106,12 +106,14 @@ class ActionButtons extends StatelessWidget {
               color: Colors.white,
             ),
           ),
+
           const SizedBox(width: 8),
-          const Icon(
-            Icons.arrow_forward_sharp,
-            size: 16,
-            color: Colors.white,
-          ),
+          if(nextButtonText == "Next")
+            const Icon(
+              Icons.arrow_forward_sharp,
+              size: 16,
+              color: Colors.white,
+            ),
         ],
       ),
     );

@@ -847,13 +847,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       Container(
         // height: 25,
         decoration: BoxDecoration(
-          color: AppColors.successColor,
+          color: text == 'active' ? AppColors.successColor : text == 'inactive' ? Colors.red : AppColors.buttonBorderColor,
           borderRadius: BorderRadius.all(Radius.circular(25)),
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 13.0, vertical: 5),
           child: Text(
-            'Available',
+            text.toUpperCase(),
             style: TextStyle(
               color: Colors.white,
               fontSize: 12,
@@ -883,7 +883,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               ClipRRect(
                 borderRadius: BorderRadiusGeometry.all(Radius.circular(5)),
                 child: Image.network(
-                project.projectPhoto, // sample image url
+                project.projectImage, // sample image url
                 width: MediaQuery.of(context).size.width,
                 height: 150,
                 fit: BoxFit.cover,
@@ -983,7 +983,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 onPressed: () => context.go(Routes.addVisitScreen, extra: project),
                 // onPressed: () => context.push(Routes.addVisitScreen, extra: project),
                 // onPressed: () => AddVisitDialog(project: project),
-                // onPressed: () => _showAddVisitDialog(project),
+                // onPressed: () => context.go(Routes.addVisitScreen, extra: project),
                 icon: const Icon(Icons.add, size: 18),
                 label: const Text('Add Visit'),
                 style: ElevatedButton.styleFrom(
@@ -1042,8 +1042,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                   const SizedBox(width: 8),
                   IconButton(
                     icon: const Icon(Icons.add, color:  AppColors.primaryColor),
-                    onPressed: () => AddVisitDialog(project: project),
-                    // onPressed: () => _showAddVisitDialog(project),
+                    onPressed: () => context.go(Routes.addVisitScreen, extra: project),
                   ),
                 ],
               ),
@@ -1142,8 +1141,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                   DataCell(
                     IconButton(
                       icon: const Icon(Icons.add, color:  AppColors.primaryColor),
-                      onPressed: () => AddVisitDialog(project: project),
-                      // onPressed: () => _showAddVisitDialog(project),
+                      onPressed: () => context.go(Routes.addVisitScreen, extra: project),
                     ),
                   ),
                 ],
@@ -1155,26 +1153,4 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     );
   }
 
-  // Show Add Visit Dialog
-  void _showAddVisitDialog(Project project) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AddVisitDialog(project: project);
-      },
-    ).then((result) {
-      if (result != null) {
-        // Handle the result from the dialog
-        debugPrint("Visit added for project: ${project.name}");
-        debugPrint("Visitor: ${result['visitorName']}");
-        // Show success message
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Visit added successfully!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    });
-  }
 }

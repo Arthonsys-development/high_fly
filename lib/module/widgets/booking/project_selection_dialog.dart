@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../config/constant/app_colors.dart';
 import '../../../data/models/project_model.dart' as local_model;
-import '../../../data/repository/auth_api_repository.dart';
-import '../../../module/providers/projects_provider.dart';
 
 class ProjectSelectionDialog extends StatefulWidget {
   final List<local_model.Project> projects;
@@ -261,13 +258,13 @@ class _ProjectSelectionDialogState extends State<ProjectSelectionDialog> {
                                     : AppColors.headingTextColor,
                               ),
                             ),
-                            subtitle: Text(
-                              '${project.plots.length} plots available',
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: AppColors.darkGreyColor,
-                              ),
-                            ),
+                            // subtitle: Text(
+                            //   '${project.availablePlotCount} plots available',
+                            //   style: const TextStyle(
+                            //     fontSize: 14,
+                            //     color: AppColors.darkGreyColor,
+                            //   ),
+                            // ),
                             trailing: _isLoadingPlots && _loadingProjectId == project.id
                                 ? const SizedBox(
                                     width: 20,

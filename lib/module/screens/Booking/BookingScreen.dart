@@ -11,6 +11,7 @@ import '../../../data/models/booking_summary_model.dart';
 import '../../../data/models/hold_details_model.dart';
 import '../../../data/providers/sample_data_provider.dart';
 import '../../providers/projects_provider.dart';
+import '../../providers/user_provider.dart';
 import '../../widgets/booking/booking_form_section.dart';
 import '../../widgets/booking/customer_selection_section.dart';
 import '../../widgets/booking/hold_details_section.dart';
@@ -26,6 +27,7 @@ extension ProjectConversion on Project {
       id: id.toString(),
       name: name,
       plots: [], // API doesn't provide plots directly, they might be fetched separately
+      availablePlotCount: availablePlotCount, // Pass the available plot count from API
     );
   }
 }
@@ -54,6 +56,21 @@ class _BookingProcessorScreenState extends State<BookingProcessorScreen>
   PaymentDetails? _paymentDetails;
   BankDetails? _bankDetails;
 
+  // Method to reset all form data
+  void _resetFormData() {
+    setState(() {
+      _selectedProject = null;
+      _selectedPlot = null;
+      _selectedCustomer = null;
+      _holdDetails = null;
+      _paymentDetails = null;
+      _bankDetails = null;
+      _currentStep = 0;
+      _currentHoldStep = 0;
+      _selectedPlotPrice = '85000';
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -66,32 +83,6 @@ class _BookingProcessorScreenState extends State<BookingProcessorScreen>
     super.dispose();
   }
 
-  void _handleBookingAction(String action) {
-    // Show confirmation dialog or navigate to next screen
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(action),
-        content: const Text('This action will be processed. Continue?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              // Handle the actual booking/hold logic here
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('$action completed successfully!')),
-              );
-            },
-            child: const Text('Confirm'),
-          ),
-        ],
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -266,24 +257,34 @@ class _BookingProcessorScreenState extends State<BookingProcessorScreen>
       );
     } else {
       // Review & Confirm Step
-      return ReviewConfirmSection(
-        title: "Review & Confirm",
-        nextButtonText: actionType,
-        onPrevious: () {
-          setState(() {
-            _currentStep = 3; // Go back to bank details
-          });
+      return Consumer(
+        builder: (context, ref, child) {
+          final userState = ref.watch(userControllerProvider);
+          final agentId = userState.user?.id ?? '1'; // Default to '1' if no user data
+          
+          return ReviewConfirmSection(
+            title: "Review & Confirm",
+            nextButtonText: actionType,
+            onPrevious: () {
+              setState(() {
+                _currentStep = 3; // Go back to bank details
+              });
+            },
+            onNext: () {
+              // This will be handled by the ReviewConfirmSection itself
+            },
+            bookingSummary: BookingSummary(
+              selectedProject: _selectedProject,
+              selectedPlot: _selectedPlot,
+              selectedCustomer: _selectedCustomer,
+              paymentDetails: _paymentDetails,
+              bankDetails: _bankDetails,
+            ),
+            isHoldFlow: false,
+            agentId: int.parse(agentId),
+            onResetForm: _resetFormData,
+          );
         },
-        onNext: () {
-          _handleBookingAction(actionType);
-        },
-        bookingSummary: BookingSummary(
-          selectedProject: _selectedProject,
-          selectedPlot: _selectedPlot,
-          selectedCustomer: _selectedCustomer,
-          paymentDetails: _paymentDetails,
-          bankDetails: _bankDetails,
-        ),
       );
     }
   }
@@ -389,25 +390,35 @@ class _BookingProcessorScreenState extends State<BookingProcessorScreen>
       );
     } else {
       // Review & Confirm Step
-      return ReviewConfirmSection(
-        title: "Review & Confirm",
-        nextButtonText: actionType,
-        onPrevious: () {
-          setState(() {
-            _currentHoldStep = 3; // Go back to bank details
-          });
+      return Consumer(
+        builder: (context, ref, child) {
+          final userState = ref.watch(userControllerProvider);
+          final agentId = userState.user?.id ?? '1'; // Default to '1' if no user data
+          
+          return ReviewConfirmSection(
+            title: "Review & Confirm",
+            nextButtonText: "Hold",
+            onPrevious: () {
+              setState(() {
+                _currentHoldStep = 3; // Go back to bank details
+              });
+            },
+            onNext: () {
+              // This will be handled by the ReviewConfirmSection itself
+            },
+            bookingSummary: BookingSummary(
+              selectedProject: _selectedProject,
+              selectedPlot: _selectedPlot,
+              selectedCustomer: _selectedCustomer,
+              holdDetails: _holdDetails,
+             // paymentDetails: _paymentDetails,
+              bankDetails: _bankDetails,
+            ),
+            isHoldFlow: true,
+            agentId: int.parse(agentId),
+            onResetForm: _resetFormData,
+          );
         },
-        onNext: () {
-          _handleBookingAction(actionType);
-        },
-        bookingSummary: BookingSummary(
-          selectedProject: _selectedProject,
-          selectedPlot: _selectedPlot,
-          selectedCustomer: _selectedCustomer,
-          holdDetails: _holdDetails,
-         // paymentDetails: _paymentDetails,
-          bankDetails: _bankDetails,
-        ),
       );
     }
   }

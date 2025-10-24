@@ -48,7 +48,7 @@ class PlotDetailsCard extends StatelessWidget {
                   _DetailItem('Project:', selectedProjectName ?? ''),
                   _DetailItem('Dimensions:', selectedPlot!.dimensions),
                   _DetailItem('Area:', '${selectedPlot!.area.toInt()} sq ft'),
-                  _DetailItem('Price:', '\$${selectedPlot!.price.toInt()}', isHighlighted: true),
+                  _DetailItem('Price:', '₹${selectedPlot!.price.toInt()}', isHighlighted: true),
                 ]),
               ),
               const SizedBox(width: 20),

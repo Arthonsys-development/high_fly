@@ -102,6 +102,55 @@ class LocationService {
     }
   }
 
+  /// Calculate distance between two coordinates in meters
+  /// Returns distance in meters, or null if calculation fails
+  double? calculateDistance(
+    double? startLatitude,
+    double? startLongitude,
+    double? endLatitude,
+    double? endLongitude,
+  ) {
+    try {
+      if (startLatitude == null || startLongitude == null || 
+          endLatitude == null || endLongitude == null) {
+        return null;
+      }
+      
+      return Geolocator.distanceBetween(
+        startLatitude,
+        startLongitude,
+        endLatitude,
+        endLongitude,
+      );
+    } catch (e) {
+      debugPrint('Error calculating distance: $e');
+      return null;
+    }
+  }
+
+  /// Check if user is within specified distance from project location
+  /// Returns true if within distance, false if outside, null if calculation fails
+  bool? isWithinDistance(
+    double? userLatitude,
+    double? userLongitude,
+    double? projectLatitude,
+    double? projectLongitude,
+    double maxDistanceInMeters,
+  ) {
+    final distance = calculateDistance(
+      userLatitude,
+      userLongitude,
+      projectLatitude,
+      projectLongitude,
+    );
+    
+    if (distance == null) {
+      return null;
+    }
+    
+    return distance <= maxDistanceInMeters;
+  }
+
   /// Request location permission
   Future<bool> requestLocationPermission() async {
     try {

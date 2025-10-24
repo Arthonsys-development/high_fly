@@ -21,11 +21,14 @@ void main() {
       final project = Project(
         id: 1,
         name: 'Test Project',
-        location: 'Test Location',
         description: 'Test project description',
+        location: 'Test Location',
+        address: 'Test Address',
+        projectImage: '',
         status: 'Active',
-        projectPhoto: '',
         createdAt: DateTime.now(),
+        totalPlotCount: 1,
+        availablePlotCount: 1,
       );
       
       // Verify that the widget can be created

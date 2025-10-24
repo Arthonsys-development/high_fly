@@ -63,13 +63,14 @@ class _BookingFormSectionState extends State<BookingFormSection> {
         final localPlots = apiPlots.map((plot) => plot.toLocalModel()).toList();
         
         setState(() {
-          _availablePlots = localPlots as List<local_model.Plot>;
+          _availablePlots = localPlots;
           _isLoadingPlots = false;
         });
       } else {
         setState(() {
           _isLoadingPlots = false;
         });
+        print("Error loading plots: ${result['message']}");
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error loading plots: ${result['message']}')),
         );

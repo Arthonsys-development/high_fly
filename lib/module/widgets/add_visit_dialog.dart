@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:go_router/go_router.dart';
 import 'package:highfly/config/constant/app_colors.dart';
 import 'package:highfly/config/constant/const_assets.dart';
 import 'package:highfly/data/models/response_model/project_response_model.dart';
@@ -142,44 +142,44 @@ class _AddVisitDialogState extends State<AddVisitDialog>
           debugPrint('Preventing back navigation during image picking');
           return false;
         }
-        return true;
+        // Use context.go to navigate back to dashboard instead of pop
+        if (mounted) {
+          context.go(Routes.dashboardScreen);
+        }
+        return false; // Prevent default pop behavior
       },
-      child: /*Dialog(
-      backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12.0),
-      ),
-      child: */Scaffold(
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(60), 
-        child: commonAppBar(
-          context, 
-          "Add Visit",
-          onBack: () {
-            // If we're picking an image, prevent back navigation
-            if (_isPickingImage) {
-              debugPrint('Preventing back navigation during image picking');
-              return;
-            }
-            Navigator.of(context).pop();
-          },
+      child: Scaffold(
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(60), 
+          child: commonAppBar(
+            context, 
+            "Add Visit",
+            onBack: () {
+              // If we're picking an image, prevent back navigation
+              if (_isPickingImage) {
+                debugPrint('Preventing back navigation during image picking');
+                return;
+              }
+              // Use context.go to navigate back to dashboard instead of pop
+              context.go(Routes.dashboardScreen);
+            },
+          ),
         ),
-      ),
-      body: GestureDetector(
-        onTap: (){
-          FocusScope.of(context).unfocus();
-        },
-        child: SingleChildScrollView(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 500),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+        body: GestureDetector(
+          onTap: (){
+            FocusScope.of(context).unfocus();
+          },
+          child: SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 500),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       // Row(
                       //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       //   children: [
@@ -232,18 +232,6 @@ class _AddVisitDialogState extends State<AddVisitDialog>
 
                       const SizedBox(height: 12),
 
-                      // _buildCustomDropdown(
-                      //   label: "Assign Agent *",
-                      //   value: selectedAgent,
-                      //   items: agents,
-                      //   onChanged: (value) {
-                      //     setState(() {
-                      //       selectedAgent = value;
-                      //     });
-                      //   },
-                      //   validator: (value) => value == null ? "Please select an agent" : null,
-                      // ),
-                      // const SizedBox(height: 12),
 
                       _buildVisitorPhotoSection(),
                       const SizedBox(height: 12),
@@ -258,21 +246,33 @@ class _AddVisitDialogState extends State<AddVisitDialog>
 
                       Row(
                         children: [
-                          Expanded(
-                            child: SizedBox(
-                              height: 40,
-                              child: OutlinedButton(
-                                style: ButtonStyle(
-                                  side: WidgetStateProperty.all(
-                                    BorderSide(color: AppColors.primaryTextColor),
-                                  ),
+                          // Expanded(
+                          //   child: SizedBox(
+                          //     height: 40,
+                          //     child: OutlinedButton(
+                          //       style: ButtonStyle(
+                          //         side: WidgetStateProperty.all(
+                          //           BorderSide(color: AppColors.primaryTextColor),
+                          //         ),
 
-                                ),
-                                onPressed: () => Navigator.pop(context),
-                                child: const Text("Cancel", style: TextStyle(color: AppColors.primaryTextColor),),
-                              ),
+                          //       ),
+                          //       onPressed: () => context.go(Routes.dashboardScreen),
+                          //       child: const Text("Cancel", style: TextStyle(color: AppColors.primaryTextColor),),
+                          //     ),
+                          //   ),
+                          // ),
+
+                          Expanded(
+                            child: CustomButton(
+                              backgroundColor: Colors.white,
+                              textColor: AppColors.primaryTextColor,
+                              borderColor: AppColors.primaryTextColor,
+                              height: 40,
+                              text: "Cancel",
+                              onPressed:() => context.go(Routes.dashboardScreen),
                             ),
                           ),
+
                           const SizedBox(width: 10),
                           Expanded(
                             child: CustomButton(
@@ -288,8 +288,7 @@ class _AddVisitDialogState extends State<AddVisitDialog>
                 ),
               ),
             ),
-          // ),
-              ),
+          ),
         ),
       ),
     );
@@ -423,10 +422,7 @@ class _AddVisitDialogState extends State<AddVisitDialog>
         _imagePickStartTime = DateTime.now();
       });
       
-      // Close the image source dialog before opening camera
-      if (mounted) {
-        Navigator.of(context).pop();
-      }
+      // Image source dialog is already closed by the onTap handler
       
       // Check and request camera permission on mobile
       if (!kIsWeb) {
@@ -437,7 +433,7 @@ class _AddVisitDialogState extends State<AddVisitDialog>
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('Camera permission is required to take photos'),
+                  content: Text('Camera permission is required to take photos', style: TextStyle(color: Colors.white)),
                   backgroundColor: Colors.red,
                 ),
               );
@@ -526,7 +522,7 @@ class _AddVisitDialogState extends State<AddVisitDialog>
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Camera access denied or not supported by your browser. Please check browser permissions or try selecting from gallery.'),
+              content: Text('Camera access denied or not supported by your browser. Please check browser permissions or try selecting from gallery.', style: TextStyle(color: Colors.white)),
               backgroundColor: Colors.red,
             ),
           );
@@ -535,7 +531,7 @@ class _AddVisitDialogState extends State<AddVisitDialog>
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Failed to pick image from camera: ${e.toString()}'),
+              content: Text('Failed to pick image from camera: ${e.toString()}', style: const TextStyle(color: Colors.white)),
               backgroundColor: Colors.red,
             ),
           );
@@ -554,10 +550,7 @@ class _AddVisitDialogState extends State<AddVisitDialog>
         _imagePickStartTime = DateTime.now();
       });
       
-      // Close the image source dialog before opening gallery
-      if (mounted) {
-        Navigator.of(context).pop();
-      }
+      // Image source dialog is already closed by the onTap handler
       
       // Check and request gallery permission on mobile
       if (!kIsWeb) {
@@ -574,7 +567,7 @@ class _AddVisitDialogState extends State<AddVisitDialog>
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('Gallery permission is required to select photos'),
+                    content: Text('Gallery permission is required to select photos', style: TextStyle(color: Colors.white)),
                     backgroundColor: Colors.red,
                   ),
                 );
@@ -664,7 +657,7 @@ class _AddVisitDialogState extends State<AddVisitDialog>
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Gallery access denied or not supported by your browser. Please check browser permissions.'),
+              content: Text('Gallery access denied or not supported by your browser. Please check browser permissions.', style: TextStyle(color: Colors.white)),
               backgroundColor: Colors.red,
             ),
           );
@@ -673,7 +666,7 @@ class _AddVisitDialogState extends State<AddVisitDialog>
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Failed to pick image from gallery: ${e.toString()}'),
+              content: Text('Failed to pick image from gallery: ${e.toString()}', style: const TextStyle(color: Colors.white)),
               backgroundColor: Colors.red,
             ),
           );
@@ -890,7 +883,7 @@ class _AddVisitDialogState extends State<AddVisitDialog>
           SnackBar(
             content: Text(kIsWeb 
               ? 'Requesting location access from browser...' 
-              : 'Getting current location...'),
+              : 'Processing...'),
             duration: const Duration(seconds: 3),
           ),
         );
@@ -905,13 +898,13 @@ class _AddVisitDialogState extends State<AddVisitDialog>
         });
         
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Location obtained: $_currentLatitude, $_currentLongitude'),
-              backgroundColor: Colors.green,
-              duration: const Duration(seconds: 3),
-            ),
-          );
+          // ScaffoldMessenger.of(context).showSnackBar(
+          //   SnackBar(
+          //     content: Text('Location obtained: $_currentLatitude, $_currentLongitude'),
+          //     backgroundColor: Colors.green,
+          //     duration: const Duration(seconds: 3),
+          //   ),
+          // );
         }
       } else {
         if (mounted) {
@@ -919,7 +912,7 @@ class _AddVisitDialogState extends State<AddVisitDialog>
             SnackBar(
               content: Text(kIsWeb 
                 ? 'Location access denied or unavailable. Please allow location access in your browser settings.'
-                : 'Unable to get current location. Please check location permissions.'),
+                : 'Unable to get current location. Please check location permissions.', style: const TextStyle(color: Colors.white)),
               backgroundColor:  AppColors.primaryColor,
               duration: const Duration(seconds: 5),
             ),
@@ -930,7 +923,7 @@ class _AddVisitDialogState extends State<AddVisitDialog>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error getting location: $e'),
+            content: Text('Error getting location: $e', style: const TextStyle(color: Colors.white)),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 3),
           ),
@@ -947,7 +940,7 @@ class _AddVisitDialogState extends State<AddVisitDialog>
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Visitor photo is required to save visit. Please select a photo.'),
+              content: Text('Visitor photo is required to save visit. Please select a photo.', style: TextStyle(color: Colors.white)),
               backgroundColor: Colors.red,
             ),
           );
@@ -962,7 +955,7 @@ class _AddVisitDialogState extends State<AddVisitDialog>
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Location permission is required to save visit. Please enable location permission in settings.'),
+              content: Text('Location permission is required to save visit. Please enable location permission in settings.', style: TextStyle(color: Colors.white)),
               backgroundColor: Colors.red,
             ),
           );
@@ -977,6 +970,81 @@ class _AddVisitDialogState extends State<AddVisitDialog>
       try {
         // Get current location before creating the visit
         await _getCurrentLocation();
+
+        // Check distance validation - user must be within 100 meters of project
+        if (widget.project.latitude != null && widget.project.longitude != null) {
+          final locationService = LocationService();
+          final userLat = double.tryParse(_currentLatitude);
+          final userLng = double.tryParse(_currentLongitude);
+          
+          if (userLat != null && userLng != null) {
+            final isWithinDistance = locationService.isWithinDistance(
+              userLat,
+              userLng,
+              widget.project.latitude,
+              widget.project.longitude,
+              100.0, // 100 meters maximum distance
+            );
+            
+            if (isWithinDistance == false) {
+              if (mounted) {
+                setState(() {
+                  _isSaving = false;
+                });
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('You must be within 100 meters of the project location to save a visit. Please move closer to the project.', style: TextStyle(color: Colors.white)),
+                    backgroundColor: Colors.red,
+                    duration: Duration(seconds: 5),
+                  ),
+                );
+              }
+              return;
+            } else if (isWithinDistance == null) {
+              if (mounted) {
+                setState(() {
+                  _isSaving = false;
+                });
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Unable to verify your distance from the project. Please ensure you have proper location access.', style: TextStyle(color: Colors.white)),
+                    backgroundColor: Colors.orange,
+                    duration: Duration(seconds: 5),
+                  ),
+                );
+              }
+              return;
+            }
+          } else {
+            if (mounted) {
+              setState(() {
+                _isSaving = false;
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Unable to get your current location. Please ensure location services are enabled.', style: TextStyle(color: Colors.white)),
+                  backgroundColor: Colors.red,
+                  duration: Duration(seconds: 5),
+                ),
+              );
+            }
+            return;
+          }
+        } else {
+          if (mounted) {
+            setState(() {
+              _isSaving = false;
+            });
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Project location coordinates are not available. Please contact support.', style: TextStyle(color: Colors.white)),
+                backgroundColor: Colors.red,
+                duration: Duration(seconds: 5),
+              ),
+            );
+          }
+          return;
+        }
 
         String id = await _secureStorage.read(key: SharedPreferenceStrings.id) ?? '';
         // Create the visit request
@@ -1010,10 +1078,10 @@ class _AddVisitDialogState extends State<AddVisitDialog>
               _pickedImage = null;
               _webImage = null;
             });
-            // Navigator.pop(context, true); // Return true to indicate success
+            context.go(Routes.dashboardScreen); // Navigate back to dashboard
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Visit created successfully'),
+                content: Text('Visit created successfully', style: TextStyle(color: Colors.white)),
                 backgroundColor: Colors.green,
               ),
             );
@@ -1022,7 +1090,7 @@ class _AddVisitDialogState extends State<AddVisitDialog>
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Failed to create visit: ${result['message']}'),
+                content: Text('Failed to create visit: ${result['message']}', style: const TextStyle(color: Colors.white)),
                 backgroundColor: Colors.red,
               ),
             );
@@ -1032,7 +1100,7 @@ class _AddVisitDialogState extends State<AddVisitDialog>
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Error creating visit: $e'),
+              content: Text('Error creating visit: $e', style: const TextStyle(color: Colors.white)),
               backgroundColor: Colors.red,
             ),
           );

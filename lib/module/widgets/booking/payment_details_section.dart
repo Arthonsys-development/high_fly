@@ -4,9 +4,9 @@ import '../../../data/models/payment_model.dart';
 import '../../../config/constant/app_colors.dart';
 import '../../global/widgets/custom_text_field.dart';
 import 'header_icon_widget.dart';
-import 'file_upload_widget.dart';
+import 'file_upload_widget_new.dart';
 import 'pdf_upload_widget.dart';
-import 'payment_selection_dialog.dart';
+import 'payment_method_selection_dialog.dart';
 import 'action_buttons.dart';
 
 class PaymentDetailsSection extends StatefulWidget {
@@ -37,6 +37,9 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
   late TextEditingController _additionalNotesController;
   late TextEditingController _paymentMethodController;
   late TextEditingController _paymentTypeController;
+  late TextEditingController _chequeNumberController;
+  late TextEditingController _chequeDateController;
+  String _selectedPaymentTypeKey = '';
 
   @override
   void initState() {
@@ -44,7 +47,9 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
     _paymentDetails = PaymentDetails(
       paymentAmount: widget.paymentAmount,
       paymentMethod: '',
+      paymentMethodKey: '',
       paymentType: '',
+      paymentTypeKey: '',
       panNumber: '',
       aadharNumber: '',
       additionalNotes: '',
@@ -56,6 +61,8 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
     _additionalNotesController = TextEditingController();
     _paymentMethodController = TextEditingController();
     _paymentTypeController = TextEditingController();
+    _chequeNumberController = TextEditingController();
+    _chequeDateController = TextEditingController();
   }
 
   @override
@@ -66,6 +73,8 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
     _additionalNotesController.dispose();
     _paymentMethodController.dispose();
     _paymentTypeController.dispose();
+    _chequeNumberController.dispose();
+    _chequeDateController.dispose();
     super.dispose();
   }
 
@@ -123,7 +132,46 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
           
           const SizedBox(height: 24),
           
-          // Payment Type field
+         
+          
+          // Cheque Number and Date fields (only visible if Payment Method is cheque)
+          if (_paymentDetails.paymentMethodKey == PaymentMethod.cheque) ...[
+            CustomTextField(
+              titleText: 'Cheque Number',
+              controller: _chequeNumberController,
+              hintText: 'Enter cheque number',
+              isMandatory: true,
+              borderRadius: 6,
+              onChanged: (value) {
+                setState(() {
+                  _paymentDetails = _paymentDetails.copyWith(chequeNumber: value);
+                });
+              },
+            ),
+            
+            const SizedBox(height: 24),
+            
+            GestureDetector(
+              onTap: _showDatePicker,
+              child: CustomTextField(
+                titleText: 'Cheque Date',
+                controller: _chequeDateController,
+                hintText: 'Select cheque date',
+                isMandatory: true,
+                borderRadius: 6,
+                enabled: false,
+                suffixIcon: const Icon(
+                  Icons.calendar_today,
+                  color: AppColors.lightGreyColor,
+                  size: 20,
+                ),
+              ),
+            ),
+            
+            const SizedBox(height: 24),
+          ],
+          
+           // Payment Type field
           GestureDetector(
             onTap: _showPaymentTypeDialog,
             child: CustomTextField(
@@ -142,7 +190,6 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
           ),
           
           const SizedBox(height: 24),
-          
           // PAN Number field
           CustomTextField(
             titleText: 'PAN Number',
@@ -175,8 +222,8 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
           
           const SizedBox(height: 20),
           
-          // Salaried Individual checkbox (only visible if Payment Type is Loan)
-          if (_paymentDetails.paymentType == PaymentType.loan) ...[
+          // Salaried Individual checkbox (only visible if Payment Type is Finance)
+          if (_selectedPaymentTypeKey == PaymentType.finance) ...[
             Row(
               mainAxisSize: MainAxisSize.max,
               children: [
@@ -243,13 +290,13 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
             const SizedBox(height: 24),
             
             // Form 16A field
-            FileUploadWidget(
+            FileUploadWidgetNew(
               label: 'Form 16A',
               fileName: _paymentDetails.form16APath != null 
                   ? _paymentDetails.form16APath!.split('/').last 
                   : null,
               isRequired: true,
-              acceptedFileTypes: 'PDF, JPG, PNG',
+              acceptedFileTypes: ['pdf', 'jpg', 'jpeg', 'png'],
               placeholderText: 'Upload form 16A for reference',
               onFileSelected: (filePath) {
                 setState(() {
@@ -295,12 +342,21 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
   bool _canProceed() {
     // Basic validation
     if (_paymentDetails.paymentAmount.isEmpty ||
-        _paymentDetails.paymentMethod.isEmpty ||
+        _paymentDetails.paymentMethodKey.isEmpty ||
         _paymentDetails.paymentType.isEmpty ||
         _paymentDetails.panNumber.isEmpty ||
         _paymentDetails.aadharNumber.isEmpty ||
         _paymentDetails.additionalNotes.isEmpty) {
       return false;
+    }
+    
+    // Additional validation for cheque payment method
+    if (_paymentDetails.paymentMethodKey == PaymentMethod.cheque) {
+      if (_paymentDetails.chequeNumber == null || 
+          _paymentDetails.chequeNumber!.isEmpty ||
+          _paymentDetails.chequeDate == null) {
+        return false;
+      }
     }
     
     // Additional validation for salaried individual
@@ -316,14 +372,26 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
   void _showPaymentMethodDialog() {
     showDialog(
       context: context,
-      builder: (context) => PaymentSelectionDialog(
+      builder: (context) => PaymentMethodSelectionDialog(
         title: 'Select Payment Method',
         options: PaymentMethod.all,
-        selectedValue: _paymentDetails.paymentMethod,
-        onSelected: (method) {
+        selectedKey: _paymentDetails.paymentMethodKey,
+        onSelected: (key, value) {
           setState(() {
-            _paymentDetails = _paymentDetails.copyWith(paymentMethod: method);
-            _paymentMethodController.text = method;
+            _paymentDetails = _paymentDetails.copyWith(
+              paymentMethodKey: key,
+              paymentMethod: value,
+              // Clear cheque fields if payment method is not cheque
+              chequeNumber: key == PaymentMethod.cheque ? _paymentDetails.chequeNumber : null,
+              chequeDate: key == PaymentMethod.cheque ? _paymentDetails.chequeDate : null,
+            );
+            _paymentMethodController.text = value;
+            
+            // Clear cheque controllers if payment method is not cheque
+            if (key != PaymentMethod.cheque) {
+              _chequeNumberController.clear();
+              _chequeDateController.clear();
+            }
           });
         },
       ),
@@ -333,20 +401,51 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
   void _showPaymentTypeDialog() {
     showDialog(
       context: context,
-      builder: (context) => PaymentSelectionDialog(
+      builder: (context) => PaymentMethodSelectionDialog(
         title: 'Select Payment Type',
         options: PaymentType.all,
-        selectedValue: _paymentDetails.paymentType,
-        onSelected: (type) {
+        selectedKey: _selectedPaymentTypeKey,
+        onSelected: (key, value) {
           setState(() {
+            _selectedPaymentTypeKey = key;
             _paymentDetails = _paymentDetails.copyWith(
-              paymentType: type,
+              paymentType: value,
+              paymentTypeKey: key,
               isSalariedIndividual: false, // Reset when changing payment type
             );
-            _paymentTypeController.text = type;
+            _paymentTypeController.text = value;
           });
         },
       ),
     );
+  }
+
+  void _showDatePicker() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _paymentDetails.chequeDate ?? DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2030),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: AppColors.primaryColor,
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: Colors.black,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    
+    if (picked != null) {
+      setState(() {
+        _paymentDetails = _paymentDetails.copyWith(chequeDate: picked);
+        _chequeDateController.text = '${picked.day}/${picked.month}/${picked.year}';
+      });
+    }
   }
 }

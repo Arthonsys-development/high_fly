@@ -4,7 +4,7 @@ import '../../../data/models/customer_model.dart';
 
 class CustomerSelectionDialog extends StatefulWidget {
   final List<Customer> customers;
-  final String? selectedCustomerId;
+  final int? selectedCustomerId;
   final Function(Customer?) onCustomerSelected;
 
   const CustomerSelectionDialog({
@@ -42,9 +42,9 @@ class _CustomerSelectionDialogState extends State<CustomerSelectionDialog> {
         _filteredCustomers = widget.customers
             .where((customer) =>
                 customer.name.toLowerCase().contains(query.toLowerCase()) ||
-                customer.email.toLowerCase().contains(query.toLowerCase()) ||
+                (customer.email?.toLowerCase().contains(query.toLowerCase()) ?? false) ||
                 customer.phone.toLowerCase().contains(query.toLowerCase()) ||
-                customer.location.toLowerCase().contains(query.toLowerCase()))
+                (customer.location?.toLowerCase().contains(query.toLowerCase()) ?? false))
             .toList();
       }
     });
@@ -245,7 +245,7 @@ class _CustomerSelectionDialogState extends State<CustomerSelectionDialog> {
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  customer.email,
+                                  customer.email ?? 'No email',
                                   style: const TextStyle(
                                     fontSize: 12,
                                     color: AppColors.lightGreyColor,
@@ -253,7 +253,7 @@ class _CustomerSelectionDialogState extends State<CustomerSelectionDialog> {
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  customer.location,
+                                  customer.location ?? 'No location',
                                   style: const TextStyle(
                                     fontSize: 12,
                                     color: AppColors.lightGreyColor,

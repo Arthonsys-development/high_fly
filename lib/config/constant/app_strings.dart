@@ -28,6 +28,18 @@ class SharedPreferenceStrings{
   static String accessToken = 'access_token';
   static String id = 'id';
   static String firstName = 'first_name';
+  static String lastName = 'last_name';
+  static String email = 'email';
+  static String role = 'role';
+  static String isActive = 'is_active';
+  static String token = 'token';
+  static String message = 'message';
+  static String success = 'success';
+  static String fullName = 'full_name';
+  static String username = 'username';
+  static String reraNumber = 'rera_number';
+  static String teamLeaderName = 'team_leader_name';
+  static String idNumber = 'id_number';
   static String phoneNumber = 'phone_number';
   static String profilePhoto = 'profile_photo';
 

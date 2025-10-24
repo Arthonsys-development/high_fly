@@ -158,6 +158,7 @@ class AuthController extends Notifier<AuthState> {
         final accessToken = result['data']['access_token'] ?? '';
         final id = result['data']['agent']['id'] ?? '';
         final fName = result['data']['agent']['full_name'] ?? '';
+        final fullName = result['data']['agent']['full_name'] ?? '';
         final phoneNumber = result['data']['agent']['user']['phone_number'] ?? '';
         final profileImage = result['data']['agent']['user']['profile_image'] ?? '';
         if (accessToken != null) {
@@ -165,6 +166,7 @@ class AuthController extends Notifier<AuthState> {
         }
         await _secureStorage.write(key: SharedPreferenceStrings.id, value: id.toString());
         await _secureStorage.write(key: SharedPreferenceStrings.firstName, value: fName);
+        await _secureStorage.write(key: SharedPreferenceStrings.fullName, value: fullName);
         await _secureStorage.write(key: SharedPreferenceStrings.phoneNumber, value: phoneNumber);
         await _secureStorage.write(key: SharedPreferenceStrings.profilePhoto, value: "${dotenv.env['BASE_URL_IMAGE']}$profileImage");
 

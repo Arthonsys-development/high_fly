@@ -43,10 +43,8 @@ class BankDetails {
 }
 
 class BankConstants {
-  static const List<String> accountTypes = [
-    'Savings Account',
-    'Current Account',
-    'Fixed Deposit',
-    'Recurring Deposit',
-  ];
+  static const Map<String, String> accountTypes = {
+    'savings': 'Savings',
+    'current': 'Current',
+  };
 }

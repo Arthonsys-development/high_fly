@@ -43,10 +43,10 @@ class CustomerDetailsCard extends StatelessWidget {
             children: [
               Expanded(
                 child: _buildDetailColumn([
-                  _DetailItem('Email', selectedCustomer!.email),
+                  _DetailItem('Email', selectedCustomer!.email ?? 'Not provided'),
                   _DetailItem('Phone', selectedCustomer!.phone),
-                  _DetailItem('Location', selectedCustomer!.location),
-                  _DetailItem('Budget', selectedCustomer!.budgetRange, isHighlighted: true),
+                  _DetailItem('Location', selectedCustomer!.location ?? 'Not provided'),
+                  _DetailItem('Budget', selectedCustomer!.budget ?? 'Not specified', isHighlighted: true),
                 ]),
               ),
               const SizedBox(width: 20),

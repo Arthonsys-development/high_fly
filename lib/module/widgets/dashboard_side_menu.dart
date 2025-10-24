@@ -652,11 +652,11 @@ class MobileSideMenuDrawer extends ConsumerWidget {
 
   Future<Map<String, String?>> _getUserData() async {
     final storage = const FlutterSecureStorage();
-    final firstName = await storage.read(key: SharedPreferenceStrings.firstName);
+    final fullName = await storage.read(key: SharedPreferenceStrings.fullName);
     final profilePhoto = await storage.read(key: SharedPreferenceStrings.profilePhoto);
     
     return {
-      'name': firstName,
+      'name': fullName,
       'photo': profilePhoto,
     };
   }
