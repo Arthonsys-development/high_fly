@@ -12,6 +12,7 @@ class CreateVisitRequest {
   final String dateTime;
   final String lat;
   final String long;
+  final String type; // Visit type
   // final String phoneNumber;
   // final String email;
   final String? comments;
@@ -30,6 +31,7 @@ class CreateVisitRequest {
     required this.lat,
     required this.long,
     required this.dateTime,
+    required this.type,
     this.comments,
     this.visitorPhoto,
     this.visitorPhotoFile,
@@ -43,6 +45,7 @@ class CreateVisitRequest {
       "visitor_name": visitorName,
       "rera_number": reraNumber,
       "team_leader_name": teamLeaderName,
+      "type": type,
       // "client_phone": phoneNumber,
       // "client_email": email,
       "visit_datetime": dateTime,
@@ -60,11 +63,14 @@ class CreateVisitRequest {
     formData.fields.add(MapEntry('project', projectId.toString()));
     formData.fields.add(MapEntry('agent', agentId.toString()));
     formData.fields.add(MapEntry('visitor_name', visitorName));
+    formData.fields.add(MapEntry('rera_number', reraNumber));
+    formData.fields.add(MapEntry('team_leader_name', teamLeaderName));
     // formData.fields.add(MapEntry('client_phone', phoneNumber));
     // formData.fields.add(MapEntry('client_email', email));
     formData.fields.add(MapEntry('visit_datetime', dateTime));
     formData.fields.add(MapEntry('location_latitude', lat));
     formData.fields.add(MapEntry('location_longitude', long));
+    formData.fields.add(MapEntry('type', type));
     if (comments != null) {
       formData.fields.add(MapEntry('comments', comments!));
     }

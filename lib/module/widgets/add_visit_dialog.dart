@@ -49,14 +49,23 @@ class _AddVisitDialogState extends State<AddVisitDialog>
   // String? comments;
   String? phoneNumber;
   String? email;
+  String? selectedVisitType; // Store selected visit type
   bool _isSaving = false;
   String _currentLatitude = '';
   String _currentLongitude = '';
   bool _isInBackground = false;
   bool _isPickingImage = false;
   DateTime? _imagePickStartTime;
+  bool _isTooFarFromProject = false; // Track if user is too far from project
 
   final List<String> agents = ["Sarah Johnson", "Michael Smith", "Emily Brown"];
+  
+  // Visit type options with keys and labels
+  final List<Map<String, String>> visitTypes = [
+    {'key': 'office_visit', 'label': 'Office Visit'},
+    {'key': 'project_visit', 'label': 'Project Visit'},
+    {'key': 'event_visit', 'label': 'Event Visit'},
+  ];
 
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
 
@@ -65,6 +74,8 @@ class _AddVisitDialogState extends State<AddVisitDialog>
     debugPrint("Project Name: ${widget.project.name}");
     WidgetsBinding.instance.addObserver(this);
     super.initState();
+    // Get initial location when dialog opens
+    _getCurrentLocation();
   }
 
   @override
@@ -229,9 +240,170 @@ class _AddVisitDialogState extends State<AddVisitDialog>
                         validator: (value) => value == null || value.isEmpty ? "Enter team leader name" : null,
                       ),
 
-
                       const SizedBox(height: 12),
 
+                      // Visit Type Dropdown
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                "Type",
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.black,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Image.asset(
+                                IconsAssets.star,
+                                width: 8,
+                                height: 8,
+                                color: Colors.red,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          DropdownButtonFormField<String>(
+                            value: selectedVisitType,
+                            hint: Text(
+                              "Select type",
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                            decoration: InputDecoration(
+                              isDense: true,
+                              fillColor: Colors.white,
+                              filled: true,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 14,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: const BorderSide(
+                                  color: AppColors.primaryTextColor,
+                                  width: 0.5,
+                                ),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: const BorderSide(
+                                  color: Colors.black26,
+                                  width: 1,
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: const BorderSide(
+                                  color: AppColors.primaryTextColor,
+                                  width: 1,
+                                ),
+                              ),
+                              errorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: const BorderSide(
+                                  color: Colors.red,
+                                  width: 1.2,
+                                ),
+                              ),
+                              focusedErrorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: const BorderSide(
+                                  color: Colors.red,
+                                  width: 1.5,
+                                ),
+                              ),
+                            ),
+                            dropdownColor: Colors.white,
+                            items: visitTypes.map((visitType) {
+                              return DropdownMenuItem<String>(
+                                value: visitType['key'],
+                                child: Text(
+                                  visitType['label']!,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                            onChanged: (value) {
+                              setState(() {
+                                selectedVisitType = value;
+                              });
+                              debugPrint('Visit type changed to: $value');
+                              // If Project Visit is selected, show warning based on already-checked distance
+                              if (value == 'project_visit') {
+                                // Check distance - trigger check even if location not ready yet
+                                _checkDistanceFromProject();
+                                // Also schedule checks to ensure location is ready
+                                Future.delayed(const Duration(milliseconds: 500), () {
+                                  if (mounted && selectedVisitType == 'project_visit') {
+                                    _checkDistanceFromProject();
+                                  }
+                                });
+                                Future.delayed(const Duration(milliseconds: 1500), () {
+                                  if (mounted && selectedVisitType == 'project_visit') {
+                                    _checkDistanceFromProject();
+                                  }
+                                });
+                              } else {
+                                // Clear warning for other types
+                                setState(() {
+                                  _isTooFarFromProject = false;
+                                });
+                              }
+                            },
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return "Select visit type";
+                              }
+                              return null;
+                            },
+                            icon: const Icon(
+                              Icons.arrow_drop_down,
+                              color: AppColors.secondaryTextColor,
+                            ),
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ],
+                      ),
+                      
+                      // Warning message if too far from project for project visit
+                      if (_isTooFarFromProject && selectedVisitType == 'project_visit')
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.warning_amber_rounded,
+                                color: Colors.orange,
+                                size: 18,
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  'You are more than 100 meters away from the project location.',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.orange[800],
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                      const SizedBox(height: 12),
 
                       _buildVisitorPhotoSection(),
                       const SizedBox(height: 12),
@@ -675,112 +847,6 @@ class _AddVisitDialogState extends State<AddVisitDialog>
     }
   }
 
-  Widget _buildCustomDropdown({
-    required String label,
-    required String? value,
-    required List<String> items,
-    required ValueChanged<String?> onChanged,
-    String? Function(String?)? validator,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: Colors.black,
-              ),
-            ),
-            const SizedBox(width: 4),
-            if (label.contains('*'))
-              Container(
-                width: 5,
-                height: 5,
-                decoration: const BoxDecoration(
-                  color: Colors.red,
-                  shape: BoxShape.circle,
-                ),
-              ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        DropdownButtonFormField<String>(
-          value: value,
-          validator: validator,
-          decoration: InputDecoration(
-            isDense: true,
-            fillColor: Colors.white,
-            filled: true,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 14,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(
-                color: AppColors.primaryTextColor,
-                width: 0.5,
-              ),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(
-                color: Colors.black26,
-                width: 1,
-              ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(
-                color: AppColors.primaryTextColor,
-                width: 1,
-              ),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(
-                color: Colors.red,
-                width: 1.2,
-              ),
-            ),
-            focusedErrorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(
-                color: Colors.red,
-                width: 1.5,
-              ),
-            ),
-          ),
-          items: items.map((item) {
-            return DropdownMenuItem<String>(
-              value: item,
-              child: Text(
-                item,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.black,
-                ),
-              ),
-            );
-          }).toList(),
-          onChanged: onChanged,
-          style: const TextStyle(
-            fontSize: 14,
-            color: Colors.black,
-          ),
-          icon: const Icon(
-            Icons.arrow_drop_down,
-            color: AppColors.secondaryTextColor,
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildCustomTextField({
     required String label,
     required TextEditingController txtController,
@@ -877,18 +943,6 @@ class _AddVisitDialogState extends State<AddVisitDialog>
   // Get current location
   Future<void> _getCurrentLocation() async {
     try {
-      // Show loading indicator for location
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(kIsWeb 
-              ? 'Requesting location access from browser...' 
-              : 'Processing...'),
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
-
       final location = await _locationService.getCurrentLocation();
       
       if (location != null) {
@@ -896,6 +950,11 @@ class _AddVisitDialogState extends State<AddVisitDialog>
           _currentLatitude = location['latitude']!.toString();
           _currentLongitude = location['longitude']!.toString();
         });
+        
+        // Check distance if project visit is selected
+        if (mounted) {
+          _checkDistanceFromProject();
+        }
         
         if (mounted) {
           // ScaffoldMessenger.of(context).showSnackBar(
@@ -929,6 +988,59 @@ class _AddVisitDialogState extends State<AddVisitDialog>
           ),
         );
       }
+    }
+  }
+
+  // Check distance from project if project visit is selected
+  void _checkDistanceFromProject() {
+    debugPrint('Checking distance - selectedVisitType: $selectedVisitType, location: $_currentLatitude, $_currentLongitude');
+    
+    // Only check if "Project Visit" is selected
+    if (selectedVisitType != 'project_visit') {
+      setState(() {
+        _isTooFarFromProject = false;
+      });
+      return;
+    }
+
+    // Check if we have location and project coordinates
+    if (_currentLatitude.isEmpty || _currentLongitude.isEmpty) {
+      debugPrint('Location not ready yet');
+      setState(() {
+        _isTooFarFromProject = false;
+      });
+      return;
+    }
+
+    if (widget.project.latitude == null || widget.project.longitude == null) {
+      debugPrint('Project coordinates not available');
+      setState(() {
+        _isTooFarFromProject = false;
+      });
+      return;
+    }
+
+    // Check distance
+    final locationService = LocationService();
+    final userLat = double.tryParse(_currentLatitude);
+    final userLng = double.tryParse(_currentLongitude);
+    
+    debugPrint('User location: $userLat, $userLng, Project location: ${widget.project.latitude}, ${widget.project.longitude}');
+    
+    if (userLat != null && userLng != null) {
+      final isWithinDistance = locationService.isWithinDistance(
+        userLat,
+        userLng,
+        widget.project.latitude,
+        widget.project.longitude,
+        100.0, // 100 meters
+      );
+      
+      debugPrint('isWithinDistance result: $isWithinDistance');
+      setState(() {
+        _isTooFarFromProject = (isWithinDistance == false);
+      });
+      debugPrint('Warning should show: $_isTooFarFromProject');
     }
   }
 
@@ -971,81 +1083,6 @@ class _AddVisitDialogState extends State<AddVisitDialog>
         // Get current location before creating the visit
         await _getCurrentLocation();
 
-        // Check distance validation - user must be within 100 meters of project
-        if (widget.project.latitude != null && widget.project.longitude != null) {
-          final locationService = LocationService();
-          final userLat = double.tryParse(_currentLatitude);
-          final userLng = double.tryParse(_currentLongitude);
-          
-          if (userLat != null && userLng != null) {
-            final isWithinDistance = locationService.isWithinDistance(
-              userLat,
-              userLng,
-              widget.project.latitude,
-              widget.project.longitude,
-              100.0, // 100 meters maximum distance
-            );
-            
-            if (isWithinDistance == false) {
-              if (mounted) {
-                setState(() {
-                  _isSaving = false;
-                });
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('You must be within 100 meters of the project location to save a visit. Please move closer to the project.', style: TextStyle(color: Colors.white)),
-                    backgroundColor: Colors.red,
-                    duration: Duration(seconds: 5),
-                  ),
-                );
-              }
-              return;
-            } else if (isWithinDistance == null) {
-              if (mounted) {
-                setState(() {
-                  _isSaving = false;
-                });
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Unable to verify your distance from the project. Please ensure you have proper location access.', style: TextStyle(color: Colors.white)),
-                    backgroundColor: Colors.orange,
-                    duration: Duration(seconds: 5),
-                  ),
-                );
-              }
-              return;
-            }
-          } else {
-            if (mounted) {
-              setState(() {
-                _isSaving = false;
-              });
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Unable to get your current location. Please ensure location services are enabled.', style: TextStyle(color: Colors.white)),
-                  backgroundColor: Colors.red,
-                  duration: Duration(seconds: 5),
-                ),
-              );
-            }
-            return;
-          }
-        } else {
-          if (mounted) {
-            setState(() {
-              _isSaving = false;
-            });
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Project location coordinates are not available. Please contact support.', style: TextStyle(color: Colors.white)),
-                backgroundColor: Colors.red,
-                duration: Duration(seconds: 5),
-              ),
-            );
-          }
-          return;
-        }
-
         String id = await _secureStorage.read(key: SharedPreferenceStrings.id) ?? '';
         // Create the visit request
         final visitRequest = CreateVisitRequest(
@@ -1060,6 +1097,7 @@ class _AddVisitDialogState extends State<AddVisitDialog>
           lat: _currentLatitude.isNotEmpty ? _currentLatitude : '0.0',
           long: _currentLongitude.isNotEmpty ? _currentLongitude : '0.0',
           dateTime: DateTime.now().toString(),
+          type: selectedVisitType ?? 'office_visit', // Default to office_visit if not selected
         );
 
         // Call the API to create the visit
@@ -1074,6 +1112,7 @@ class _AddVisitDialogState extends State<AddVisitDialog>
               _teamLeaderNameController.text = '';
               _reraNUmberController.text = '';
               _commentsController.text = '';
+              selectedVisitType = null; // Clear selected type
               // Clear the picked image
               _pickedImage = null;
               _webImage = null;

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../config/constant/app_colors.dart';
 import '../../../config/constant/const_assets.dart';
 import '../../../config/routes.dart';
@@ -7,6 +8,7 @@ import '../../../data/models/booking_summary_model.dart';
 import '../../../data/repository/booking_api_repository.dart';
 import '../../../data/models/request_models/booking_request_model.dart';
 import '../../../data/models/request_models/hold_request_model.dart';
+import '../../providers/projects_provider.dart';
 import 'header_icon_widget.dart';
 import 'action_buttons.dart';
 
@@ -53,6 +55,9 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
       } else {
         await _createBooking();
       }
+      
+      // Call project API after successful booking/hold creation
+      await _callProjectApi();
       
       // Show success message and reset form
       if (mounted) {
@@ -193,6 +198,25 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
     final paymentType = summary.paymentDetails!.paymentType;
     
     return '$paymentMethod payment for $paymentType booking';
+  }
+
+  /// Call project API after successful booking/hold creation
+  Future<void> _callProjectApi() async {
+    try {
+      print('Calling project API after successful ${widget.isHoldFlow ? 'hold' : 'booking'} creation...');
+      
+      // Refresh the projects provider state to update the project list
+      // This will automatically update the BookingFormSection since it watches the provider
+      if (mounted) {
+        final container = ProviderScope.containerOf(context);
+        await container.read(projectsControllerProvider.notifier).loadProjects();
+        print('Projects provider refreshed after ${widget.isHoldFlow ? 'hold' : 'booking'} creation');
+      }
+    } catch (e) {
+      print('Error refreshing projects provider after ${widget.isHoldFlow ? 'hold' : 'booking'} creation: $e');
+      // Don't throw error here as the main booking/hold operation was successful
+      // Just log the project API error
+    }
   }
 
   @override

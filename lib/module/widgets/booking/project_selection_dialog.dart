@@ -258,13 +258,13 @@ class _ProjectSelectionDialogState extends State<ProjectSelectionDialog> {
                                     : AppColors.headingTextColor,
                               ),
                             ),
-                            // subtitle: Text(
-                            //   '${project.availablePlotCount} plots available',
-                            //   style: const TextStyle(
-                            //     fontSize: 14,
-                            //     color: AppColors.darkGreyColor,
-                            //   ),
-                            // ),
+                            subtitle: Text(
+                              '${project.availablePlotCount} plots available',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: AppColors.darkGreyColor,
+                              ),
+                            ),
                             trailing: _isLoadingPlots && _loadingProjectId == project.id
                                 ? const SizedBox(
                                     width: 20,

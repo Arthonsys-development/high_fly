@@ -43,8 +43,6 @@ class _VisitorsScreenState extends ConsumerState<VisitorsScreen>
 
   void _onSearchChanged() {
     setState(() {
-
-    });(() {
       _searchQuery = _searchController.text.trim();
     });
   }
