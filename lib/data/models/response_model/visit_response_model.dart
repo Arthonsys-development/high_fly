@@ -12,6 +12,12 @@ class Visit {
   // final String visitTime;
   final String status;
   final String purpose;
+  final String? clientName;
+  final String? clientPhone;
+  final String? clientInterestLevel;
+  final bool isAtProjectLocation;
+  final String? createdAt;
+  final String? clientPhoto;
 
   Visit({
     required this.id,
@@ -27,22 +33,36 @@ class Visit {
     // required this.visitTime,
     required this.status,
     required this.purpose,
+    this.clientName,
+    this.clientPhone,
+    this.clientInterestLevel,
+    this.isAtProjectLocation = false,
+    this.createdAt,
+    this.clientPhoto,
   });
 
   factory Visit.fromJson(Map<String, dynamic> json) {
     // Handle different possible field names in the API response
     final id = json['id'] ?? json['visit_id'] ?? 0;
-    final projectId = json['project_id'] ?? 0;
+    final projectId = json['project_id'] ?? json['project'] ?? 0;
     
     // Ensure all string fields are properly converted to String
-    final projectName = (json['project_name'] ?? json['project'] ?? '').toString();
+    final projectName = (json['project_name'] ?? '').toString();
     final visitorName = (json['visitor_name'] ?? json['name'] ?? '').toString();
     final phoneNumber = (json['phone_number'] ?? json['phone'] ?? '').toString();
     final email = json['email']?.toString();
-    final agent = (json['agent'] ?? json['assigned_agent'] ?? '').toString();
+    final agent = (json['agent_name'] ?? json['agent'] ?? json['assigned_agent'] ?? '').toString();
     final comments = json['comments']?.toString();
     final visitorPhoto = json['visit_image']?.toString() ?? json['photo']?.toString();
-    final purpose = (json['purpose'] ?? json['visit_purpose'] ?? '').toString();
+    final purpose = (json['type'] ?? json['purpose'] ?? json['visit_purpose'] ?? '').toString();
+    final clientName = json['client_name']?.toString();
+    final clientPhone = json['client_phone']?.toString();
+    final clientInterestLevel = json['client_interest_level']?.toString();
+    final isAtProjectLocation = json['is_at_project_location'] == true || 
+                                 json['is_at_project_location'] == 'true' ||
+                                 (json['is_at_project_location'] is String && json['is_at_project_location'].toString().toLowerCase() == 'true');
+    final createdAt = json['created_at']?.toString();
+    final clientPhoto = json['client_photo']?.toString();
 
     // Handle date parsing
     // DateTime visitDate;
@@ -89,6 +109,12 @@ class Visit {
       visitDateTime: visitDateTime,
       status: status,
       purpose: purpose,
+      clientName: clientName,
+      clientPhone: clientPhone,
+      clientInterestLevel: clientInterestLevel,
+      isAtProjectLocation: isAtProjectLocation,
+      createdAt: createdAt,
+      clientPhoto: clientPhoto,
     );
   }
 
@@ -106,6 +132,12 @@ class Visit {
       'visit_datetime': visitDateTime,
       'status': status,
       'purpose': purpose,
+      'client_name': clientName,
+      'client_phone': clientPhone,
+      'client_interest_level': clientInterestLevel,
+      'is_at_project_location': isAtProjectLocation,
+      'created_at': createdAt,
+      'client_photo': clientPhoto,
     };
   }
 }

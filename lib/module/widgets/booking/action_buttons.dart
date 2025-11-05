@@ -22,11 +22,11 @@ class ActionButtons extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        SizedBox(
+        (onPrevious != null) ? SizedBox(
           width: 116,
           height: 40,
           child: _buildPreviousButton(),
-        ),
+        ) : Container(),
         const SizedBox(width: 16),
         SizedBox(
           width: 116,

@@ -17,4 +17,6 @@ class ApiConstants {
   // Booking Endpoints
   static const String plotBookings = 'plot-bookings/';
   static const String plotHolds = 'plot-holds/';
+  static const String holdsList = 'projects/plots/holds/';
+  static const String bookingsList = 'projects/plots/bookings/';
 }

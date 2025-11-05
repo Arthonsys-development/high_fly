@@ -6,6 +6,8 @@ import '../models/request_models/booking_request_model.dart';
 import '../models/request_models/hold_request_model.dart';
 import '../models/response_models/booking_response_model.dart';
 import '../models/response_models/hold_response_model.dart';
+import '../models/hold_list_model.dart';
+import '../models/booking_list_model.dart';
 
 class BookingApiRepository {
   final ApiClient _apiClient = ApiClient();
@@ -68,6 +70,52 @@ class BookingApiRepository {
         return HoldResponseModel.fromJson(response.data);
       } else {
         throw Exception('Failed to create hold: ${response.statusMessage}');
+      }
+    } on DioException catch (e) {
+      throw Exception('API Error: ${e.message}');
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
+  /// Get list of all holds
+  Future<List<HoldListModel>> getHoldsList() async {
+    try {
+      final response = await _apiClient.get(ApiConstants.holdsList);
+      
+      if (response.statusCode == 200) {
+        if (response.data is List) {
+          return (response.data as List)
+              .map((item) => HoldListModel.fromJson(item as Map<String, dynamic>))
+              .toList();
+        } else {
+          throw Exception('Invalid response format');
+        }
+      } else {
+        throw Exception('Failed to fetch holds: ${response.statusMessage}');
+      }
+    } on DioException catch (e) {
+      throw Exception('API Error: ${e.message}');
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
+  /// Get list of all bookings
+  Future<List<BookingListModel>> getBookingsList() async {
+    try {
+      final response = await _apiClient.get(ApiConstants.bookingsList);
+      
+      if (response.statusCode == 200) {
+        if (response.data is List) {
+          return (response.data as List)
+              .map((item) => BookingListModel.fromJson(item as Map<String, dynamic>))
+              .toList();
+        } else {
+          throw Exception('Invalid response format');
+        }
+      } else {
+        throw Exception('Failed to fetch bookings: ${response.statusMessage}');
       }
     } on DioException catch (e) {
       throw Exception('API Error: ${e.message}');

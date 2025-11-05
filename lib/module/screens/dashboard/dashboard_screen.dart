@@ -14,6 +14,9 @@ import '../../utils/responsive.dart';
 import '../../widgets/dashboard_side_menu.dart';
 import '../Booking/BookingScreen.dart';
 import '../visitors/visitors_screen.dart';
+import '../holds/holds_list_screen.dart';
+import '../bookings/bookings_list_screen.dart';
+import '../bookings/webview_screen.dart';
 import '../../providers/analytics_provider.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -95,6 +98,37 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     setState(() {
       _searchQuery = _searchController.text.toLowerCase();
     });
+  }
+
+  Future<void> _openGoogleMaps(Project project) async {
+    if (project.latitude == null || project.longitude == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Location coordinates not available for this project'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+      return;
+    }
+
+    // Create Google Maps web URL
+    // The WebView will handle intent:// redirects and extract the fallback URL
+    final googleMapsUrl = 'https://www.google.com/maps/search/?api=1&query=${project.latitude},${project.longitude}';
+    
+    // Navigate to WebViewScreen to display Google Maps in-app
+    if (mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => WebViewScreen(
+            url: googleMapsUrl,
+            title: '${project.name} - Location',
+          ),
+        ),
+      );
+    }
   }
 
   List<Project> _filterProjects(List<Project> projects, String query) {
@@ -229,6 +263,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       case 2:
         return 'Vistarak - Booking';
       case 3:
+        return 'Vistarak - Holds';
+      case 4:
+        return 'Vistarak - Bookings';
+      case 5:
         return 'Vistarak - Profile';
       default:
         return 'Vistarak Dashboard';
@@ -245,6 +283,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       case 2:
         return _buildBookingProcessorContent();
       case 3:
+        return _buildHoldsContent();
+      case 4:
+        return _buildBookingsContent();
+      case 5:
         return _buildProfileContent();
       default:
         return _buildProjectContent();
@@ -269,6 +311,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
 
   Widget _buildBookingProcessorContent() {
     return BookingProcessorScreen();
+  }
+
+  Widget _buildHoldsContent() {
+    return const HoldsListScreen();
+  }
+
+  Widget _buildBookingsContent() {
+    return const BookingsListScreen();
   }
 
   Widget _buildMobileLayout() {
@@ -965,23 +1015,30 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             ],
           ),
           const SizedBox(height: 8),
-          Row(
-           // crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Image.asset(IconsAssets.locationIcon, width: 15, color: const Color.fromARGB(255, 66, 76, 90)),
-              // const Icon(Icons.location_on, size: 16, color: Colors.grey),
-              const SizedBox(width: 4),
-              Expanded(
-                child: Text(
-                  project.subAddress,
-                  style: const TextStyle(
-                    color: AppColors.darkGreyColor,
-                    fontWeight: FontWeight.normal,
-                    fontSize: 16,
+          InkWell(
+            onTap: () => _openGoogleMaps(project),
+            borderRadius: BorderRadius.circular(4),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4.0),
+              child: Row(
+               // crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Image.asset(IconsAssets.locationIcon, width: 15, color: const Color.fromARGB(255, 66, 76, 90)),
+                  // const Icon(Icons.location_on, size: 16, color: Colors.grey),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      project.subAddress,
+                      style: const TextStyle(
+                        color: AppColors.darkGreyColor,
+                        fontWeight: FontWeight.normal,
+                        fontSize: 16,
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
           const SizedBox(height: 8),
     if(project.description.isNotEmpty)...[

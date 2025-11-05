@@ -141,46 +141,40 @@ class _VisitorsScreenState extends ConsumerState<VisitorsScreen>
           const SizedBox(height: 20),
 
           // Search field
-          Padding(
-            padding: const EdgeInsets.all(15.0),
-            child: SizedBox(
-              height: 50,
+          Container(
+              padding: const EdgeInsets.symmetric(horizontal: 15.0),
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                borderRadius: BorderRadius.circular(8),
+              ),
               child: TextField(
                 controller: _searchController,
-                cursorColor: AppColors.primaryTextColor,
-                style: const TextStyle(fontSize: 14, color: AppColors.primaryTextColor),
+                cursorColor: AppColors.primaryColor,
+                style: TextStyle(color: AppColors.primaryColor, fontSize: 15),
                 decoration: InputDecoration(
-                  hintText: "Search by project or visitor name...",
-                  prefixIcon: const Icon(Icons.search, size: 20, color: AppColors.primaryTextColor,),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(
-                      color: AppColors.secondaryTextColor,
-                      width: 1.5,
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(
-                      color: AppColors.secondaryTextColor,
-                      width: 1,
-                    ),
-                  ),
-                  suffixIcon: _searchQuery.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear, size: 20),
-                          onPressed: () {
-                            _searchController.clear();
-                            setState(() {
-                              _searchQuery = '';
-                            });
-                          },
-                        )
-                      : null,
+                  hintText: "Search by plot code, customer name, phone...",
+                  border: InputBorder.none,
+                  prefixIcon: const Icon(Icons.search, color: AppColors.primaryColor),
                 ),
               ),
             ),
-          ),
+            const SizedBox(height: 20),
+          // Padding(
+          //   padding: const EdgeInsets.all(15.0),
+          //   child: SizedBox(
+          //     height: 50,
+          //     child: TextField(
+          //       controller: _searchController,
+          //       cursorColor: AppColors.primaryColor,
+          //       style: TextStyle(color: AppColors.primaryColor, fontSize: 15),
+          //       decoration: InputDecoration(
+          //         hintText: "Search by plot code, customer name, phone...",
+          //         border: InputBorder.none,
+          //         prefixIcon: const Icon(Icons.search, color: AppColors.primaryColor),
+          //       )
+          //     ),
+          //   ),
+          // ),
 
           // Show empty state message when there are no visits
           if (filteredVisits.isEmpty)
@@ -259,11 +253,11 @@ class _VisitorsScreenState extends ConsumerState<VisitorsScreen>
               height: 50,
               child: TextField(
                 controller: _searchController,
-                cursorColor: AppColors.primaryTextColor,
+                cursorColor: AppColors.primaryColor,
                 style: const TextStyle(fontSize: 14, color: AppColors.primaryTextColor),
                 decoration: InputDecoration(
                   hintText: "Search by project or visitor name...",
-                  prefixIcon: const Icon(Icons.search, size: 20, color: AppColors.primaryTextColor,),
+                  prefixIcon: const Icon(Icons.search, size: 20, color: AppColors.primaryColor,),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide(
@@ -280,7 +274,7 @@ class _VisitorsScreenState extends ConsumerState<VisitorsScreen>
                   ),
                   suffixIcon: _searchQuery.isNotEmpty
                       ? IconButton(
-                          icon: const Icon(Icons.clear, size: 20),
+                          icon: const Icon(Icons.clear, size: 20, color: AppColors.primaryColor),
                           onPressed: () {
                             _searchController.clear();
                             setState(() {

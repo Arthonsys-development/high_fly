@@ -40,9 +40,19 @@ class _DashboardSideMenuState extends State<DashboardSideMenu> {
       index: 2,
     ),
     MenuItem(
+      icon: Icons.lock_clock,
+      title: 'Holds',
+      index: 3,
+    ),
+    MenuItem(
+      icon: Icons.book_online,
+      title: 'Bookings',
+      index: 4,
+    ),
+    MenuItem(
       icon: Icons.person,
       title: 'Profile',
-      index: 3,
+      index: 5,
     ),
     // MenuItem(
     //   icon: Icons.settings,
@@ -448,6 +458,16 @@ class MobileSideMenuDrawer extends ConsumerWidget {
       title: 'Booking Processor',
       index: 2,
     ),
+    MenuItem(
+      icon: Icons.lock_clock,
+      title: 'Holds',
+      index: 3,
+    ),
+    MenuItem(
+      icon: Icons.book_online,
+      title: 'Bookings',
+      index: 4,
+    ),
     // MenuItem(
     //   icon: Icons.person,
     //   title: 'Profile',
@@ -564,7 +584,7 @@ class MobileSideMenuDrawer extends ConsumerWidget {
   Widget _buildUserProfile(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        onMenuItemSelected(3);
+        onMenuItemSelected(5);
         Navigator.of(context).pop();
       },
       child: Container(
@@ -664,7 +684,7 @@ class MobileSideMenuDrawer extends ConsumerWidget {
       onTap: () {
         // Navigator.of(context).pop(); // Close drawer first
         // context.go(Routes.profileScreen);
-        onMenuItemSelected(3);
+        onMenuItemSelected(5);
         Navigator.of(context).pop(); // Close drawer
       },
       child: Container(
