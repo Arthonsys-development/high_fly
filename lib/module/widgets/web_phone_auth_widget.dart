@@ -101,7 +101,7 @@ class _WebPhoneAuthWidgetState extends ConsumerState<WebPhoneAuthWidget> {
               hintText: 'Enter your phone number (e.g., +1234567890)',
               borderRadius: 6,
               contentSpace: 5,
-              maxLength: 15,
+              maxLength: 10,
               keyboardType: TextInputType.phone,
               enabled: !authState.isOtpSent,
               validator: (value) {

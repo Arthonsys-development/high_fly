@@ -2,7 +2,6 @@ import 'package:dio/dio.dart';
 import 'package:highfly/config/network/api_client.dart';
 import 'package:highfly/config/network/api_constants.dart';
 import 'package:highfly/data/models/response_model/profile_model.dart';
-import 'dart:io';
 
 class ProfileApiRepository {
   final ApiClient _apiClient = ApiClient();
@@ -92,7 +91,7 @@ class ProfileApiRepository {
       
       print('📊 ProfileApiRepository: Complete update data: $completeData');
 
-      final response = await _apiClient.put(
+      final response = await _apiClient.patch(
         ApiConstants.profileData,
         data: completeData,
       );
@@ -142,8 +141,8 @@ class ProfileApiRepository {
 
       // Try different possible endpoints for photo upload
       final endpoints = [
-        '${ApiConstants.profileData}photo/',
-        '${ApiConstants.profileData}profile-image/',
+        (ApiConstants.profileData),
+        (ApiConstants.profileData),
         ApiConstants.profileData,
       ];
       
@@ -153,7 +152,7 @@ class ProfileApiRepository {
       for (final endpoint in endpoints) {
         try {
           print('📸 ProfileApiRepository: Trying endpoint: $endpoint');
-          final response = await _apiClient.post(endpoint, data: formData);
+          final response = await _apiClient.patch(endpoint, data: formData);
           
           print('✅ ProfileApiRepository: Profile photo uploaded successfully');
           print('📊 ProfileApiRepository: Response data: ${response.data}');

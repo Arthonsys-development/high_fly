@@ -16,10 +16,54 @@ class Utils {
   }
 
   static String formatDateTime(date) {
-    date = date.split('+')[0];
-    DateTime dateTime = DateTime.parse(date);
-    DateFormat dateFormat = DateFormat('MMM dd, yyyy hh:mm a');
-    String formattedDate = dateFormat.format(dateTime);
+    if (date == null) return '';
+
+    // Normalize to String
+    String raw = date is DateTime ? date.toIso8601String() : date.toString();
+    raw = raw.trim();
+
+    // Remove timezone suffix if present (e.g., "+05:30") to allow fallback ISO parsing
+    if (raw.contains('+')) {
+      raw = raw.split('+')[0];
+    }
+
+    DateTime? parsed;
+
+    // 1) Try native ISO parser first
+    try {
+      parsed = DateTime.parse(raw);
+    } catch (_) {
+      parsed = null;
+    }
+
+    // 2) Try common non-ISO formats when native parse fails
+    if (parsed == null) {
+      final candidates = <String>[
+        'dd/MM/yy',
+        'dd/MM/yyyy',
+        'MM/dd/yy',
+        'MM/dd/yyyy',
+        'dd-MM-yy',
+        'dd-MM-yyyy',
+      ];
+      for (final pattern in candidates) {
+        try {
+          parsed = DateFormat(pattern).parseStrict(raw);
+          break;
+        } catch (_) {
+          // try next
+        }
+      }
+    }
+
+    // If still not parsable, return original string to avoid crashing UI
+    if (parsed == null) {
+      debugPrint('Utils.formatDateTime: Unparsable date "$raw"');
+      return raw;
+    }
+
+    final DateFormat dateFormat = DateFormat('MMM dd, yyyy hh:mm a');
+    final String formattedDate = dateFormat.format(parsed);
     debugPrint(formattedDate);
     return formattedDate;
   }

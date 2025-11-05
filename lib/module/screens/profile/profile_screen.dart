@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
-import '../../global/widgets/profile_header.dart';
 import '../../global/widgets/profile_picture.dart';
 import '../../global/widgets/profile_text_field.dart';
 import '../../global/widgets/custom_button.dart';
 import '../../providers/profile_provider.dart';
 import '../../../config/constant/app_colors.dart';
-import '../../../config/routes.dart';
 import '../../utils/app_fonts.dart';
 import '../../../main.dart';
+import 'package:image_picker/image_picker.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -180,7 +178,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       child: ProfilePicture(
         imageUrl: state.profile?.profileImage,
         onEditPressed: () {
-          ref.read(profileProvider.notifier).updateProfilePhoto();
+          _showImageSourceDialog();
         },
         size: 120,
       ),
@@ -194,6 +192,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ProfileTextField(
           titleText: 'Full Name',
           isMandatory: true,
+          maxLength: 30,
           controller: _fullNameController,
           enabled: state.isEditing,
           onChanged: (value) {
@@ -222,6 +221,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           isMandatory: true,
           controller: TextEditingController(text: state.profile?.phoneNumber ?? ''),
           enabled: false,
+          maxLength: 10,
           isReadOnly: true,
         ),
         const SizedBox(height: 20),
@@ -242,6 +242,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           isMandatory: state.profile?.teamLeaderName?.isNotEmpty ?? false,
           controller: _teamLeaderNameController,
           enabled: state.isEditing,
+          maxLength: 30,
           onChanged: (value) {
             ref.read(profileProvider.notifier).updateField('teamLeaderName', value);
           },
@@ -405,6 +406,40 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               ),
             ),
           ],
+        );
+      },
+    );
+  }
+
+  Future<void> _showImageSourceDialog() async {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Select Image Source'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: Icon(Icons.camera_alt, color: AppColors.primaryColor),
+                title: const Text('Camera'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  ref.read(profileProvider.notifier)
+                      .updateProfilePhotoFromSource(ImageSource.camera);
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.photo_library, color: AppColors.primaryColor),
+                title: const Text('Gallery'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  ref.read(profileProvider.notifier)
+                      .updateProfilePhotoFromSource(ImageSource.gallery);
+                },
+              ),
+            ],
+          ),
         );
       },
     );

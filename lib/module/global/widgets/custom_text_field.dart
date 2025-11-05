@@ -151,7 +151,7 @@ class CustomTextField extends StatelessWidget {
               SizedBox(
                 width: 4,
               ),
-
+              if(isMandatory)...[
               Padding(
                 padding: const EdgeInsets.only(top: 5.0),
                 child: SizedBox(
@@ -159,6 +159,7 @@ class CustomTextField extends StatelessWidget {
                     height: 5,
                     child: Image.asset(IconsAssets.star, color: Colors.red,)),
               )
+              ]
             ],
           ),
           SizedBox(height: contentSpace ?? 12),

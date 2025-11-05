@@ -1,9 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../../data/models/response_model/profile_model.dart';
 import '../../data/repository/profile_api_repository.dart';
+import '../../config/constant/app_strings.dart';
 
 // Profile state class
 class ProfileState {
@@ -38,6 +41,7 @@ class ProfileState {
 class ProfileNotifier extends Notifier<ProfileState> {
   final ProfileApiRepository _profileApiRepository = ProfileApiRepository();
   final ImagePicker _imagePicker = ImagePicker();
+  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
 
   @override
   ProfileState build() {
@@ -63,12 +67,50 @@ class ProfileNotifier extends Notifier<ProfileState> {
         profile: profileData,
         isLoading: false,
       );
+      
+      // Sync data to secure storage after loading
+      await _syncToSecureStorage(profileData);
     } catch (e) {
       print('❌ ProfileNotifier: Error loading profile - $e');
       state = state.copyWith(
         error: e.toString(),
         isLoading: false,
       );
+    }
+  }
+
+  // Helper method to sync profile data to secure storage
+  Future<void> _syncToSecureStorage(ProfileResponseData profileData) async {
+    try {
+      // Update fullName
+      if (profileData.fullName != null && profileData.fullName!.isNotEmpty) {
+        await _secureStorage.write(
+          key: SharedPreferenceStrings.fullName, 
+          value: profileData.fullName!
+        );
+        await _secureStorage.write(
+          key: SharedPreferenceStrings.firstName, 
+          value: profileData.fullName!
+        );
+        print('✅ ProfileNotifier: Full name synced to secure storage');
+      }
+      
+      // Update profile photo if available
+      if (profileData.profileImage != null && profileData.profileImage!.isNotEmpty) {
+        // Check if it's already a full URL or needs BASE_URL_IMAGE prefix
+        String profileImageUrl = profileData.profileImage!;
+        if (!profileImageUrl.startsWith('http')) {
+          // If it's a relative path, add the base URL
+          profileImageUrl = "${dotenv.env['BASE_URL_IMAGE']}$profileImageUrl";
+        }
+        await _secureStorage.write(
+          key: SharedPreferenceStrings.profilePhoto,
+          value: profileImageUrl
+        );
+        print('✅ ProfileNotifier: Profile photo synced to secure storage');
+      }
+    } catch (e) {
+      print('⚠️ ProfileNotifier: Error syncing to secure storage - $e');
     }
   }
 
@@ -192,12 +234,15 @@ class ProfileNotifier extends Notifier<ProfileState> {
         updateData['team_leader_name'] = state.profile!.teamLeaderName;
       }
       
-      final updatedProfile = await _profileApiRepository.updateProfile(state.profile!, updateData);
+      await _profileApiRepository.updateProfile(state.profile!, updateData);
       
       print('✅ ProfileNotifier: Profile saved successfully');
+      // Allow loadProfile to proceed (it early-returns if already loading)
+      state = state.copyWith(isLoading: false);
+      // After saving, fetch the latest profile from API to ensure fresh data
+      await loadProfile();
+      // Ensure we exit edit mode
       state = state.copyWith(
-        profile: updatedProfile,
-        isLoading: false,
         isEditing: false,
       );
     } on DioException catch (e) {
@@ -252,13 +297,37 @@ class ProfileNotifier extends Notifier<ProfileState> {
         state = state.copyWith(isLoading: true, error: null);
         
         // Upload the image to the backend
-        final updatedProfile = await _profileApiRepository.uploadProfilePhoto(image.path);
-        
-        // Update the state with the new profile data
-        state = state.copyWith(
-          profile: updatedProfile,
-          isLoading: false,
-        );
+        await _profileApiRepository.uploadProfilePhoto(image.path);
+        print('✅ ProfileNotifier: Profile image updated successfully');
+        // Allow loadProfile to proceed and fetch the freshest data, including CDN URLs
+        state = state.copyWith(isLoading: false);
+        await loadProfile();
+      }
+    } catch (e) {
+      state = state.copyWith(
+        error: 'Failed to update profile photo: $e',
+        isLoading: false,
+      );
+    }
+  }
+
+  // Update profile photo from a specific image source (camera or gallery)
+  Future<void> updateProfilePhotoFromSource(ImageSource source) async {
+    try {
+      final XFile? image = await _imagePicker.pickImage(
+        source: source,
+        maxWidth: 400,
+        maxHeight: 400,
+        imageQuality: 80,
+      );
+
+      if (image != null) {
+        state = state.copyWith(isLoading: true, error: null);
+
+        await _profileApiRepository.uploadProfilePhoto(image.path);
+        print('✅ ProfileNotifier: Profile image updated successfully (from ${source.name})');
+        state = state.copyWith(isLoading: false);
+        await loadProfile();
       }
     } catch (e) {
       state = state.copyWith(

@@ -340,19 +340,19 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                 width: 100,
               ),
             ),
-            const SizedBox(height: 30),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 30.0),
-              child: Text(
-                SignInScreenString.heading1,
-                style: TextStyle(
-                  fontSize: 30,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black,
-                ),
-              ),
-            ),
-            const SizedBox(height: 10),
+            // const SizedBox(height: 30),
+            // Padding(
+            //   padding: const EdgeInsets.symmetric(horizontal: 30.0),
+            //   child: Text(
+            //     SignInScreenString.heading1,
+            //     style: TextStyle(
+            //       fontSize: 30,
+            //       fontWeight: FontWeight.w500,
+            //       color: Colors.black,
+            //     ),
+            //   ),
+            // ),
+            // const SizedBox(height: 10),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 30.0),
               child: Text(
@@ -469,17 +469,17 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                 ImageAssets.highFlyLogo,
                 width: Responsive.isDesktop(context) ? 120 : 100,
               ),
-              const SizedBox(height: 30),
-              Text(
-                SignInScreenString.heading1,
-                style: TextStyle(
-                  fontSize: Responsive.isDesktop(context) ? 36 : 32,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
+              // const SizedBox(height: 30),
+              // Text(
+              //   SignInScreenString.heading1,
+              //   style: TextStyle(
+              //     fontSize: Responsive.isDesktop(context) ? 36 : 32,
+              //     fontWeight: FontWeight.w500,
+              //     color: Colors.black,
+              //   ),
+              //   textAlign: TextAlign.center,
+              // ),
+              // const SizedBox(height: 16),
               Text(
                 SignInScreenString.heading2,
                 style: TextStyle(

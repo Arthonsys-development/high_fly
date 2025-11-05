@@ -122,7 +122,8 @@ class VisitDetailScreen extends StatelessWidget {
                     _buildDetailRow(
                       icon: Icons.calendar_today,
                       label: "Visit Date & Time",
-                      value: Utils.formatDateTime(visit.visitDateTime),
+                      // value: Utils.formatDateTime(visit.visitDateTime),
+                      value: visit.visitDateTime,
                     ),
                     /*const SizedBox(height: 16),
                     _buildDetailRow(

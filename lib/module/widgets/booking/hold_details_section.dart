@@ -82,6 +82,7 @@ class _HoldDetailsSectionState extends State<HoldDetailsSection> {
             controller: _associateNameController,
             hintText: 'Enter associate name or self',
             isMandatory: true,
+            maxLength: 30,
             borderRadius: 6,
             onChanged: (value) {
               setState(() {
@@ -98,6 +99,7 @@ class _HoldDetailsSectionState extends State<HoldDetailsSection> {
             controller: _reraNumberController,
             hintText: 'Enter RERA number',
             isMandatory: true,
+            maxLength: 25,
             borderRadius: 6,
             onChanged: (value) {
               setState(() {
@@ -114,6 +116,7 @@ class _HoldDetailsSectionState extends State<HoldDetailsSection> {
             controller: _teamLeaderController,
             hintText: 'Enter team leader name',
             isMandatory: false,
+            maxLength: 30,
             borderRadius: 6,
             onChanged: (value) {
               setState(() {
@@ -130,6 +133,7 @@ class _HoldDetailsSectionState extends State<HoldDetailsSection> {
             controller: _clientAadharController,
             hintText: 'Enter client\'s Aadhar number',
             isMandatory: true,
+            maxLength: 12,
             keyboardType: TextInputType.number,
             borderRadius: 6,
             onChanged: (value) {
@@ -147,6 +151,7 @@ class _HoldDetailsSectionState extends State<HoldDetailsSection> {
             controller: _additionalNotesController,
             hintText: 'Enter any additional notes or special instructions',
             isMandatory: false,
+            maxLength: 150,
             maxLines: 3,
             borderRadius: 6,
             onChanged: (value) {

@@ -36,7 +36,7 @@ class ProfileResponseData {
 
   ProfileResponseData.fromJson(Map<String, dynamic> json) {
     id = json['id'];
-    user = json['user'] != null ? new User.fromJson(json['user']) : null;
+    user = json['user'] != null ? User.fromJson(json['user']) : null;
     phoneNumber = json['phone_number'];
     reraNumber = json['rera_number'];
     idNumber = json['id_number'];
@@ -106,7 +106,7 @@ class User {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
+    final Map<String, dynamic> data = <String, dynamic>{};
     data['id'] = id;
     data['email'] = email;
     data['first_name'] = firstName;

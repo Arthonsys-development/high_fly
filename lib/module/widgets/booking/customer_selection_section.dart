@@ -84,6 +84,7 @@ class _CustomerSelectionSectionState extends ConsumerState<CustomerSelectionSect
               hintText: 'Enter customer name',
               isMandatory: true,
               borderRadius: 6,
+              maxLength: 30,
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
                   return 'Please enter customer name';
@@ -101,6 +102,7 @@ class _CustomerSelectionSectionState extends ConsumerState<CustomerSelectionSect
               hintText: 'Enter phone number',
               isMandatory: true,
               borderRadius: 6,
+              maxLength: 10,
               keyboardType: TextInputType.phone,
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {

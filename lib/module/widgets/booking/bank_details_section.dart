@@ -87,6 +87,7 @@ class _BankDetailsSectionState extends State<BankDetailsSection> {
             hintText: 'Enter account holder name',
             isMandatory: true,
             borderRadius: 6,
+            maxLength: 30,
             onChanged: (value) {
               setState(() {
                 _bankDetails = _bankDetails.copyWith(accountHolderName: value);
@@ -103,6 +104,7 @@ class _BankDetailsSectionState extends State<BankDetailsSection> {
             hintText: 'Enter branch name',
             isMandatory: true,
             borderRadius: 6,
+            maxLength: 30,
             onChanged: (value) {
               setState(() {
                 _bankDetails = _bankDetails.copyWith(branchName: value);
@@ -118,6 +120,7 @@ class _BankDetailsSectionState extends State<BankDetailsSection> {
             controller: _accountNumberController,
             hintText: 'Enter account number',
             isMandatory: true,
+            maxLength: 18,
             keyboardType: TextInputType.number,
             borderRadius: 6,
             inputFormatters: [
@@ -138,6 +141,7 @@ class _BankDetailsSectionState extends State<BankDetailsSection> {
             controller: _ifscCodeController,
             hintText: 'Enter IFSC Code',
             isMandatory: true,
+            maxLength: 11,
             borderRadius: 6,
             inputFormatters: [
               FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9]')),

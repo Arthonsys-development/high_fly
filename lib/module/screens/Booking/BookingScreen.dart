@@ -11,7 +11,6 @@ import '../../../data/models/booking_summary_model.dart';
 import '../../../data/models/hold_details_model.dart';
 import '../../../data/providers/sample_data_provider.dart';
 import '../../providers/projects_provider.dart';
-import '../../providers/user_provider.dart';
 import '../../widgets/booking/booking_form_section.dart';
 import '../../widgets/booking/customer_selection_section.dart';
 import '../../widgets/booking/hold_details_section.dart';
@@ -259,9 +258,10 @@ class _BookingProcessorScreenState extends State<BookingProcessorScreen>
       // Review & Confirm Step
       return Consumer(
         builder: (context, ref, child) {
-          final userState = ref.watch(userControllerProvider);
-          final agentId = userState.user?.id ?? '1'; // Default to '1' if no user data
-          
+         // final userState = ref.watch(userControllerProvider);
+         // final agentId = userState.user?.id ?? '1'; // Default to '1' if no user data
+         // String agentId = await _secureStorage.read(key: SharedPreferenceStrings.id) ?? '';
+
           return ReviewConfirmSection(
             title: "Review & Confirm",
             nextButtonText: actionType,
@@ -281,7 +281,7 @@ class _BookingProcessorScreenState extends State<BookingProcessorScreen>
               bankDetails: _bankDetails,
             ),
             isHoldFlow: false,
-            agentId: int.parse(agentId),
+          //  agentId: int.parse(agentId),
             onResetForm: _resetFormData,
           );
         },
@@ -392,8 +392,8 @@ class _BookingProcessorScreenState extends State<BookingProcessorScreen>
       // Review & Confirm Step
       return Consumer(
         builder: (context, ref, child) {
-          final userState = ref.watch(userControllerProvider);
-          final agentId = userState.user?.id ?? '1'; // Default to '1' if no user data
+         // final userState = ref.watch(userControllerProvider);
+         // final agentId = userState.user?.id ?? '1'; // Default to '1' if no user data
           
           return ReviewConfirmSection(
             title: "Review & Confirm",
@@ -415,7 +415,7 @@ class _BookingProcessorScreenState extends State<BookingProcessorScreen>
               bankDetails: _bankDetails,
             ),
             isHoldFlow: true,
-            agentId: int.parse(agentId),
+          // agentId: int.parse(agentId),
             onResetForm: _resetFormData,
           );
         },

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 // Add these new imports
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:permission_handler/permission_handler.dart';
 
@@ -109,6 +110,17 @@ Future<void> main() async {
     }
   } catch (e) {
     debugPrint('🔥 Firebase Messaging initialization error: $e');
+  }
+  
+  // Initialize Firebase Analytics
+  try {
+    final analytics = FirebaseAnalytics.instance;
+    debugPrint('🔥 Firebase Analytics initialized successfully');
+    // Set analytics collection enabled (it's enabled by default)
+    await analytics.setAnalyticsCollectionEnabled(true);
+  } catch (e) {
+    debugPrint('🔥 Firebase Analytics initialization error: $e');
+    // Continue anyway - analytics is not critical for app functionality
   }
   
   try {

@@ -1,8 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:highfly/module/widgets/add_visit_dialog.dart';
-import 'package:mockito/annotations.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:highfly/data/models/response_model/project_response_model.dart';
 
 // Generate mock classes

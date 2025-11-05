@@ -1,10 +1,8 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:highfly/config/constant/app_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:highfly/config/constant/const_assets.dart';
 import 'package:highfly/module/providers/projects_provider.dart';
-import 'package:highfly/module/providers/user_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
@@ -16,7 +14,7 @@ import '../../utils/responsive.dart';
 import '../../widgets/dashboard_side_menu.dart';
 import '../Booking/BookingScreen.dart';
 import '../visitors/visitors_screen.dart';
-import '../../widgets/add_visit_dialog.dart';
+import '../../providers/analytics_provider.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -55,6 +53,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!_isDisposed) {
         ref.read(projectsControllerProvider.notifier).loadProjects();
+        // Log dashboard view analytics
+        try {
+          final analyticsService = ref.read(analyticsProvider);
+          analyticsService.logDashboardViewed();
+        } catch (e) {
+          debugPrint('Error logging dashboard view analytics: $e');
+        }
       }
     });
     
@@ -270,9 +275,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     final projectsState = ref.watch(projectsControllerProvider);
     final filteredProjects = _filterProjects(projectsState.projects, _searchQuery);
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
+    return RefreshIndicator(
+      onRefresh: () async {
+        await Future.wait([
+          ref.read(projectsControllerProvider.notifier).loadProjects(),
+          ref.read(projectsControllerProvider.notifier).loadActiveProjects(),
+        ]);
+      },
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Title and Refresh Button
@@ -497,6 +510,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           ),
         ],
       ),
+      ),
     );
   }
 
@@ -506,9 +520,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     final projectsState = ref.watch(projectsControllerProvider);
     final filteredProjects = _filterProjects(projectsState.projects, _searchQuery);
 
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(isTablet ? 12.0 : 16.0),
-      child: Column(
+    return RefreshIndicator(
+      onRefresh: () async {
+        await Future.wait([
+          ref.read(projectsControllerProvider.notifier).loadProjects(),
+          ref.read(projectsControllerProvider.notifier).loadActiveProjects(),
+        ]);
+      },
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: EdgeInsets.all(isTablet ? 12.0 : 16.0),
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Title and Refresh Button
@@ -724,6 +746,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             ),
           ),
         ],
+      ),
       ),
     );
   }
@@ -943,13 +966,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           ),
           const SizedBox(height: 8),
           Row(
+           // crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Image.asset(IconsAssets.locationIcon, width: 12, color: AppColors.darkGreyColor),
+              Image.asset(IconsAssets.locationIcon, width: 15, color: const Color.fromARGB(255, 66, 76, 90)),
               // const Icon(Icons.location_on, size: 16, color: Colors.grey),
               const SizedBox(width: 4),
               Expanded(
                 child: Text(
-                  project.location,
+                  project.subAddress,
                   style: const TextStyle(
                     color: AppColors.darkGreyColor,
                     fontWeight: FontWeight.normal,
@@ -960,19 +984,20 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             ],
           ),
           const SizedBox(height: 8),
-
+    if(project.description.isNotEmpty)...[
     RichText(
-    text: TextSpan(
-    text: 'Description: ',
-    style: const TextStyle(color: AppColors.darkGreyColor,  fontSize: 16, fontWeight: FontWeight.w500),
-    children: [
-    TextSpan(
-    text: project.description,
-      style: const TextStyle(color: AppColors.darkGreyColor,  fontSize: 16, fontWeight: FontWeight.w400),
-    ),
+      text: TextSpan(
+        text: 'Description: ',
+        style: const TextStyle(color: AppColors.darkGreyColor,  fontSize: 16, fontWeight: FontWeight.w500),
+        children: [
+          TextSpan(
+            text: project.description,
+              style: const TextStyle(color: AppColors.darkGreyColor,  fontSize: 16, fontWeight: FontWeight.w400),
+          ),
+        ],
+      ),
+    )
     ],
-    ),
-    ),
 
           // Add Visit Button
           if(project.status == 'active')...[

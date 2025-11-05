@@ -13,6 +13,7 @@ class CreateVisitRequest {
   final String lat;
   final String long;
   final String type; // Visit type
+  final bool isAtProjectLocation;
   // final String phoneNumber;
   // final String email;
   final String? comments;
@@ -32,6 +33,7 @@ class CreateVisitRequest {
     required this.long,
     required this.dateTime,
     required this.type,
+    required this.isAtProjectLocation,
     this.comments,
     this.visitorPhoto,
     this.visitorPhotoFile,
@@ -51,6 +53,7 @@ class CreateVisitRequest {
       "visit_datetime": dateTime,
       "location_latitude": lat,
       "location_longitude": long,
+      "is_at_project_location": isAtProjectLocation,
       if (comments != null) "comments": comments,
       if (visitorPhoto != null) "visitor_photo": visitorPhoto,
     };
@@ -71,6 +74,7 @@ class CreateVisitRequest {
     formData.fields.add(MapEntry('location_latitude', lat));
     formData.fields.add(MapEntry('location_longitude', long));
     formData.fields.add(MapEntry('type', type));
+    formData.fields.add(MapEntry('is_at_project_location', isAtProjectLocation.toString()));
     if (comments != null) {
       formData.fields.add(MapEntry('comments', comments!));
     }

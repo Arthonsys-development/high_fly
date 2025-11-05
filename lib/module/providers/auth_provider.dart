@@ -12,6 +12,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 // Add FCM provider import
 import '../providers/fcm_provider.dart';
 import '../providers/profile_provider.dart';
+import '../providers/analytics_provider.dart';
 
 // Firebase Auth Repository Provider
 final firebaseAuthRepositoryProvider = Provider<FirebaseAuthRepository>((ref) {
@@ -172,6 +173,16 @@ class AuthController extends Notifier<AuthState> {
 
         // Register device for notifications after successful sign-in
         await registerDeviceForNotifications();
+
+        // Log analytics event for successful login
+        try {
+          final analyticsService = ref.read(analyticsProvider);
+          await analyticsService.logLogin(method: 'phone_otp');
+          // Set user ID for analytics
+          await analyticsService.setUserId(id);
+        } catch (e) {
+          debugPrint('Error logging login analytics: $e');
+        }
 
         // Load user profile after successful login
         try {

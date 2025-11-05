@@ -17,11 +17,14 @@ import 'dart:io' show Platform;
 import 'package:highfly/data/repository/auth_api_repository_provider.dart';
 import 'package:highfly/data/models/request_models/auth_request_model.dart';
 import 'package:highfly/data/repository/firebase_auth_repository.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../../../config/constant/app_strings.dart';
 import '../../../config/constant/const_assets.dart';
 import '../../global/widgets/custom_text_field.dart';
 import '../../utils/app_fonts.dart';
+import '../../providers/analytics_provider.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class SignUpScreen extends ConsumerStatefulWidget {
   const SignUpScreen({super.key});
@@ -49,6 +52,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   
   // Firebase auth repository
   final FirebaseAuthRepository _firebaseAuthRepository = FirebaseAuthRepository();
+  
+  // Secure storage for cleanup
+  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
 
   @override
   void initState() {
@@ -64,6 +70,30 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     _reraNumberController.dispose();
     _idNumberController.dispose();
     super.dispose();
+  }
+
+  /// Clean up Firebase auth and secure storage when registration fails
+  Future<void> _cleanupOnRegistrationFailure() async {
+    try {
+      debugPrint('🧹 Cleaning up Firebase auth and secure storage due to registration failure');
+      
+      // Sign out from Firebase
+      await _firebaseAuthRepository.signOut();
+      
+      // Clear all secure storage keys
+      await _secureStorage.delete(key: SharedPreferenceStrings.accessToken);
+      await _secureStorage.delete(key: SharedPreferenceStrings.id);
+      await _secureStorage.delete(key: SharedPreferenceStrings.firstName);
+      await _secureStorage.delete(key: SharedPreferenceStrings.fullName);
+      await _secureStorage.delete(key: SharedPreferenceStrings.phoneNumber);
+      await _secureStorage.delete(key: SharedPreferenceStrings.profilePhoto);
+      await _secureStorage.delete(key: 'access_token');
+      await _secureStorage.delete(key: 'user_data');
+      
+      debugPrint('✅ Cleanup completed successfully');
+    } catch (e) {
+      debugPrint('⚠️ Error during cleanup: $e');
+    }
   }
 
   /// Pick image from camera
@@ -483,19 +513,19 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
               ),
             ),
 
-            SizedBox(height: 30),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 30.0),
-              child: Text(
-                SignInScreenString.heading1,
-                style: TextStyle(
-                  fontSize: 30,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black,
-                ),
-              ),
-            ),
-            SizedBox(height: 10),
+            // SizedBox(height: 30),
+            // Padding(
+            //   padding: const EdgeInsets.symmetric(horizontal: 30.0),
+            //   child: Text(
+            //     SignInScreenString.heading1,
+            //     style: TextStyle(
+            //       fontSize: 30,
+            //       fontWeight: FontWeight.w500,
+            //       color: Colors.black,
+            //     ),
+            //   ),
+            // ),
+            // SizedBox(height: 10),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 30.0),
               child: Text(
@@ -508,7 +538,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                 textAlign: TextAlign.center,
               ),
             ),
-            SizedBox(height: 20),
+            SizedBox(height: 40),
             _buildProfilePhotoSection(),
             SizedBox(height: 20),
             CustomTextField(
@@ -518,16 +548,18 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
               borderRadius: 6,
               contentSpace: 8,
               maxLength: 50,
+              isMandatory: true,
             ),
             SizedBox(height: 20),
             CustomTextField(
               controller: _phoneNumberController,
               titleText: 'Phone Number',
-              hintText: '123456789',
+              hintText: '9xxxxxxxxx',
               borderRadius: 6,
               contentSpace: 8,
               maxLength: 10,
               keyboardType: TextInputType.phone,
+              isMandatory: true,
             ),
 
             if(showOtpField)...[
@@ -540,6 +572,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                 contentSpace: 8,
                 maxLength: 6,
                 keyboardType: TextInputType.number,
+                isMandatory: true,
               ),
             ],
 
@@ -551,6 +584,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
               borderRadius: 6,
               contentSpace: 8,
               maxLength: 30,
+              isMandatory: true,
             ),
             SizedBox(height: 20),
             CustomTextField(
@@ -560,6 +594,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
               borderRadius: 8,
               contentSpace: 12,
               maxLength: 50,
+              isMandatory: true,
             ),
             SizedBox(height: 20),
             CustomTextField(
@@ -568,7 +603,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
               hintText: 'Enter your ID number',
               borderRadius: 6,
               contentSpace: 8,
-              maxLength: 30,
+              maxLength: 20,
+              isMandatory: false,
             ),
             SizedBox(height: 30),
 
@@ -628,17 +664,17 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                 ImageAssets.highFlyLogo,
                 width: Responsive.isDesktop(context) ? 120 : 100,
               ),
-              SizedBox(height: 30),
-              Text(
-                SignInScreenString.heading1,
-                style: TextStyle(
-                  fontSize: Responsive.isDesktop(context) ? 36 : 32,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              SizedBox(height: 16),
+              // SizedBox(height: 30),
+              // Text(
+              //   SignInScreenString.heading1,
+              //   style: TextStyle(
+              //     fontSize: Responsive.isDesktop(context) ? 36 : 32,
+              //     fontWeight: FontWeight.w500,
+              //     color: Colors.black,
+              //   ),
+              //   textAlign: TextAlign.center,
+              // ),
+              // SizedBox(height: 16),
               Text(
                 SignInScreenString.heading2,
                 style: TextStyle(
@@ -701,7 +737,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
               child: CustomTextField(
                 controller: _phoneNumberController,
                 titleText: 'Phone Number',
-                hintText: '123456789',
+                hintText: '9xxxxxxxxx',
                 borderRadius: 8,
                 contentSpace: 12,
                 maxLength: 10,
@@ -780,7 +816,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
         CustomTextField(
           controller: _phoneNumberController,
           titleText: 'Phone Number',
-          hintText: '123456789',
+          hintText: '9xxxxxxxxx',
           borderRadius: 8,
           contentSpace: 12,
           maxLength: 10,
@@ -961,15 +997,15 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
       return;
     }
     
-    if (idNumber.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter your ID number'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
+    // if (idNumber.isEmpty) {
+    //   ScaffoldMessenger.of(context).showSnackBar(
+    //     const SnackBar(
+    //       content: Text('Please enter your ID number'),
+    //       backgroundColor: Colors.red,
+    //     ),
+    //   );
+    //   return;
+    // }
     
     // Check if profile photo is required
     if (_pickedImage == null) {
@@ -988,7 +1024,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     
     try {
       // First, verify the OTP with Firebase
-      final userCredential = await _firebaseAuthRepository.verifyOTP(
+      await _firebaseAuthRepository.verifyOTP(
         otpCode: otp,
         verificationId: _firebaseAuthRepository.verificationId,
       );
@@ -1044,9 +1080,57 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
         debugPrint('Token verification result: $tokenResult');
         
         if (tokenResult['success']) {
-          // Save the access token (assuming it's in the response data)
-          // The access token should be saved in secure storage by the API client
-          debugPrint('Token verification successful, navigating to dashboard');
+          // Save user data to secure storage (similar to sign-in flow)
+          final data = tokenResult['data'];
+          if (data != null && data is Map) {
+            final accessToken = data['access_token']?.toString() ?? '';
+            final agent = data['agent'];
+            if (agent != null && agent is Map) {
+              final id = agent['id']?.toString() ?? '';
+              final fName = agent['full_name']?.toString() ?? '';
+              final fullName = agent['full_name']?.toString() ?? '';
+              final user = agent['user'];
+              final phoneNumber = (user != null && user is Map) ? (user['phone_number']?.toString() ?? '') : '';
+              final profileImage = (user != null && user is Map) ? (user['profile_image']?.toString() ?? '') : '';
+              
+              if (accessToken.isNotEmpty) {
+                await _secureStorage.write(key: SharedPreferenceStrings.accessToken, value: accessToken);
+              }
+              if (id.isNotEmpty) {
+                await _secureStorage.write(key: SharedPreferenceStrings.id, value: id);
+              }
+              if (fName.isNotEmpty) {
+                await _secureStorage.write(key: SharedPreferenceStrings.firstName, value: fName);
+              }
+              if (fullName.isNotEmpty) {
+                await _secureStorage.write(key: SharedPreferenceStrings.fullName, value: fullName);
+              }
+              if (phoneNumber.isNotEmpty) {
+                await _secureStorage.write(key: SharedPreferenceStrings.phoneNumber, value: phoneNumber);
+              }
+              if (profileImage.isNotEmpty) {
+                final profilePhotoUrl = "${dotenv.env['BASE_URL_IMAGE']}$profileImage";
+                await _secureStorage.write(key: SharedPreferenceStrings.profilePhoto, value: profilePhotoUrl);
+              }
+              
+              debugPrint('Token verification successful, user data saved to secure storage');
+            }
+          }
+          
+          // Log analytics event for successful signup
+          try {
+            final analyticsService = ref.read(analyticsProvider);
+            await analyticsService.logSignUp(method: 'phone_otp');
+            // Set user ID for analytics if available
+            if (tokenResult['data'] != null && tokenResult['data']['agent'] != null) {
+              final id = tokenResult['data']['agent']['id']?.toString();
+              if (id != null) {
+                await analyticsService.setUserId(id);
+              }
+            }
+          } catch (e) {
+            debugPrint('Error logging signup analytics: $e');
+          }
           
           setState(() {
             _isLoading = false;
@@ -1076,6 +1160,10 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
         }
       } else {
         debugPrint('Registration failed: ${result['message']}');
+        
+        // Clean up Firebase auth and secure storage since registration failed
+        await _cleanupOnRegistrationFailure();
+        
         setState(() {
           _isLoading = false;
         });
@@ -1088,6 +1176,11 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
         );
       }
     } catch (e) {
+      debugPrint('Registration error: $e');
+      
+      // Clean up Firebase auth and secure storage since registration failed
+      await _cleanupOnRegistrationFailure();
+      
       setState(() {
         _isLoading = false;
       });

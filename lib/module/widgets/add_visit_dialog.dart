@@ -19,17 +19,19 @@ import 'package:geolocator/geolocator.dart';
 import '../../config/constant/app_strings.dart';
 import '../../config/routes.dart';
 import '../global/widgets/common_app_bar.dart';
+import '../providers/analytics_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class AddVisitDialog extends StatefulWidget {
+class AddVisitDialog extends ConsumerStatefulWidget {
   final Project project;
   
   const AddVisitDialog({super.key, required this.project});
 
   @override
-  State<AddVisitDialog> createState() => _AddVisitDialogState();
+  ConsumerState<AddVisitDialog> createState() => _AddVisitDialogState();
 }
 
-class _AddVisitDialogState extends State<AddVisitDialog>
+class _AddVisitDialogState extends ConsumerState<AddVisitDialog>
     with WidgetsBindingObserver {
   final _formKey = GlobalKey<FormState>();
   final ImagePicker _picker = ImagePicker();
@@ -216,6 +218,7 @@ class _AddVisitDialogState extends State<AddVisitDialog>
                         label: "Visitor Name",
                         txtController: _visitorNameController,
                         isRequired: true,
+                        maxLength: 30,
                         // onChanged: (value) => visitorName = value,
                         validator: (value) => value == null || value.isEmpty ? "Enter visitor name" : null,
                       ),
@@ -226,6 +229,7 @@ class _AddVisitDialogState extends State<AddVisitDialog>
                         label: "RERA Number",
                         txtController: _reraNUmberController,
                         isRequired: true,
+                        maxLength: 25,
                         // onChanged: (value) => reraNUmber = value,
                         validator: (value) => value == null || value.isEmpty ? "Enter your RERA number" : null,
                       ),
@@ -236,6 +240,7 @@ class _AddVisitDialogState extends State<AddVisitDialog>
                         label: "Team Leader Name",
                         txtController: _teamLeaderNameController,
                         isRequired: true,
+                        maxLength: 30,
                         // onChanged: (value) => teamLeaderName = value,
                         validator: (value) => value == null || value.isEmpty ? "Enter team leader name" : null,
                       ),
@@ -412,6 +417,7 @@ class _AddVisitDialogState extends State<AddVisitDialog>
                         label: "Comments",
                         txtController: _commentsController,
                         maxLines: 3,
+                        maxLength: 150,
                         // onChanged: (value) => comments = value,
                       ),
                       const SizedBox(height: 20),
@@ -855,6 +861,7 @@ class _AddVisitDialogState extends State<AddVisitDialog>
     bool isRequired = false,
     int maxLines = 1,
     TextInputType? keyboardType,
+    int? maxLength,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -886,6 +893,7 @@ class _AddVisitDialogState extends State<AddVisitDialog>
           onChanged: onChanged,
           maxLines: maxLines,
           keyboardType: keyboardType,
+          maxLength: maxLength,
           style: const TextStyle(
             fontSize: 14,
             color: Colors.black,
@@ -1084,6 +1092,21 @@ class _AddVisitDialogState extends State<AddVisitDialog>
         await _getCurrentLocation();
 
         String id = await _secureStorage.read(key: SharedPreferenceStrings.id) ?? '';
+        // Compute is_at_project_location: true if within 100m, else false
+        bool isAtProjectLocation = false;
+        final userLat = double.tryParse(_currentLatitude);
+        final userLng = double.tryParse(_currentLongitude);
+        if (userLat != null && userLng != null &&
+            widget.project.latitude != null && widget.project.longitude != null) {
+          final within = _locationService.isWithinDistance(
+            userLat,
+            userLng,
+            widget.project.latitude,
+            widget.project.longitude,
+            100.0,
+          );
+          isAtProjectLocation = (within == true);
+        }
         // Create the visit request
         final visitRequest = CreateVisitRequest(
           projectId: widget.project.id.toString(),
@@ -1098,6 +1121,7 @@ class _AddVisitDialogState extends State<AddVisitDialog>
           long: _currentLongitude.isNotEmpty ? _currentLongitude : '0.0',
           dateTime: DateTime.now().toString(),
           type: selectedVisitType ?? 'office_visit', // Default to office_visit if not selected
+          isAtProjectLocation: isAtProjectLocation,
         );
 
         // Call the API to create the visit
@@ -1105,6 +1129,20 @@ class _AddVisitDialogState extends State<AddVisitDialog>
         final result = await authApiRepository.createVisit(visitRequest);
 
         if (result['success']) {
+          // Log analytics event for visit creation
+          try {
+            final analyticsService = ref.read(analyticsProvider);
+            await analyticsService.logVisitCreated(
+              visitType: selectedVisitType ?? 'office_visit',
+              projectId: widget.project.id.toString(),
+              projectName: widget.project.name,
+              hasPhoto: (_pickedImage != null || _webImage != null),
+              hasComments: _commentsController.text.isNotEmpty,
+            );
+          } catch (e) {
+            debugPrint('Error logging visit creation analytics: $e');
+          }
+
           if (mounted) {
             setState(() {
               _isSaving = false;

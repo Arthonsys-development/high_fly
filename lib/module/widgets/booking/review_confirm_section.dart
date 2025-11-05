@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:highfly/config/constant/app_strings.dart';
 import '../../../config/constant/app_colors.dart';
 import '../../../config/constant/const_assets.dart';
 import '../../../config/routes.dart';
@@ -19,7 +21,7 @@ class ReviewConfirmSection extends StatefulWidget {
   final VoidCallback? onNext;
   final BookingSummary bookingSummary;
   final bool isHoldFlow; // New parameter to distinguish between booking and hold flows
-  final int agentId; // Agent ID for API calls
+ // final int agentId; // Agent ID for API calls
   final VoidCallback? onResetForm; // Callback to reset form data
 
   const ReviewConfirmSection({
@@ -30,7 +32,7 @@ class ReviewConfirmSection extends StatefulWidget {
     required this.onNext,
     required this.bookingSummary,
     this.isHoldFlow = false,
-    this.agentId = 1, // Default agent ID, should be passed from parent
+  //  this.agentId = 1, // Default agent ID, should be passed from parent
     this.onResetForm, // Callback to reset form data
   });
 
@@ -41,6 +43,7 @@ class ReviewConfirmSection extends StatefulWidget {
 class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
   final BookingApiRepository _bookingRepository = BookingApiRepository();
   bool _isLoading = false;
+  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
 
   Future<void> _handleBookingAction() async {
     if (_isLoading) return;
@@ -102,6 +105,8 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
   }
 
   Future<void> _createBooking() async {
+      String agentId = await _secureStorage.read(key: SharedPreferenceStrings.id) ?? '';
+    //print("agentId for booking: $agentId");
     final summary = widget.bookingSummary;
     
     if (summary.selectedPlot == null || 
@@ -113,7 +118,7 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
 
     final request = BookingRequestModel(
       plot: int.parse(summary.selectedPlot!.id),
-      agent: widget.agentId,
+      agent: int.parse(agentId),
       customer: summary.selectedCustomer!.id,
       customerName: summary.selectedCustomer!.name,
       customerPhone: summary.selectedCustomer!.phone,
@@ -146,6 +151,8 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
   }
 
   Future<void> _createHold() async {
+    String agentId = await _secureStorage.read(key: SharedPreferenceStrings.id) ?? '';
+   // print("agentId for hold: $agentId");
     final summary = widget.bookingSummary;
     
     if (summary.selectedPlot == null || 
@@ -162,7 +169,7 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
     final request = HoldRequestModel(
       plot: int.parse(summary.selectedPlot!.id),
       customer: summary.selectedCustomer!.id,
-      agent: widget.agentId,
+      agent: int.parse(agentId),
       customerName: summary.selectedCustomer!.name,
       customerPhone: summary.selectedCustomer!.phone,
       customerEmail: summary.selectedCustomer!.email ?? '',

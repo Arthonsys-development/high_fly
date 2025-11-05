@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:highfly/config/network/api_client.dart';
 import 'package:highfly/config/network/api_constants.dart';
-import 'dart:io';
 import 'package:http_parser/http_parser.dart';
 
 class DocumentRepository {

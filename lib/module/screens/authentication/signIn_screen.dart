@@ -37,6 +37,12 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
     super.initState();
     // Check if user is already signed in
     _checkAuthState();
+    // Reset auth state after first frame to avoid modifying provider during build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref.read(authControllerProvider.notifier).reset();
+      }
+    });
   }
 
   void _checkAuthState() {
@@ -112,19 +118,19 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                   // h
                 ),
               ),
-              SizedBox(height: 30),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 30.0),
-                child: Text(
-                  SignInScreenString.heading1,
-                  style: TextStyle(
-                    fontSize: 30,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.black,
-                  ),
-                ),
-              ),
-              SizedBox(height: 10),
+              // SizedBox(height: 30),
+              // Padding(
+              //   padding: const EdgeInsets.symmetric(horizontal: 30.0),
+              //   child: Text(
+              //     SignInScreenString.heading1,
+              //     style: TextStyle(
+              //       fontSize: 30,
+              //       fontWeight: FontWeight.w500,
+              //       color: Colors.black,
+              //     ),
+              //   ),
+              // ),
+              // SizedBox(height: 10),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 30.0),
                 child: Text(
@@ -137,7 +143,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                   textAlign: TextAlign.center,
                 ),
               ),
-              SizedBox(height: 20),
+              SizedBox(height: 40),
               CustomTextField(
                 controller: _phoneController,
                 titleText: 'Phone number',
@@ -278,7 +284,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                   hintText: 'Enter your phone number (e.g., +1234567890)',
                   borderRadius: 8,
                   contentSpace: 12,
-                  maxLength: 15,
+                  maxLength: 10,
                   keyboardType: TextInputType.phone,
                   enabled: !authState.isOtpSent,
                   validator: _validatePhoneNumber,

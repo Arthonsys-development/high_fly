@@ -159,6 +159,20 @@ class ApiClient {
     }
   }
 
+  // Generic PATCH request
+  Future<Response> patch(String endpoint, {Object? data, Map<String, dynamic>? queryParameters}) async {
+    try {
+      print('Making PATCH request to: $endpoint');
+      return await _dio.patch(endpoint, data: data, queryParameters: queryParameters);
+    } on DioException catch (e) {
+      _handleError(e);
+      rethrow;
+    } catch (e) {
+      print('Unexpected error in PATCH request: $e');
+      rethrow;
+    }
+  }
+
   // Generic DELETE request
   Future<Response> delete(String endpoint, {Map<String, dynamic>? queryParameters}) async {
     try {

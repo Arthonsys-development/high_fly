@@ -11,6 +11,7 @@ class Project {
   final DateTime createdAt;
   final int totalPlotCount;
   final int availablePlotCount;
+  final String subAddress;
   final double? latitude;
   final double? longitude;
 
@@ -27,6 +28,7 @@ class Project {
     required this.createdAt,
     required this.totalPlotCount,
     required this.availablePlotCount,
+    required this.subAddress,
     this.latitude,
     this.longitude,
   });
@@ -84,6 +86,9 @@ class Project {
     // Handle plot count fields
     final totalPlotCount = json['total_plot_count'] ?? 0;
     final availablePlotCount = json['available_plot_count'] ?? 0;
+    
+    // Handle sub_address field
+    final subAddress = json['sub_address'] ?? '';
 
     // Handle latitude and longitude from location field (comma-separated)
     double? latitude;
@@ -137,6 +142,7 @@ class Project {
       createdAt: createdAt,
       totalPlotCount: totalPlotCount,
       availablePlotCount: availablePlotCount,
+      subAddress: subAddress,
       latitude: latitude,
       longitude: longitude,
     );
@@ -162,6 +168,7 @@ class Project {
       'created_at': createdAt.toIso8601String(),
       'total_plot_count': totalPlotCount,
       'available_plot_count': availablePlotCount,
+      'sub_address': subAddress,
     };
   }
 }

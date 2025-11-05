@@ -142,6 +142,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
               hintText: 'Enter cheque number',
               isMandatory: true,
               borderRadius: 6,
+              maxLength: 6,
               onChanged: (value) {
                 setState(() {
                   _paymentDetails = _paymentDetails.copyWith(chequeNumber: value);
@@ -197,6 +198,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
             hintText: 'Enter PAN number',
             isMandatory: true,
             borderRadius: 6,
+            maxLength: 10,
             onChanged: (value) {
               setState(() {
                 _paymentDetails = _paymentDetails.copyWith(panNumber: value);
@@ -213,6 +215,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
             hintText: 'Enter Aadhar number',
             isMandatory: true,
             borderRadius: 6,
+            maxLength: 12,
             onChanged: (value) {
               setState(() {
                 _paymentDetails = _paymentDetails.copyWith(aadharNumber: value);
@@ -238,9 +241,9 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                   },
                   activeColor: AppColors.textFieldBGColor,
                   checkColor: AppColors.primaryColor,
-                  fillColor: MaterialStateProperty.resolveWith<Color>(
-                        (Set<MaterialState> states) {
-                      if (states.contains(MaterialState.selected)) {
+                  fillColor: WidgetStateProperty.resolveWith<Color>(
+                        (Set<WidgetState> states) {
+                      if (states.contains(WidgetState.selected)) {
                         return AppColors.textFieldBGColor;
                       }
                       return Colors.white;
@@ -249,9 +252,9 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(4),
                   ),
-                  side: MaterialStateBorderSide.resolveWith(
-                        (Set<MaterialState> states) {
-                      if (states.contains(MaterialState.selected)) {
+                  side: WidgetStateBorderSide.resolveWith(
+                        (Set<WidgetState> states) {
+                      if (states.contains(WidgetState.selected)) {
                         return const BorderSide(color: AppColors.dropDownBorderColor, width: 1.5);
                       }
                       return const BorderSide(color: AppColors.dropDownBorderColor, width: 1);
@@ -292,9 +295,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
             // Form 16A field
             FileUploadWidgetNew(
               label: 'Form 16A',
-              fileName: _paymentDetails.form16APath != null 
-                  ? _paymentDetails.form16APath!.split('/').last 
-                  : null,
+              fileName: _paymentDetails.form16APath?.split('/').last,
               isRequired: true,
               acceptedFileTypes: ['pdf', 'jpg', 'jpeg', 'png'],
               placeholderText: 'Upload form 16A for reference',
@@ -315,6 +316,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
             isMandatory: true,
             maxLines: 3,
             borderRadius: 6,
+            maxLength: 150,
             onChanged: (value) {
               setState(() {
                 _paymentDetails = _paymentDetails.copyWith(additionalNotes: value);

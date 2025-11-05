@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths xmlns:android="http://schemas.android.com/apk/res/android">
-    <external-path name="external_files" path="."/>
+    <!-- Use scoped-safe paths to avoid FileUriExposed and storage restrictions on Android 11+ -->
+    <cache-path name="cache" path="."/>
+    <external-cache-path name="external_cache" path="."/>
+    <files-path name="files" path="."/>
+    <external-files-path name="external_files" path="."/>
 </paths>
