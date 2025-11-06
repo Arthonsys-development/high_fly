@@ -131,6 +131,67 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     }
   }
 
+  void _showLogoutConfirmationDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          title: const Text(
+            'Logout',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: AppColors.primaryTextColor,
+            ),
+          ),
+          content: const Text(
+            'Are you sure you want to logout?',
+            style: TextStyle(
+              fontSize: 14,
+              color: AppColors.secondaryTextColor,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(
+                  color: AppColors.secondaryTextColor,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.of(dialogContext).pop();
+                // Sign out from Firebase
+                await FirebaseAuth.instance.signOut();
+                // Clear access token from secure storage
+                const secureStorage = FlutterSecureStorage();
+                await secureStorage.deleteAll();
+                // Navigate back to sign in screen
+                if (mounted) {
+                  context.go(Routes.signIn);
+                }
+              },
+              child: const Text(
+                'Logout',
+                style: TextStyle(
+                  color: AppColors.primaryColor,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   List<Project> _filterProjects(List<Project> projects, String query) {
     if (query.isEmpty) {
       return projects;
@@ -236,17 +297,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           // Sign out button
           IconButton(
             icon: const Icon(Icons.logout, color: AppColors.primaryColor),
-            onPressed: () async {
-              // Sign out from Firebase
-              await FirebaseAuth.instance.signOut();
-              // Clear access token from secure storage
-              const secureStorage = FlutterSecureStorage();
-              secureStorage.deleteAll();
-              // await secureStorage.delete(key: 'access_token');
-              // Navigate back to sign in screen
-              if (mounted) {
-                context.go(Routes.signIn);
-              }
+            onPressed: () {
+              _showLogoutConfirmationDialog(context);
             },
           ),
         ],
