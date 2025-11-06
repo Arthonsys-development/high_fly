@@ -28,11 +28,71 @@ class AuthApiRepository {
         'data': response.data,
         'message': 'Registration successful',
       };
-    } catch (e) {
+    } on DioException catch (e) {
+      debugPrint('DioException in register: ${e.message}');
+      String errorMessage = 'Registration failed';
+      
+      // Extract error message from response
+      if (e.response != null) {
+        debugPrint('Error response data: ${e.response?.data}');
+        debugPrint('Error status code: ${e.response?.statusCode}');
+        
+        final responseData = e.response?.data;
+        if (responseData != null) {
+          // Try to extract error message from different response formats
+          if (responseData is Map<String, dynamic>) {
+            // Common error response formats
+            errorMessage = responseData['error']?.toString() ?? 
+                          responseData['message']?.toString() ?? 
+                          responseData['detail']?.toString() ?? 
+                          responseData['non_field_errors']?.toString() ?? 
+                          errorMessage;
+            
+            // Handle field-specific errors
+            if (errorMessage == 'Registration failed' && responseData.isNotEmpty) {
+              // Collect all error messages (without field name prefix)
+              final errorMessages = <String>[];
+              responseData.forEach((key, value) {
+                if (value is List && value.isNotEmpty) {
+                  errorMessages.add(value.join(", "));
+                } else if (value is String && value.isNotEmpty) {
+                  errorMessages.add(value);
+                }
+              });
+              if (errorMessages.isNotEmpty) {
+                errorMessage = errorMessages.join('\n');
+              }
+            }
+          } else if (responseData is String) {
+            errorMessage = responseData;
+          } else if (responseData is List && responseData.isNotEmpty) {
+            errorMessage = responseData.join(', ');
+          }
+        }
+      } else {
+        // Network or other errors
+        if (e.type == DioExceptionType.connectionTimeout || 
+            e.type == DioExceptionType.receiveTimeout ||
+            e.type == DioExceptionType.sendTimeout) {
+          errorMessage = 'Connection timeout. Please check your internet connection.';
+        } else if (e.type == DioExceptionType.connectionError) {
+          errorMessage = 'Connection error. Please check your internet connection.';
+        } else if (e.message != null && e.message!.isNotEmpty) {
+          errorMessage = e.message!;
+        }
+      }
+      
       return {
         'success': false,
         'error': e.toString(),
-        'message': 'Registration failed',
+        'message': errorMessage,
+      };
+    } catch (e) {
+      debugPrint('Exception in register: $e');
+      return {
+        'success': false,
+        'error': e.toString(),
+        'message': 'Registration failed: ${e.toString()}',
       };
     }
   }
@@ -89,14 +149,62 @@ class AuthApiRepository {
       };
     } on DioException catch (e) {
       debugPrint('DioException in verifyToken: ${e.message}');
+      String errorMessage = 'Token verification failed';
+      
+      // Extract error message from response
       if (e.response != null) {
         debugPrint('Error response data: ${e.response?.data}');
         debugPrint('Error status code: ${e.response?.statusCode}');
+        
+        final responseData = e.response?.data;
+        if (responseData != null) {
+          // Try to extract error message from different response formats
+          if (responseData is Map<String, dynamic>) {
+            // Common error response formats
+            errorMessage = responseData['error']?.toString() ?? 
+                          responseData['message']?.toString() ?? 
+                          responseData['detail']?.toString() ?? 
+                          responseData['non_field_errors']?.toString() ?? 
+                          errorMessage;
+            
+            // Handle field-specific errors
+            if (errorMessage == 'Token verification failed' && responseData.isNotEmpty) {
+              // Collect all error messages (without field name prefix)
+              final errorMessages = <String>[];
+              responseData.forEach((key, value) {
+                if (value is List && value.isNotEmpty) {
+                  errorMessages.add(value.join(", "));
+                } else if (value is String && value.isNotEmpty) {
+                  errorMessages.add(value);
+                }
+              });
+              if (errorMessages.isNotEmpty) {
+                errorMessage = errorMessages.join('\n');
+              }
+            }
+          } else if (responseData is String) {
+            errorMessage = responseData;
+          } else if (responseData is List && responseData.isNotEmpty) {
+            errorMessage = responseData.join(', ');
+          }
+        }
+      } else {
+        // Network or other errors
+        if (e.type == DioExceptionType.connectionTimeout || 
+            e.type == DioExceptionType.receiveTimeout ||
+            e.type == DioExceptionType.sendTimeout) {
+          errorMessage = 'Connection timeout. Please check your internet connection.';
+        } else if (e.type == DioExceptionType.connectionError) {
+          errorMessage = 'Connection error. Please check your internet connection.';
+        } else if (e.message != null && e.message!.isNotEmpty) {
+          errorMessage = e.message!;
+        }
       }
+      
       return {
         'success': false,
         'error': e.toString(),
-        'message': 'Token verification failed: ${e.message}',
+        'message': errorMessage,
       };
     } catch (e) {
       debugPrint('Exception in verifyToken: $e');

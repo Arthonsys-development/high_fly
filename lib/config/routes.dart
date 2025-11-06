@@ -1,11 +1,14 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:typed_data' show Uint8List;
 
 import '../data/models/response_model/project_response_model.dart';
 import '../data/models/response_model/visit_response_model.dart';
 import '../module/screens/authentication/signIn_screen.dart';
 import '../module/screens/authentication/signUp_screen.dart';
+import '../module/screens/authentication/otp_verification_screen.dart';
 import '../module/screens/dashboard/dashboard_screen.dart';
 import '../module/screens/visitors/visit_detail_screen.dart';
 import '../module/screens/profile/profile_screen.dart';
@@ -105,6 +108,28 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: Routes.signUp,
       builder: (context, state) => const SignUpScreen(),
+    ),
+    GoRoute(
+      path: Routes.otp,
+      builder: (context, state) {
+        final extra = state.extra as Map<String, dynamic>?;
+        if (extra == null) {
+          // Fallback to sign in if no data provided
+          return const SignInScreen();
+        }
+        
+        return OtpVerificationScreen(
+          phoneNumber: extra['phoneNumber'] as String,
+          verificationId: extra['verificationId'] as String,
+          type: extra['type'] as OtpScreenType,
+          fullName: extra['fullName'] as String?,
+          reraNumber: extra['reraNumber'] as String?,
+          teamLeaderName: extra['teamLeaderName'] as String?,
+          idNumber: extra['idNumber'] as String?,
+          profilePhoto: extra['profilePhoto'] as XFile?,
+          profilePhotoBytes: extra['profilePhotoBytes'] as Uint8List?,
+        );
+      },
     ),
     GoRoute(
       path: Routes.dashboardScreen,

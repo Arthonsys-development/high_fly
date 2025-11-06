@@ -102,7 +102,7 @@ class HoldDetailScreen extends StatelessWidget {
             // Plot Information Section
             _buildSectionTitle('Plot Information'),
             _buildDetailCard([
-              _buildDetailRow('Plot Code', hold.plotCode),
+              _buildDetailRow('Plot No.', hold.plotCode),
               _buildDetailRow('Hold Amount', '₹${hold.holdAmount}'),
               _buildDetailRow('Hold Until', hold.holdUntil),
               _buildDetailRow('Created At', hold.createdAt),

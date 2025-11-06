@@ -104,7 +104,7 @@ class BookingDetailScreen extends StatelessWidget {
             // Plot Information Section
             _buildSectionTitle('Plot Information'),
             _buildDetailCard([
-              _buildDetailRow('Plot Code', booking.plotCode),
+              _buildDetailRow('Plot No.', booking.plotCode),
               _buildDetailRow('Booking Type', booking.bookingType),
               _buildDetailRow('Booking Amount', '₹${booking.bookingAmount}'),
               _buildDetailRow('Total Amount', '₹${booking.totalAmount}'),

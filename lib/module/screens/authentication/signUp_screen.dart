@@ -13,18 +13,13 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:permission_handler/permission_handler.dart';
 import 'dart:io' show Platform;
 
-// Import the new providers and models
-import 'package:highfly/data/repository/auth_api_repository_provider.dart';
-import 'package:highfly/data/models/request_models/auth_request_model.dart';
 import 'package:highfly/data/repository/firebase_auth_repository.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../../../config/constant/app_strings.dart';
 import '../../../config/constant/const_assets.dart';
 import '../../global/widgets/custom_text_field.dart';
 import '../../utils/app_fonts.dart';
-import '../../providers/analytics_provider.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'otp_verification_screen.dart';
 
 class SignUpScreen extends ConsumerStatefulWidget {
   const SignUpScreen({super.key});
@@ -34,7 +29,6 @@ class SignUpScreen extends ConsumerStatefulWidget {
 }
 
 class _SignUpScreenState extends ConsumerState<SignUpScreen> {
-  bool showOtpField = false;
   XFile? _pickedImage;
   Uint8List? _webImage;
   final ImagePicker _picker = ImagePicker();
@@ -42,7 +36,6 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   // Form controllers
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _phoneNumberController = TextEditingController();
-  final TextEditingController _otpController = TextEditingController();
   final TextEditingController _reraNumberController = TextEditingController();
   final TextEditingController _teamLeaderNameController = TextEditingController();
   final TextEditingController _idNumberController = TextEditingController();
@@ -52,9 +45,6 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   
   // Firebase auth repository
   final FirebaseAuthRepository _firebaseAuthRepository = FirebaseAuthRepository();
-  
-  // Secure storage for cleanup
-  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
 
   @override
   void initState() {
@@ -66,34 +56,10 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     // Dispose controllers
     _fullNameController.dispose();
     _phoneNumberController.dispose();
-    _otpController.dispose();
     _reraNumberController.dispose();
+    _teamLeaderNameController.dispose();
     _idNumberController.dispose();
     super.dispose();
-  }
-
-  /// Clean up Firebase auth and secure storage when registration fails
-  Future<void> _cleanupOnRegistrationFailure() async {
-    try {
-      debugPrint('🧹 Cleaning up Firebase auth and secure storage due to registration failure');
-      
-      // Sign out from Firebase
-      await _firebaseAuthRepository.signOut();
-      
-      // Clear all secure storage keys
-      await _secureStorage.delete(key: SharedPreferenceStrings.accessToken);
-      await _secureStorage.delete(key: SharedPreferenceStrings.id);
-      await _secureStorage.delete(key: SharedPreferenceStrings.firstName);
-      await _secureStorage.delete(key: SharedPreferenceStrings.fullName);
-      await _secureStorage.delete(key: SharedPreferenceStrings.phoneNumber);
-      await _secureStorage.delete(key: SharedPreferenceStrings.profilePhoto);
-      await _secureStorage.delete(key: 'access_token');
-      await _secureStorage.delete(key: 'user_data');
-      
-      debugPrint('✅ Cleanup completed successfully');
-    } catch (e) {
-      debugPrint('⚠️ Error during cleanup: $e');
-    }
   }
 
   /// Pick image from camera
@@ -562,20 +528,6 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
               isMandatory: true,
             ),
 
-            if(showOtpField)...[
-              SizedBox(height: 20),
-              CustomTextField(
-                controller: _otpController,
-                titleText: 'OTP',
-                hintText: 'Enter 6-digit OTP',
-                borderRadius: 6,
-                contentSpace: 8,
-                maxLength: 6,
-                keyboardType: TextInputType.number,
-                isMandatory: true,
-              ),
-            ],
-
             SizedBox(height: 20),
             CustomTextField(
               controller: _reraNumberController,
@@ -749,22 +701,6 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
         SizedBox(height: 20),
         Row(
           children: [
-
-            if(showOtpField)...[
-              Expanded(
-                child: CustomTextField(
-                  controller: _otpController,
-                  titleText: 'OTP',
-                  hintText: 'Enter 6-digit OTP',
-                  borderRadius: 8,
-                  contentSpace: 12,
-                  maxLength: 6,
-                  keyboardType: TextInputType.number,
-                ),
-              ),
-              SizedBox(width: 20),
-            ],
-
             Expanded(
               child: CustomTextField(
                 controller: _reraNumberController,
@@ -823,19 +759,6 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
           keyboardType: TextInputType.phone,
         ),
 
-        if(showOtpField)...[
-          SizedBox(height: 20),
-          CustomTextField(
-            controller: _otpController,
-            titleText: 'OTP',
-            hintText: 'Enter 6-digit OTP',
-            borderRadius: 8,
-            contentSpace: 12,
-            maxLength: 6,
-            keyboardType: TextInputType.number,
-          ),
-        ],
-
         SizedBox(height: 20),
         CustomTextField(
           controller: _reraNumberController,
@@ -869,84 +792,13 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
   // Send OTP to phone number
   Future<void> _sendOTP() async {
-    final phoneNumber = "+91${_phoneNumberController.text.trim()}";
-    
-    if (phoneNumber.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter your phone number'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-    
-    setState(() {
-      _isLoading = true;
-    });
-    
-    try {
-      await _firebaseAuthRepository.sendOTP(
-        phoneNumber: phoneNumber,
-        onCodeSent: (verificationId) {
-          setState(() {
-            _isLoading = false;
-            showOtpField = true;
-          });
-          
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('OTP sent successfully'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        },
-        onError: (error) {
-          setState(() {
-            _isLoading = false;
-          });
-          
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(error),
-              backgroundColor: Colors.red,
-            ),
-          );
-        },
-        onAutoVerificationCompleted: () {
-          setState(() {
-            _isLoading = false;
-            showOtpField = false;
-          });
-          
-          // Navigate to dashboard since auto-verification completed
-          context.go(Routes.dashboardScreen);
-        },
-      );
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to send OTP: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
-
-  // Verify OTP and register user
-  Future<void> _verifyOTPAndRegister() async {
+    // Validate form fields before sending OTP
     final fullName = _fullNameController.text.trim();
     final phoneNumber = "+91${_phoneNumberController.text.trim()}";
-    final otp = _otpController.text.trim();
     final reraNumber = _reraNumberController.text.trim();
     final teamLeaderName = _teamLeaderNameController.text.trim();
-    final idNumber = _idNumberController.text.trim();
     
-    // Validate form fields
+    // Validate required fields
     if (fullName.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -957,20 +809,10 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
       return;
     }
     
-    if (phoneNumber.isEmpty) {
+    if (phoneNumber.isEmpty || phoneNumber == "+91") {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please enter your phone number'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-    
-    if (otp.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter the OTP'),
           backgroundColor: Colors.red,
         ),
       );
@@ -997,18 +839,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
       return;
     }
     
-    // if (idNumber.isEmpty) {
-    //   ScaffoldMessenger.of(context).showSnackBar(
-    //     const SnackBar(
-    //       content: Text('Please enter your ID number'),
-    //       backgroundColor: Colors.red,
-    //     ),
-    //   );
-    //   return;
-    // }
-    
     // Check if profile photo is required
-    if (_pickedImage == null) {
+    if (_pickedImage == null && _webImage == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please select a profile photo'),
@@ -1023,171 +855,73 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     });
     
     try {
-      // First, verify the OTP with Firebase
-      await _firebaseAuthRepository.verifyOTP(
-        otpCode: otp,
-        verificationId: _firebaseAuthRepository.verificationId,
-      );
-      
-      // Get the Firebase ID token
-      final String? idToken = await _firebaseAuthRepository.getIdToken();
-      
-      if (idToken == null) {
-        throw 'Failed to get Firebase ID token';
-      }
-      
-      // After successful OTP verification, register the user with your backend
-      final authApiRepository = ref.read(authApiRepositoryProvider);
-
-      debugPrint('ID Token: $idToken');
-
-      // Convert XFile to File for mobile, or keep as is for web
-      File? profilePhotoFile;
-      Uint8List? profilePhotoBytes;
-      
-      if (kIsWeb) {
-        // For web, use the bytes
-        profilePhotoBytes = _webImage;
-      } else {
-        // For mobile, use the file
-        if (_pickedImage != null) {
-          profilePhotoFile = File(_pickedImage!.path);
-        }
-      }
-
-      // Create register request with the actual Firebase ID token and profile photo
-      final registerRequest = RegisterRequest(
-        idToken: idToken,
-        fullName: fullName,
+      String? verificationId;
+      await _firebaseAuthRepository.sendOTP(
         phoneNumber: phoneNumber,
-        reraNumber: reraNumber,
-        teamLeaderName: teamLeaderName,
-        idNumber: idNumber,
-        profilePhotoFile: profilePhotoFile, // Include the profile photo file for mobile
-        profilePhotoBytes: profilePhotoBytes, // Include the profile photo bytes for web
-      );
-      
-      final result = await authApiRepository.register(registerRequest);
-      
-      if (result['success']) {
-        debugPrint('Registration successful, proceeding to verify token');
-        
-        // After successful registration, call verifyToken to get access token
-        final loginTokenRequest = LoginTokenRequest(idToken: idToken);
-        debugPrint('Calling verifyToken with ID token: $idToken');
-        
-        final tokenResult = await authApiRepository.verifyToken(loginTokenRequest);
-        debugPrint('Token verification result: $tokenResult');
-        
-        if (tokenResult['success']) {
-          // Save user data to secure storage (similar to sign-in flow)
-          final data = tokenResult['data'];
-          if (data != null && data is Map) {
-            final accessToken = data['access_token']?.toString() ?? '';
-            final agent = data['agent'];
-            if (agent != null && agent is Map) {
-              final id = agent['id']?.toString() ?? '';
-              final fName = agent['full_name']?.toString() ?? '';
-              final fullName = agent['full_name']?.toString() ?? '';
-              final user = agent['user'];
-              final phoneNumber = (user != null && user is Map) ? (user['phone_number']?.toString() ?? '') : '';
-              final profileImage = (user != null && user is Map) ? (user['profile_image']?.toString() ?? '') : '';
-              
-              if (accessToken.isNotEmpty) {
-                await _secureStorage.write(key: SharedPreferenceStrings.accessToken, value: accessToken);
-              }
-              if (id.isNotEmpty) {
-                await _secureStorage.write(key: SharedPreferenceStrings.id, value: id);
-              }
-              if (fName.isNotEmpty) {
-                await _secureStorage.write(key: SharedPreferenceStrings.firstName, value: fName);
-              }
-              if (fullName.isNotEmpty) {
-                await _secureStorage.write(key: SharedPreferenceStrings.fullName, value: fullName);
-              }
-              if (phoneNumber.isNotEmpty) {
-                await _secureStorage.write(key: SharedPreferenceStrings.phoneNumber, value: phoneNumber);
-              }
-              if (profileImage.isNotEmpty) {
-                final profilePhotoUrl = "${dotenv.env['BASE_URL_IMAGE']}$profileImage";
-                await _secureStorage.write(key: SharedPreferenceStrings.profilePhoto, value: profilePhotoUrl);
-              }
-              
-              debugPrint('Token verification successful, user data saved to secure storage');
-            }
-          }
-          
-          // Log analytics event for successful signup
-          try {
-            final analyticsService = ref.read(analyticsProvider);
-            await analyticsService.logSignUp(method: 'phone_otp');
-            // Set user ID for analytics if available
-            if (tokenResult['data'] != null && tokenResult['data']['agent'] != null) {
-              final id = tokenResult['data']['agent']['id']?.toString();
-              if (id != null) {
-                await analyticsService.setUserId(id);
-              }
-            }
-          } catch (e) {
-            debugPrint('Error logging signup analytics: $e');
-          }
-          
+        onCodeSent: (verificationIdParam) {
+          verificationId = verificationIdParam;
           setState(() {
             _isLoading = false;
           });
           
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Registration and login successful'),
+              content: Text('OTP sent successfully'),
               backgroundColor: Colors.green,
             ),
           );
           
-          // Navigate to dashboard
-          context.go(Routes.dashboardScreen);
-        } else {
-          debugPrint('Token verification failed: ${tokenResult['message']}');
+          // Navigate to OTP screen with all form data
+          if (context.mounted && verificationId != null) {
+            Future.delayed(const Duration(milliseconds: 500), () {
+              if (context.mounted) {
+                context.push(
+                  Routes.otp,
+                  extra: {
+                    'phoneNumber': phoneNumber,
+                    'verificationId': verificationId!,
+                    'type': OtpScreenType.signUp,
+                    'fullName': fullName,
+                    'reraNumber': reraNumber,
+                    'teamLeaderName': teamLeaderName,
+                    'idNumber': _idNumberController.text.trim(),
+                    'profilePhoto': _pickedImage,
+                    'profilePhotoBytes': _webImage,
+                  },
+                );
+              }
+            });
+          }
+        },
+        onError: (error) {
           setState(() {
             _isLoading = false;
           });
           
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Login failed: ${tokenResult['message']}'),
+              content: Text(error),
               backgroundColor: Colors.red,
             ),
           );
-        }
-      } else {
-        debugPrint('Registration failed: ${result['message']}');
-        
-        // Clean up Firebase auth and secure storage since registration failed
-        await _cleanupOnRegistrationFailure();
-        
-        setState(() {
-          _isLoading = false;
-        });
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Registration failed: ${result['message']}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+        },
+        onAutoVerificationCompleted: () {
+          setState(() {
+            _isLoading = false;
+          });
+          
+          // Navigate to dashboard since auto-verification completed
+          context.go(Routes.dashboardScreen);
+        },
+      );
     } catch (e) {
-      debugPrint('Registration error: $e');
-      
-      // Clean up Firebase auth and secure storage since registration failed
-      await _cleanupOnRegistrationFailure();
-      
       setState(() {
         _isLoading = false;
       });
       
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Registration failed: ${e.toString()}'),
+          content: Text('Failed to send OTP: ${e.toString()}'),
           backgroundColor: Colors.red,
         ),
       );
@@ -1196,18 +930,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
   Widget submitButton(){
     return CustomButton(
-      onPressed: _isLoading 
-        ? null 
-        : () {
-            if(showOtpField) {
-              _verifyOTPAndRegister();
-            } else {
-              _sendOTP();
-            }
-          },
-      text: _isLoading 
-        ? 'Processing...' 
-        : (showOtpField ? 'Register' : 'Request OTP'),
+      onPressed: _isLoading ? null : _sendOTP,
+      text: _isLoading ? 'Processing...' : 'Request OTP',
       height: 52,
       fontSize: 18,
       leadingWidget: _isLoading 

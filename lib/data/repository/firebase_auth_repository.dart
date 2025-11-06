@@ -166,12 +166,17 @@ class FirebaseAuthRepository {
         codeSent: (String verificationId, int? resendToken) {
           print('🔥 Firebase Auth: Code sent successfully');
           print('🔥 Firebase Auth: Verification ID: $verificationId');
+          print('🔥 Firebase Auth: Resend token: $resendToken');
           _verificationId = verificationId;
           onCodeSent(verificationId);
         },
         codeAutoRetrievalTimeout: (String verificationId) {
           print('🔥 Firebase Auth: Code auto-retrieval timeout');
+          print('🔥 Firebase Auth: Verification ID: $verificationId');
+          // Even though auto-retrieval timed out, the OTP was still sent
+          // So we should call onCodeSent to notify that the code was sent
           _verificationId = verificationId;
+          onCodeSent(verificationId);
         },
         timeout: const Duration(seconds: 60),
       );

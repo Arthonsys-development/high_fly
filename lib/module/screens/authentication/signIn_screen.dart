@@ -12,6 +12,7 @@ import '../../../config/constant/app_strings.dart';
 import '../../../config/constant/const_assets.dart';
 import '../../global/widgets/custom_text_field.dart';
 import '../../utils/app_fonts.dart';
+import 'otp_verification_screen.dart';
 
 class SignInScreen extends ConsumerStatefulWidget {
   const SignInScreen({super.key});
@@ -22,13 +23,13 @@ class SignInScreen extends ConsumerStatefulWidget {
 
 class _SignInScreenState extends ConsumerState<SignInScreen> {
   final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _otpController = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  String? _pendingPhoneNumber; // Track phone number for navigation
+  bool _hasNavigated = false; // Prevent multiple navigations
 
   @override
   void dispose() {
     _phoneController.dispose();
-    _otpController.dispose();
     super.dispose();
   }
 
@@ -87,19 +88,8 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
     return null; // Add explicit return
   }
 
-  String? _validateOTP(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Please enter the OTP';
-    }
-    if (value.length != 6) {
-      return 'OTP must be 6 digits';
-    }
-    return null;
-  }
 
   Widget _buildMobileLayout() {
-    final authState = ref.watch(authControllerProvider);
-
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0),
       child: SingleChildScrollView(
@@ -152,52 +142,8 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                 contentSpace: 5,
                 maxLength: 10,
                 keyboardType: TextInputType.phone,
-                enabled: !authState.isOtpSent,
                 validator: _validatePhoneNumber,
               ),
-
-              if(authState.isOtpSent)...[
-                SizedBox(height: 15),
-                CustomTextField(
-                  controller: _otpController,
-                  titleText: 'OTP',
-                  hintText: 'Enter 6-digit OTP',
-                  borderRadius: 8,
-                  contentSpace: 5,
-                  maxLength: 6,
-                  keyboardType: TextInputType.number,
-                  validator: _validateOTP,
-                ),
-
-                // Resend OTP option
-                SizedBox(height: 10),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      "Didn't receive OTP? ",
-                      style: TextStyle(
-                        color: AppColors.secondaryTextColor,
-                        fontSize: 14,
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: authState.isLoading ? null : () {
-                        ref.read(authControllerProvider.notifier).resendOTP();
-                        _showSuccessSnackBar('OTP sent again!');
-                      },
-                      child: Text(
-                        'Resend',
-                        style: TextStyle(
-                          color: authState.isLoading ? Colors.grey : AppColors.primaryColor,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
 
               SizedBox(height: 30),
               submitButton(),
@@ -223,8 +169,6 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
   }
 
   Widget _buildTabletDesktopLayout() {
-    final authState = ref.watch(authControllerProvider);
-    
     return Center(
       child: SingleChildScrollView(
         child: Container(
@@ -286,52 +230,8 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                   contentSpace: 12,
                   maxLength: 10,
                   keyboardType: TextInputType.phone,
-                  enabled: !authState.isOtpSent,
                   validator: _validatePhoneNumber,
                 ),
-
-                if(authState.isOtpSent)...[
-                  SizedBox(height: 15),
-                  CustomTextField(
-                    controller: _otpController,
-                    titleText: 'OTP',
-                    hintText: 'Enter 6-digit OTP',
-                    borderRadius: 8,
-                    contentSpace: 12,
-                    maxLength: 6,
-                    keyboardType: TextInputType.number,
-                    validator: _validateOTP,
-                  ),
-                  
-                  // Resend OTP option
-                  SizedBox(height: 15),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        "Didn't receive OTP? ",
-                        style: TextStyle(
-                          color: AppColors.secondaryTextColor,
-                          fontSize: 14,
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: authState.isLoading ? null : () {
-                          ref.read(authControllerProvider.notifier).resendOTP();
-                          _showSuccessSnackBar('OTP sent again!');
-                        },
-                        child: Text(
-                          'Resend',
-                          style: TextStyle(
-                            color: authState.isLoading ? Colors.grey : AppColors.primaryColor,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
 
                 SizedBox(height: 40),
                 submitButton(),
@@ -359,10 +259,40 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Listen to auth state changes for errors
+    // Listen to auth state changes for errors and navigation
     ref.listen<AuthState>(authControllerProvider, (previous, next) {
       if (next.error != null) {
         _showErrorSnackBar(next.error!);
+      }
+      
+      // Navigate to OTP screen when OTP is sent successfully
+      if (next.isOtpSent && 
+          next.verificationId != null && 
+          _pendingPhoneNumber != null && 
+          !_hasNavigated &&
+          context.mounted) {
+        _hasNavigated = true;
+        final phoneNumber = _pendingPhoneNumber!;
+        final verificationId = next.verificationId!;
+        
+        _showSuccessSnackBar('OTP sent to $phoneNumber');
+        
+        // Navigate to OTP screen
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (context.mounted) {
+            context.push(
+              Routes.otp,
+              extra: {
+                'phoneNumber': phoneNumber,
+                'verificationId': verificationId,
+                'type': OtpScreenType.signIn,
+              },
+            );
+            // Reset flags after navigation
+            _pendingPhoneNumber = null;
+            _hasNavigated = false;
+          }
+        });
       }
     });
     
@@ -393,45 +323,31 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
 
     return CustomButton(
       onPressed: authState.isLoading ? null : () async {
-
         if (!_formKey.currentState!.validate()) {
           return;
         }
 
         try {
-          if (!authState.isOtpSent) {
-            // Send OTP
-            final phoneNumber = "+91${_phoneController.text.trim()}";
-            await ref.read(authControllerProvider.notifier).sendOTP(phoneNumber);
-
-            if (authState.isOtpSent) {
-              _showSuccessSnackBar('OTP sent to $phoneNumber');
-            }
-          } else {
-            // Verify OTP
-            final otpCode = _otpController.text.trim();
-            final success = await ref.read(authControllerProvider.notifier).verifyOTP(otpCode);
-
-            if (success && context.mounted) {
-              _showSuccessSnackBar('Login successful!');
-              // Navigate to dashboard after short delay
-              Future.delayed(const Duration(milliseconds: 1500), () {
-                if (context.mounted) {
-                  context.go(Routes.dashboardScreen);
-                }
-              });
-            }
-          }
+          // Reset navigation flag
+          _hasNavigated = false;
+          
+          // Send OTP
+          final phoneNumber = "+91${_phoneController.text.trim()}";
+          _pendingPhoneNumber = phoneNumber; // Store phone number for navigation
+          
+          await ref.read(authControllerProvider.notifier).sendOTP(phoneNumber);
+          
+          // Navigation will be handled by the ref.listen in build method
+          // when the state updates to isOtpSent: true
         } catch (e) {
-          debugPrint('Error in submit button: $e'); // Use debugPrint instead of print
+          debugPrint('Error in submit button: $e');
+          _pendingPhoneNumber = null; // Clear pending phone number on error
           if (context.mounted) {
             _showErrorSnackBar('An error occurred. Please try again.');
           }
         }
       },
-      text: authState.isLoading
-          ? 'Loading...'
-          : (authState.isOtpSent ? 'Verify OTP' : 'Request OTP'),
+      text: authState.isLoading ? 'Loading...' : 'Request OTP',
       height: 52,
       fontSize: 18,
       leadingWidget: authState.isLoading
