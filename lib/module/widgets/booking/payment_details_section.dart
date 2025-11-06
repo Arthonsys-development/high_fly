@@ -293,11 +293,12 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
             const SizedBox(height: 24),
             
             // Form 16A field
-            FileUploadWidgetNew(
+            PdfUploadWidget(
               label: 'Form 16A',
               fileName: _paymentDetails.form16APath?.split('/').last,
               isRequired: true,
-              acceptedFileTypes: ['pdf', 'jpg', 'jpeg', 'png'],
+             // acceptedFileTypes: ['pdf', 'jpg', 'jpeg', 'png'],
+             uploadUrl: '/api/documents/upload/',
               placeholderText: 'Upload form 16A for reference',
               onFileSelected: (filePath) {
                 setState(() {

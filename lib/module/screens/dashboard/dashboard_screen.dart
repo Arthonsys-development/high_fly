@@ -1075,8 +1075,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               child: Row(
                // crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Image.asset(IconsAssets.locationIcon, width: 15, color: const Color.fromARGB(255, 66, 76, 90)),
-                  // const Icon(Icons.location_on, size: 16, color: Colors.grey),
+                  // Image.asset(IconsAssets.locationIcon, width: 15, color: const Color.fromARGB(255, 66, 76, 90)),
+                  const Icon(Icons.location_on_outlined, size: 22, color: Colors.grey),
                   const SizedBox(width: 4),
                   Expanded(
                     child: Text(
