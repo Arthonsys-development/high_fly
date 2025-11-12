@@ -14,6 +14,7 @@ class BankDetailsSection extends StatefulWidget {
   final String nextButtonText;
   final VoidCallback? onPrevious;
   final Function(BankDetails?)? onNext;
+  final BankDetails? initialBankDetails;
 
   const BankDetailsSection({
     super.key,
@@ -21,6 +22,7 @@ class BankDetailsSection extends StatefulWidget {
     required this.nextButtonText,
     this.onPrevious,
     this.onNext,
+    this.initialBankDetails,
   });
 
   @override
@@ -39,19 +41,29 @@ class _BankDetailsSectionState extends State<BankDetailsSection> {
   @override
   void initState() {
     super.initState();
-    _bankDetails = const BankDetails();
+    // Initialize with provided bank details if available, otherwise use defaults
+    _bankDetails = widget.initialBankDetails ?? const BankDetails();
     
-    _accountHolderNameController = TextEditingController();
-    _branchNameController = TextEditingController();
-    _accountNumberController = TextEditingController();
-    _ifscCodeController = TextEditingController();
-    _contactNumberController = TextEditingController();
-    _accountTypeController = TextEditingController();
-    
-    // Initialize account type display text if there's a selected value
-    if (_bankDetails.accountType != null) {
-      _accountTypeController.text = BankConstants.accountTypes[_bankDetails.accountType] ?? '';
-    }
+    _accountHolderNameController = TextEditingController(
+      text: _bankDetails.accountHolderName ?? ''
+    );
+    _branchNameController = TextEditingController(
+      text: _bankDetails.branchName ?? ''
+    );
+    _accountNumberController = TextEditingController(
+      text: _bankDetails.accountNumber ?? ''
+    );
+    _ifscCodeController = TextEditingController(
+      text: _bankDetails.ifscCode ?? ''
+    );
+    _contactNumberController = TextEditingController(
+      text: _bankDetails.contactNumber ?? ''
+    );
+    _accountTypeController = TextEditingController(
+      text: _bankDetails.accountType != null
+          ? (BankConstants.accountTypes[_bankDetails.accountType] ?? '')
+          : ''
+    );
   }
 
   @override

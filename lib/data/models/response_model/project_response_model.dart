@@ -6,14 +6,16 @@ class Project {
   final String address;
   final String projectImage;
   final String status;
+  final String? statusDisplay;
   final DateTime? startDate;
   final DateTime? endDate;
-  final DateTime createdAt;
-  final int totalPlotCount;
-  final int availablePlotCount;
+  final DateTime? createdAt;
+  final int? totalPlotCount;
+  final int? availablePlotCount;
   final String subAddress;
   final double? latitude;
   final double? longitude;
+  final String? budget;
 
   Project({
     required this.id,
@@ -23,14 +25,16 @@ class Project {
     required this.address,
     required this.projectImage,
     required this.status,
+    this.statusDisplay,
     this.startDate,
     this.endDate,
-    required this.createdAt,
-    required this.totalPlotCount,
-    required this.availablePlotCount,
+    this.createdAt,
+    this.totalPlotCount,
+    this.availablePlotCount,
     required this.subAddress,
     this.latitude,
     this.longitude,
+    this.budget,
   });
 
   factory Project.fromJson(Map<String, dynamic> json) {
@@ -63,32 +67,34 @@ class Project {
       }
     }
 
-    // Handle created_at date
-    DateTime createdAt;
+    // Handle created_at date (nullable)
+    DateTime? createdAt;
     try {
       if (json['created_at'] != null) {
         if (json['created_at'] is String) {
           createdAt = DateTime.parse(json['created_at']);
         } else if (json['created_at'] is int) {
           createdAt = DateTime.fromMillisecondsSinceEpoch(json['created_at']);
-        } else {
-          createdAt = DateTime.now();
         }
       } else if (json['date_created'] != null) {
         createdAt = DateTime.parse(json['date_created']);
-      } else {
-        createdAt = DateTime.now();
       }
     } catch (e) {
-      createdAt = DateTime.now();
+      createdAt = null;
     }
 
-    // Handle plot count fields
-    final totalPlotCount = json['total_plot_count'] ?? 0;
-    final availablePlotCount = json['available_plot_count'] ?? 0;
+    // Handle plot count fields - support both naming conventions
+    final totalPlotCount = json['total_plots'] ?? json['total_plot_count'];
+    final availablePlotCount = json['available_plots'] ?? json['available_plot_count'];
     
     // Handle sub_address field
     final subAddress = json['sub_address'] ?? '';
+    
+    // Handle status_display field
+    final statusDisplay = json['status_display']?.toString();
+    
+    // Handle budget field
+    final budget = json['budget']?.toString();
 
     // Handle latitude and longitude from location field (comma-separated)
     double? latitude;
@@ -137,6 +143,7 @@ class Project {
       address: address,
       projectImage: projectImage,
       status: status,
+      statusDisplay: statusDisplay,
       startDate: startDate,
       endDate: endDate,
       createdAt: createdAt,
@@ -145,6 +152,7 @@ class Project {
       subAddress: subAddress,
       latitude: latitude,
       longitude: longitude,
+      budget: budget,
     );
   }
 
@@ -163,12 +171,16 @@ class Project {
       'address': address,
       'project_image': projectImage,
       'status': status,
+      'status_display': statusDisplay,
       'start_date': startDate?.toIso8601String(),
       'end_date': endDate?.toIso8601String(),
-      'created_at': createdAt.toIso8601String(),
-      'total_plot_count': totalPlotCount,
-      'available_plot_count': availablePlotCount,
+      'created_at': createdAt?.toIso8601String(),
+      'total_plots': totalPlotCount,
+      'available_plots': availablePlotCount,
       'sub_address': subAddress,
+      'latitude': latitude,
+      'longitude': longitude,
+      'budget': budget,
     };
   }
 }

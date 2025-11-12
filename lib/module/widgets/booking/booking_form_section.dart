@@ -16,6 +16,8 @@ class BookingFormSection extends StatefulWidget {
   final VoidCallback? onPrevious;
   final Function(local_model.Project?, local_model.Plot?)? onNext;
   final String? nextButtonText;
+  final local_model.Project? initialProject;
+  final local_model.Plot? initialPlot;
 
   const BookingFormSection({
     super.key,
@@ -24,6 +26,8 @@ class BookingFormSection extends StatefulWidget {
     this.onPrevious,
     this.onNext,
     this.nextButtonText,
+    this.initialProject,
+    this.initialPlot,
   });
 
   @override
@@ -39,6 +43,22 @@ class _BookingFormSectionState extends State<BookingFormSection> {
   bool _isLoadingPlots = false;
 
   @override
+  void initState() {
+    super.initState();
+    // Initialize with provided values if available
+    if (widget.initialProject != null) {
+      _selectedProject = widget.initialProject;
+      _projectController.text = widget.initialProject!.name;
+      // Fetch plots for the initial project
+      _fetchPlotsForProject(widget.initialProject!);
+    }
+    if (widget.initialPlot != null) {
+      _selectedPlot = widget.initialPlot;
+      _plotController.text = widget.initialPlot!.displayText;
+    }
+  }
+
+  @override
   void dispose() {
     _projectController.dispose();
     _plotController.dispose();
@@ -46,11 +66,17 @@ class _BookingFormSectionState extends State<BookingFormSection> {
   }
 
   Future<void> _fetchPlotsForProject(local_model.Project project) async {
+    // Store the current selected plot before clearing
+    final previousPlot = _selectedPlot;
+    
     setState(() {
       _isLoadingPlots = true;
       _availablePlots = [];
-      _selectedPlot = null;
-      _plotController.clear();
+      // Only clear plot if we don't have an initial plot to preserve
+      if (widget.initialPlot == null) {
+        _selectedPlot = null;
+        _plotController.clear();
+      }
     });
 
     try {
@@ -62,9 +88,29 @@ class _BookingFormSectionState extends State<BookingFormSection> {
         final apiPlots = result['data'] as List<Plot>;
         final localPlots = apiPlots.map((plot) => plot.toLocalModel()).toList();
         
+        // If we had a previous plot or initial plot, try to find it in the loaded plots
+        local_model.Plot? plotToSelect;
+        if (previousPlot != null || widget.initialPlot != null) {
+          final plotToMatch = previousPlot ?? widget.initialPlot;
+          // Try to find the plot in the loaded plots
+          try {
+            plotToSelect = localPlots.firstWhere(
+              (plot) => plot.id == plotToMatch?.id,
+            );
+          } catch (e) {
+            // If not found, use the stored plot if it exists
+            plotToSelect = plotToMatch;
+          }
+        }
+        
         setState(() {
           _availablePlots = localPlots;
           _isLoadingPlots = false;
+          // Restore the selected plot if it exists
+          if (plotToSelect != null) {
+            _selectedPlot = plotToSelect;
+            _plotController.text = plotToSelect.displayText;
+          }
         });
       } else {
         setState(() {

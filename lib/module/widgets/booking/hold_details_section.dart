@@ -10,6 +10,7 @@ class HoldDetailsSection extends StatefulWidget {
   final VoidCallback? onPrevious;
   final Function(HoldDetails?)? onNext;
   final String? nextButtonText;
+  final HoldDetails? initialHoldDetails;
 
   const HoldDetailsSection({
     super.key,
@@ -17,6 +18,7 @@ class HoldDetailsSection extends StatefulWidget {
     this.onPrevious,
     this.onNext,
     this.nextButtonText,
+    this.initialHoldDetails,
   });
 
   @override
@@ -34,7 +36,8 @@ class _HoldDetailsSectionState extends State<HoldDetailsSection> {
   @override
   void initState() {
     super.initState();
-    _holdDetails = const HoldDetails(
+    // Initialize with provided hold details if available, otherwise use defaults
+    _holdDetails = widget.initialHoldDetails ?? const HoldDetails(
       associateNameOrSelf: '',
       reraNumber: '',
       teamLeaderName: '',
@@ -42,11 +45,21 @@ class _HoldDetailsSectionState extends State<HoldDetailsSection> {
       additionalNotes: '',
     );
     
-    _associateNameController = TextEditingController();
-    _reraNumberController = TextEditingController();
-    _teamLeaderController = TextEditingController();
-    _clientAadharController = TextEditingController();
-    _additionalNotesController = TextEditingController();
+    _associateNameController = TextEditingController(
+      text: _holdDetails.associateNameOrSelf
+    );
+    _reraNumberController = TextEditingController(
+      text: _holdDetails.reraNumber
+    );
+    _teamLeaderController = TextEditingController(
+      text: _holdDetails.teamLeaderName
+    );
+    _clientAadharController = TextEditingController(
+      text: _holdDetails.clientAadhar
+    );
+    _additionalNotesController = TextEditingController(
+      text: _holdDetails.additionalNotes
+    );
   }
 
   @override

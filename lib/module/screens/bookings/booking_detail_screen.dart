@@ -105,6 +105,16 @@ class BookingDetailScreen extends StatelessWidget {
             _buildSectionTitle('Plot Information'),
             _buildDetailCard([
               _buildDetailRow('Plot No.', booking.plotCode),
+              if (booking.project != null)
+                _buildDetailRow('Project', booking.project!.name),
+              if (booking.plotSize != null && booking.plotSize!.isNotEmpty)
+                _buildDetailRow('Plot Size', booking.plotSize!),
+              if (booking.plotArea != null && booking.plotArea!.isNotEmpty)
+                _buildDetailRow('Plot Area', '${booking.plotArea} sq ft'),
+              if (booking.plotPrice != null && booking.plotPrice!.isNotEmpty)
+                _buildDetailRow('Plot Price', '₹${booking.plotPrice}'),
+              if (booking.plotFacing != null && booking.plotFacing!.isNotEmpty)
+                _buildDetailRow('Plot Facing', booking.plotFacing!),
               _buildDetailRow('Booking Type', booking.bookingType),
               _buildDetailRow('Booking Amount', '₹${booking.bookingAmount}'),
               _buildDetailRow('Total Amount', '₹${booking.totalAmount}'),

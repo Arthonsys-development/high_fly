@@ -66,10 +66,12 @@ class _HoldsListScreenState extends ConsumerState<HoldsListScreen>
     if (_searchQuery.isEmpty) return holds;
     
     return holds.where((hold) {
+      final projectName = hold.project?.name ?? '';
       return hold.plotCode.toLowerCase().contains(_searchQuery.toLowerCase()) ||
              hold.customerName.toLowerCase().contains(_searchQuery.toLowerCase()) ||
              hold.customerPhone.contains(_searchQuery) ||
-             hold.statusDisplay.toLowerCase().contains(_searchQuery.toLowerCase());
+             hold.statusDisplay.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+             projectName.toLowerCase().contains(_searchQuery.toLowerCase());
     }).toList();
   }
 
@@ -372,6 +374,10 @@ class _HoldsListScreenState extends ConsumerState<HoldsListScreen>
                   ),
                 ],
               ),
+              if (hold.project != null) ...[
+                const SizedBox(height: 8),
+                _buildInfoRow('Project', hold.project!.name),
+              ],
               const SizedBox(height: 12),
               _buildInfoRow('Customer', hold.customerName),
               const SizedBox(height: 8),

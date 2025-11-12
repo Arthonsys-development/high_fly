@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:highfly/config/constant/app_colors.dart';
 import 'package:highfly/data/models/hold_list_model.dart';
 import '../../global/widgets/common_app_bar.dart';
+import 'hold_booking_screen.dart';
 
 String _formatStatusDisplay(String statusDisplay) {
   if (statusDisplay.isEmpty) return statusDisplay;
@@ -103,6 +104,16 @@ class HoldDetailScreen extends StatelessWidget {
             _buildSectionTitle('Plot Information'),
             _buildDetailCard([
               _buildDetailRow('Plot No.', hold.plotCode),
+              if (hold.project != null)
+                _buildDetailRow('Project', hold.project!.name),
+              if (hold.plotSize != null && hold.plotSize!.isNotEmpty)
+                _buildDetailRow('Plot Size', hold.plotSize!),
+              if (hold.plotArea != null && hold.plotArea!.isNotEmpty)
+                _buildDetailRow('Plot Area', '${hold.plotArea} sq ft'),
+              if (hold.plotPrice != null && hold.plotPrice!.isNotEmpty)
+                _buildDetailRow('Plot Price', '₹${hold.plotPrice}'),
+              if (hold.plotFacing != null && hold.plotFacing!.isNotEmpty)
+                _buildDetailRow('Plot Facing', hold.plotFacing!),
               _buildDetailRow('Hold Amount', '₹${hold.holdAmount}'),
               _buildDetailRow('Hold Until', hold.holdUntil),
               _buildDetailRow('Created At', hold.createdAt),
@@ -167,6 +178,40 @@ class HoldDetailScreen extends StatelessWidget {
               _buildDetailRow('Updated By', hold.updatedBy),
             ]),
             const SizedBox(height: 24),
+
+            // Book Now Button (only show if hold is active)
+            if (hold.status.toLowerCase() == 'active' && !hold.isExpired)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16.0),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => HoldBookingScreen(hold: hold),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryColor,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: const Text(
+                      'Book Now',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),

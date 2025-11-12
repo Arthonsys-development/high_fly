@@ -1,7 +1,15 @@
+import 'response_model/project_response_model.dart';
+
 class BookingListModel {
   final int id;
   final String plotCode;
+  final String? plotSize;
+  final String? plotArea;
+  final String? plotPrice;
+  final String? plotFacing;
+  final Project? project;
   final String agentName;
+  final String? agentEmail;
   final String statusDisplay;
   final String createdAt;
   final String updatedAt;
@@ -37,7 +45,6 @@ class BookingListModel {
   final String? cancelledAt;
   final String? cancellationReason;
   final String remarks;
-  final int project;
   final int plot;
   final int agent;
   final int customer;
@@ -48,7 +55,13 @@ class BookingListModel {
   const BookingListModel({
     required this.id,
     required this.plotCode,
+    this.plotSize,
+    this.plotArea,
+    this.plotPrice,
+    this.plotFacing,
+    this.project,
     required this.agentName,
+    this.agentEmail,
     required this.statusDisplay,
     required this.createdAt,
     required this.updatedAt,
@@ -84,7 +97,6 @@ class BookingListModel {
     this.cancelledAt,
     this.cancellationReason,
     required this.remarks,
-    required this.project,
     required this.plot,
     required this.agent,
     required this.customer,
@@ -94,10 +106,26 @@ class BookingListModel {
   });
 
   factory BookingListModel.fromJson(Map<String, dynamic> json) {
+    // Parse project if it exists
+    Project? project;
+    if (json['project'] != null && json['project'] is Map<String, dynamic>) {
+      try {
+        project = Project.fromJson(json['project'] as Map<String, dynamic>);
+      } catch (e) {
+        project = null;
+      }
+    }
+    
     return BookingListModel(
       id: json['id'] ?? 0,
       plotCode: json['plot_code'] ?? '',
+      plotSize: json['plot_size']?.toString(),
+      plotArea: json['plot_area']?.toString(),
+      plotPrice: json['plot_price']?.toString(),
+      plotFacing: json['plot_facing']?.toString(),
+      project: project,
       agentName: json['agent_name'] ?? '',
+      agentEmail: json['agent_email']?.toString(),
       statusDisplay: json['status_display'] ?? '',
       createdAt: json['created_at'] ?? '',
       updatedAt: json['updated_at'] ?? '',
@@ -133,7 +161,6 @@ class BookingListModel {
       cancelledAt: json['cancelled_at'],
       cancellationReason: json['cancellation_reason'],
       remarks: json['remarks'] ?? '',
-      project: json['project'] ?? 0,
       plot: json['plot'] ?? 0,
       agent: json['agent'] ?? 0,
       customer: json['customer'] ?? 0,
@@ -147,7 +174,13 @@ class BookingListModel {
     return {
       'id': id,
       'plot_code': plotCode,
+      'plot_size': plotSize,
+      'plot_area': plotArea,
+      'plot_price': plotPrice,
+      'plot_facing': plotFacing,
+      'project': project?.toJson(),
       'agent_name': agentName,
+      'agent_email': agentEmail,
       'status_display': statusDisplay,
       'created_at': createdAt,
       'updated_at': updatedAt,
@@ -183,7 +216,6 @@ class BookingListModel {
       'cancelled_at': cancelledAt,
       'cancellation_reason': cancellationReason,
       'remarks': remarks,
-      'project': project,
       'plot': plot,
       'agent': agent,
       'customer': customer,

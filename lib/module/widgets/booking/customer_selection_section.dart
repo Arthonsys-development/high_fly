@@ -14,6 +14,7 @@ class CustomerSelectionSection extends ConsumerStatefulWidget {
   final VoidCallback? onPrevious;
   final Function(Customer?)? onNext;
   final String? nextButtonText;
+  final Customer? initialCustomer;
 
   const CustomerSelectionSection({
     super.key,
@@ -22,6 +23,7 @@ class CustomerSelectionSection extends ConsumerStatefulWidget {
     this.onPrevious,
     this.onNext,
     this.nextButtonText,
+    this.initialCustomer,
   });
 
   @override
@@ -38,6 +40,12 @@ class _CustomerSelectionSectionState extends ConsumerState<CustomerSelectionSect
   @override
   void initState() {
     super.initState();
+    // Initialize with provided customer if available
+    if (widget.initialCustomer != null) {
+      _selectedCustomer = widget.initialCustomer;
+      _nameController.text = widget.initialCustomer!.name;
+      _phoneController.text = widget.initialCustomer!.phone;
+    }
     // Add listeners to trigger rebuild when text changes
     _nameController.addListener(_onTextChanged);
     _phoneController.addListener(_onTextChanged);

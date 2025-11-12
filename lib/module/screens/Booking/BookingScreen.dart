@@ -26,7 +26,7 @@ extension ProjectConversion on Project {
       id: id.toString(),
       name: name,
       plots: [], // API doesn't provide plots directly, they might be fetched separately
-      availablePlotCount: availablePlotCount, // Pass the available plot count from API
+      availablePlotCount: availablePlotCount ?? 0, // Pass the available plot count from API
     );
   }
 }
@@ -190,6 +190,8 @@ class _BookingProcessorScreenState extends State<BookingProcessorScreen>
             title: actionType,
             projects: localProjects,
             nextButtonText: "Next",
+            initialProject: _selectedProject,
+            initialPlot: _selectedPlot,
             onNext: (selectedProject, selectedPlot) {
               setState(() {
                 _selectedProject = selectedProject;
@@ -207,6 +209,7 @@ class _BookingProcessorScreenState extends State<BookingProcessorScreen>
         title: actionType,
         customers: customers,
         nextButtonText: "Next",
+        initialCustomer: _selectedCustomer,
         onPrevious: () {
           setState(() {
             _currentStep = 0; // Go back to project & plot selection
@@ -225,6 +228,7 @@ class _BookingProcessorScreenState extends State<BookingProcessorScreen>
         title: actionType,
         paymentAmount: _selectedPlotPrice,
         nextButtonText: "Next",
+        initialPaymentDetails: _paymentDetails,
         onPrevious: () {
           setState(() {
             _currentStep = 1; // Go back to customer selection
@@ -242,6 +246,7 @@ class _BookingProcessorScreenState extends State<BookingProcessorScreen>
       return BankDetailsSection(
         title: actionType,
         nextButtonText: "Next",
+        initialBankDetails: _bankDetails,
         onPrevious: () {
           setState(() {
             _currentStep = 2; // Go back to payment details
@@ -325,6 +330,8 @@ class _BookingProcessorScreenState extends State<BookingProcessorScreen>
             title: actionType,
             projects: localProjects,
             nextButtonText: "Next",
+            initialProject: _selectedProject,
+            initialPlot: _selectedPlot,
             onNext: (selectedProject, selectedPlot) {
               setState(() {
                 _selectedProject = selectedProject;
@@ -342,6 +349,7 @@ class _BookingProcessorScreenState extends State<BookingProcessorScreen>
         title: actionType,
         customers: customers,
         nextButtonText: "Next",
+        initialCustomer: _selectedCustomer,
         onPrevious: () {
           setState(() {
             _currentHoldStep = 0; // Go back to project & plot selection
@@ -359,6 +367,7 @@ class _BookingProcessorScreenState extends State<BookingProcessorScreen>
       return HoldDetailsSection(
         title: actionType,
         nextButtonText: "Next",
+        initialHoldDetails: _holdDetails,
         onPrevious: () {
           setState(() {
             _currentHoldStep = 1; // Go back to customer selection
@@ -376,9 +385,10 @@ class _BookingProcessorScreenState extends State<BookingProcessorScreen>
       return BankDetailsSection(
         title: "Bank Details",
         nextButtonText: "Next",
+        initialBankDetails: _bankDetails,
         onPrevious: () {
           setState(() {
-            _currentHoldStep = 2; // Go back to payment details
+            _currentHoldStep = 2; // Go back to hold details
           });
         },
         onNext: (bankDetails) {

@@ -15,6 +15,7 @@ class PaymentDetailsSection extends StatefulWidget {
   final VoidCallback? onPrevious;
   final Function(PaymentDetails?)? onNext;
   final String? nextButtonText;
+  final PaymentDetails? initialPaymentDetails;
 
   const PaymentDetailsSection({
     super.key,
@@ -23,6 +24,7 @@ class PaymentDetailsSection extends StatefulWidget {
     this.onPrevious,
     this.onNext,
     this.nextButtonText,
+    this.initialPaymentDetails,
   });
 
   @override
@@ -44,25 +46,49 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
   @override
   void initState() {
     super.initState();
-    _paymentDetails = PaymentDetails(
-      paymentAmount: widget.paymentAmount,
-      paymentMethod: '',
-      paymentMethodKey: '',
-      paymentType: '',
-      paymentTypeKey: '',
-      panNumber: '',
-      aadharNumber: '',
-      additionalNotes: '',
-    );
+    // Initialize with provided payment details if available, otherwise use defaults
+    if (widget.initialPaymentDetails != null) {
+      _paymentDetails = widget.initialPaymentDetails!;
+      _selectedPaymentTypeKey = widget.initialPaymentDetails!.paymentTypeKey;
+    } else {
+      _paymentDetails = PaymentDetails(
+        paymentAmount: widget.paymentAmount,
+        paymentMethod: '',
+        paymentMethodKey: '',
+        paymentType: '',
+        paymentTypeKey: '',
+        panNumber: '',
+        aadharNumber: '',
+        additionalNotes: '',
+      );
+    }
     
-    _paymentAmountController = TextEditingController(text: widget.paymentAmount);
-    _panNumberController = TextEditingController();
-    _aadharNumberController = TextEditingController();
-    _additionalNotesController = TextEditingController();
-    _paymentMethodController = TextEditingController();
-    _paymentTypeController = TextEditingController();
-    _chequeNumberController = TextEditingController();
-    _chequeDateController = TextEditingController();
+    _paymentAmountController = TextEditingController(
+      text: widget.initialPaymentDetails?.paymentAmount ?? widget.paymentAmount
+    );
+    _panNumberController = TextEditingController(
+      text: widget.initialPaymentDetails?.panNumber ?? ''
+    );
+    _aadharNumberController = TextEditingController(
+      text: widget.initialPaymentDetails?.aadharNumber ?? ''
+    );
+    _additionalNotesController = TextEditingController(
+      text: widget.initialPaymentDetails?.additionalNotes ?? ''
+    );
+    _paymentMethodController = TextEditingController(
+      text: widget.initialPaymentDetails?.paymentMethod ?? ''
+    );
+    _paymentTypeController = TextEditingController(
+      text: widget.initialPaymentDetails?.paymentType ?? ''
+    );
+    _chequeNumberController = TextEditingController(
+      text: widget.initialPaymentDetails?.chequeNumber ?? ''
+    );
+    _chequeDateController = TextEditingController(
+      text: widget.initialPaymentDetails?.chequeDate != null
+          ? '${widget.initialPaymentDetails!.chequeDate!.day}/${widget.initialPaymentDetails!.chequeDate!.month}/${widget.initialPaymentDetails!.chequeDate!.year}'
+          : ''
+    );
   }
 
   @override

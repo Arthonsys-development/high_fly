@@ -1,7 +1,15 @@
+import 'response_model/project_response_model.dart';
+
 class HoldListModel {
   final int id;
   final String plotCode;
+  final String? plotSize;
+  final String? plotArea;
+  final String? plotPrice;
+  final String? plotFacing;
+  final Project? project;
   final String agentName;
+  final String? agentEmail;
   final String statusDisplay;
   final bool isExpired;
   final String createdAt;
@@ -33,7 +41,13 @@ class HoldListModel {
   const HoldListModel({
     required this.id,
     required this.plotCode,
+    this.plotSize,
+    this.plotArea,
+    this.plotPrice,
+    this.plotFacing,
+    this.project,
     required this.agentName,
+    this.agentEmail,
     required this.statusDisplay,
     required this.isExpired,
     required this.createdAt,
@@ -64,10 +78,26 @@ class HoldListModel {
   });
 
   factory HoldListModel.fromJson(Map<String, dynamic> json) {
+    // Parse project if it exists
+    Project? project;
+    if (json['project'] != null && json['project'] is Map<String, dynamic>) {
+      try {
+        project = Project.fromJson(json['project'] as Map<String, dynamic>);
+      } catch (e) {
+        project = null;
+      }
+    }
+    
     return HoldListModel(
       id: json['id'] ?? 0,
       plotCode: json['plot_code'] ?? '',
+      plotSize: json['plot_size']?.toString(),
+      plotArea: json['plot_area']?.toString(),
+      plotPrice: json['plot_price']?.toString(),
+      plotFacing: json['plot_facing']?.toString(),
+      project: project,
       agentName: json['agent_name'] ?? '',
+      agentEmail: json['agent_email']?.toString(),
       statusDisplay: json['status_display'] ?? '',
       isExpired: json['is_expired'] ?? false,
       createdAt: json['created_at'] ?? '',
@@ -102,7 +132,13 @@ class HoldListModel {
     return {
       'id': id,
       'plot_code': plotCode,
+      'plot_size': plotSize,
+      'plot_area': plotArea,
+      'plot_price': plotPrice,
+      'plot_facing': plotFacing,
+      'project': project?.toJson(),
       'agent_name': agentName,
+      'agent_email': agentEmail,
       'status_display': statusDisplay,
       'is_expired': isExpired,
       'created_at': createdAt,

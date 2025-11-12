@@ -66,10 +66,12 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
     if (_searchQuery.isEmpty) return bookings;
     
     return bookings.where((booking) {
+      final projectName = booking.project?.name ?? '';
       return booking.plotCode.toLowerCase().contains(_searchQuery.toLowerCase()) ||
              booking.customerName.toLowerCase().contains(_searchQuery.toLowerCase()) ||
              booking.customerPhone.contains(_searchQuery) ||
-             booking.statusDisplay.toLowerCase().contains(_searchQuery.toLowerCase());
+             booking.statusDisplay.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+             projectName.toLowerCase().contains(_searchQuery.toLowerCase());
     }).toList();
   }
 
@@ -373,6 +375,10 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
                   ),
                 ],
               ),
+              if (booking.project != null) ...[
+                const SizedBox(height: 8),
+                _buildInfoRow('Project', booking.project!.name),
+              ],
               const SizedBox(height: 12),
               _buildInfoRow('Customer', booking.customerName),
               const SizedBox(height: 8),
