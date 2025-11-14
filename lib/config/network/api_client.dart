@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:highfly/config/network/tenant_keys.dart';
 import 'package:talker_dio_logger/talker_dio_logger_interceptor.dart';
 import 'dart:developer' as dev;
 
@@ -44,6 +45,7 @@ class ApiClient {
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
+        'X-Tenant-API-Key': TenantApiKeyConfig.activeTenantApiKey,
       },
     ));
 

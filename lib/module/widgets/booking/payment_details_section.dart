@@ -169,6 +169,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
               isMandatory: true,
               borderRadius: 6,
               maxLength: 6,
+              keyboardType: TextInputType.number,
               onChanged: (value) {
                 setState(() {
                   _paymentDetails = _paymentDetails.copyWith(chequeNumber: value);
@@ -242,6 +243,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
             isMandatory: true,
             borderRadius: 6,
             maxLength: 12,
+            keyboardType: TextInputType.number,
             onChanged: (value) {
               setState(() {
                 _paymentDetails = _paymentDetails.copyWith(aadharNumber: value);

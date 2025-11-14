@@ -20,16 +20,20 @@ class _HoldsListScreenState extends ConsumerState<HoldsListScreen>
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
+  void _refreshHoldsInBackground() {
+    if (_isDisposed || !mounted) return;
+    Future.microtask(() {
+      if (_isDisposed || !mounted) return;
+      ref.read(holdsControllerProvider.notifier).loadHolds();
+    });
+  }
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     // Load holds when the screen is initialized
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!_isDisposed && mounted) {
-        ref.read(holdsControllerProvider.notifier).loadHolds();
-      }
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _refreshHoldsInBackground());
     
     // Add listener to search controller
     _searchController.addListener(_onSearchChanged);
@@ -45,9 +49,7 @@ class _HoldsListScreenState extends ConsumerState<HoldsListScreen>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (_isDisposed) return;
     if (state == AppLifecycleState.resumed) {
-      if (!_isDisposed) {
-        ref.read(holdsControllerProvider.notifier).loadHolds();
-      }
+      _refreshHoldsInBackground();
     }
   }
 
@@ -332,7 +334,7 @@ class _HoldsListScreenState extends ConsumerState<HoldsListScreen>
             MaterialPageRoute(
               builder: (context) => HoldDetailScreen(hold: hold),
             ),
-          );
+          ).then((_) => _refreshHoldsInBackground());
         },
         borderRadius: BorderRadius.circular(12),
         child: Container(
@@ -384,8 +386,8 @@ class _HoldsListScreenState extends ConsumerState<HoldsListScreen>
               _buildInfoRow('Phone', hold.customerPhone),
               const SizedBox(height: 8),
               _buildInfoRow('Hold Until', hold.holdUntil),
-              const SizedBox(height: 8),
-              _buildInfoRow('Amount', '₹${hold.holdAmount}'),
+              // const SizedBox(height: 8),
+              // _buildInfoRow('Amount', '₹${hold.holdAmount}'),
             ],
           ),
         ),

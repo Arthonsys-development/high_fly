@@ -27,6 +27,7 @@ class BookingRequestModel {
   final bool salaryIndividual;
   final String? salarySlipPath;
   final String? form16APath;
+  final int? holdId;
 
   const BookingRequestModel({
     required this.plot,
@@ -57,6 +58,7 @@ class BookingRequestModel {
     required this.salaryIndividual,
     this.salarySlipPath,
     this.form16APath,
+    this.holdId,
   });
 
   Map<String, dynamic> toJson() {
@@ -89,6 +91,7 @@ class BookingRequestModel {
       'salary_individual': salaryIndividual,
       if (salarySlipPath != null) 'salary_slip_path': salarySlipPath,
       if (form16APath != null) 'form_16a_path': form16APath,
+      if (holdId != null) 'hold_id': holdId,
     };
   }
 

@@ -118,7 +118,7 @@ class BookingDetailScreen extends StatelessWidget {
               _buildDetailRow('Booking Type', booking.bookingType),
               _buildDetailRow('Booking Amount', '₹${booking.bookingAmount}'),
               _buildDetailRow('Total Amount', '₹${booking.totalAmount}'),
-              _buildDetailRow('Booking Date', booking.bookingDate),
+             // _buildDetailRow('Booking Date', booking.bookingDate),
               _buildDetailRow('Booked At', booking.bookedAt),
             ]),
             const SizedBox(height: 24),
@@ -200,15 +200,15 @@ class BookingDetailScreen extends StatelessWidget {
             ],
 
             // Additional Information
-            _buildSectionTitle('Additional Information'),
-            _buildDetailCard([
-              _buildDetailRow('Agent Name', booking.agentName),
-              _buildDetailRow('Created At', booking.createdAt),
-              _buildDetailRow('Updated At', booking.updatedAt),
-              if (booking.fromHold != null && booking.fromHold!.isNotEmpty)
-                _buildDetailRow('From Hold', booking.fromHold!),
-            ]),
-            const SizedBox(height: 24),
+            // _buildSectionTitle('Additional Information'),
+            // _buildDetailCard([
+            //   _buildDetailRow('Agent Name', booking.agentName),
+            //   _buildDetailRow('Created At', booking.createdAt),
+            //   _buildDetailRow('Updated At', booking.updatedAt),
+            //   if (booking.fromHold != null && booking.fromHold!.isNotEmpty)
+            //     _buildDetailRow('From Hold', booking.fromHold!),
+            // ]),
+            // const SizedBox(height: 24),
           ],
         ),
       ),

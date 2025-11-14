@@ -89,6 +89,7 @@ class _HoldBookingScreenState extends State<HoldBookingScreen> {
         salaryIndividual: _paymentDetails!.isSalariedIndividual,
         salarySlipPath: _paymentDetails!.salarySlipPath,
         form16APath: _paymentDetails!.form16APath,
+        holdId: widget.hold.id, // Include hold ID when booking from hold
       );
 
       await _bookingRepository.createBooking(request);
@@ -117,9 +118,14 @@ class _HoldBookingScreenState extends State<HoldBookingScreen> {
       }
     } catch (e) {
       if (mounted) {
+        // Extract error message, removing "Exception: " prefix if present
+        String errorMessage = e.toString();
+        if (errorMessage.startsWith('Exception: ')) {
+          errorMessage = errorMessage.substring(11);
+        }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: ${e.toString()}'),
+            content: Text(errorMessage),
             backgroundColor: Colors.red,
           ),
         );

@@ -31,6 +31,7 @@ class PdfUploadWidget extends StatefulWidget {
 class _PdfUploadWidgetState extends State<PdfUploadWidget> {
   String? _uploadStatus;
   String? _selectedFilePath;
+  bool _isFileTooLarge = false;
 
   @override
   void initState() {
@@ -105,10 +106,12 @@ class _PdfUploadWidgetState extends State<PdfUploadWidget> {
         return;
       }
 
-      // Check file size (e.g., 10MB limit)
-      if (file.size > 10 * 1024 * 1024) {
+      // Check file size (100KB limit)
+      if (file.size > 100 * 1024) {
         setState(() {
-          _uploadStatus = 'File size exceeds 10MB limit';
+          _uploadStatus = 'File size exceeds 100KB limit';
+          _isFileTooLarge = true;
+          _selectedFilePath = null;
         });
         return;
       }
@@ -117,6 +120,7 @@ class _PdfUploadWidgetState extends State<PdfUploadWidget> {
       setState(() {
         _selectedFilePath = file.path;
         _uploadStatus = 'File selected: ${file.name}';
+        _isFileTooLarge = false;
       });
 
       // Notify parent widget of file selection (without uploading)
@@ -171,10 +175,12 @@ class _PdfUploadWidgetState extends State<PdfUploadWidget> {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: AppColors.textFieldBGColor,
+              color: _isFileTooLarge
+                  ? const Color(0xFFFFF5F5)
+                  : AppColors.textFieldBGColor,
               borderRadius: BorderRadius.circular(6),
               border: Border.all(
-                color: Colors.black26,
+                color: _isFileTooLarge ? Colors.red : Colors.black26,
                 width: 1,
               ),
             ),
@@ -221,6 +227,16 @@ class _PdfUploadWidgetState extends State<PdfUploadWidget> {
                               _uploadStatus!.toLowerCase().contains('failed')
                           ? Colors.red
                           : Colors.grey,
+                    ),
+                  ),
+                ],
+                if (_isFileTooLarge) ...[
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Please select a PDF that is 100KB or smaller.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.red,
                     ),
                   ),
                 ],

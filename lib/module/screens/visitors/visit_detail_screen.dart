@@ -254,12 +254,12 @@ class VisitDetailScreen extends StatelessWidget {
                       ),
                     ],
                     const SizedBox(height: 16),
-                    _buildDetailRow(
-                      icon: Icons.info,
-                      label: "Status",
-                      value: visit.status,
-                    ),
-                    const SizedBox(height: 16),
+                    // _buildDetailRow(
+                    //   icon: Icons.info,
+                    //   label: "Status",
+                    //   value: visit.status,
+                    // ),
+                    // const SizedBox(height: 16),
                     _buildDetailRow(
                       icon: Icons.location_on,
                       label: "At Project Location",

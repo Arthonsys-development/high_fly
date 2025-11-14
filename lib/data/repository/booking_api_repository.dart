@@ -52,6 +52,10 @@ class BookingApiRepository {
         throw Exception('Failed to create booking: ${response.statusMessage}');
       }
     } on DioException catch (e) {
+      // Check for 413 status code (Request Entity Too Large)
+      if (e.response?.statusCode == 413) {
+        throw Exception('Selected file size Too Large');
+      }
       throw Exception('API Error: ${e.message}');
     } catch (e) {
       throw Exception('Unexpected error: $e');

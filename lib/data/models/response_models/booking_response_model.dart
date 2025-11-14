@@ -42,7 +42,7 @@ class BookingResponseModel {
   final String? cancelledBy;
   final String? cancellationReason;
   final String remarks;
-  final String? fromHold;
+  final int? fromHold;
   final String createdAt;
   final String updatedAt;
 
@@ -140,7 +140,9 @@ class BookingResponseModel {
       cancelledBy: json['cancelled_by'],
       cancellationReason: json['cancellation_reason'],
       remarks: json['remarks'] ?? '',
-      fromHold: json['from_hold'],
+      fromHold: json['from_hold'] is int
+          ? json['from_hold'] as int
+          : int.tryParse(json['from_hold']?.toString() ?? ''),
       createdAt: json['created_at'] ?? '',
       updatedAt: json['updated_at'] ?? '',
     );

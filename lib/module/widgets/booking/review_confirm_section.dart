@@ -87,10 +87,14 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
       }
     } catch (e) {
       if (mounted) {
-        print("sdfds");
+        // Extract error message, removing "Exception: " prefix if present
+        String errorMessage = e.toString();
+        if (errorMessage.startsWith('Exception: ')) {
+          errorMessage = errorMessage.substring(11);
+        }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: ${e.toString()}'),
+            content: Text(errorMessage),
             backgroundColor: Colors.red,
           ),
         );

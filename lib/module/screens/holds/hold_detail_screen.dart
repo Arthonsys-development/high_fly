@@ -171,13 +171,13 @@ class HoldDetailScreen extends StatelessWidget {
             ],
 
             // Additional Information
-            _buildSectionTitle('Additional Information'),
-            _buildDetailCard([
-              _buildDetailRow('Agent Name', hold.agentName),
-              _buildDetailRow('Created By', hold.createdBy),
-              _buildDetailRow('Updated By', hold.updatedBy),
-            ]),
-            const SizedBox(height: 24),
+            // _buildSectionTitle('Additional Information'),
+            // _buildDetailCard([
+            //   _buildDetailRow('Agent Name', hold.agentName),
+            //   _buildDetailRow('Created By', hold.createdBy),
+            //   _buildDetailRow('Updated By', hold.updatedBy),
+            // ]),
+            // const SizedBox(height: 24),
 
             // Book Now Button (only show if hold is active)
             if (hold.status.toLowerCase() == 'active' && !hold.isExpired)

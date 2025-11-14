@@ -69,12 +69,38 @@ class AuthController extends Notifier<AuthState> {
   late FirebaseAuthRepository _authRepository;
   late AuthApiRepository _authApiRepository;
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
+  static final List<String> _secureStorageKeys = [
+    SharedPreferenceStrings.accessToken,
+    SharedPreferenceStrings.id,
+    SharedPreferenceStrings.firstName,
+    SharedPreferenceStrings.fullName,
+    SharedPreferenceStrings.phoneNumber,
+    SharedPreferenceStrings.profilePhoto,
+    'access_token',
+    'user_data',
+  ];
 
   @override
   AuthState build() {
     _authRepository = ref.read(firebaseAuthRepositoryProvider);
     _authApiRepository = ref.read(authApiRepositoryProvider);
     return AuthState();
+  }
+
+  Future<void> _cleanupFailedLogin() async {
+    try {
+      await _authRepository.signOut();
+    } catch (e) {
+      debugPrint('AuthController: Failed to sign out after login failure - $e');
+    }
+
+    for (final key in _secureStorageKeys) {
+      try {
+        await _secureStorage.delete(key: key);
+      } catch (e) {
+        debugPrint('AuthController: Failed to clear $key after login failure - $e');
+      }
+    }
   }
 
   // Register device for notifications
@@ -151,20 +177,39 @@ class AuthController extends Notifier<AuthState> {
         final loginTokenRequest = LoginTokenRequest(idToken: idToken);
         final result = await _authApiRepository.verifyToken(loginTokenRequest);
         
-        if (!result['success']) {
-          throw result['message'] ?? 'Login token verification failed';
+        final tokenVerificationSucceeded = result['success'] == true;
+        if (!tokenVerificationSucceeded) {
+          final message = result['message']?.toString() ?? 'Login token verification failed';
+          await _cleanupFailedLogin();
+          throw message;
         }
         
-        // Save access token to secure storage
-        final accessToken = result['data']['access_token'] ?? '';
-        final id = result['data']['agent']['id'] ?? '';
-        final fName = result['data']['agent']['full_name'] ?? '';
-        final fullName = result['data']['agent']['full_name'] ?? '';
-        final phoneNumber = result['data']['agent']['user']['phone_number'] ?? '';
-        final profileImage = result['data']['agent']['user']['profile_image'] ?? '';
-        if (accessToken != null) {
-          await _secureStorage.write(key: SharedPreferenceStrings.accessToken, value: accessToken);
+        final data = result['data'];
+        if (data is! Map) {
+          await _cleanupFailedLogin();
+          throw 'Invalid response received from login API';
         }
+
+        // Save access token to secure storage
+        final accessToken = data['access_token']?.toString() ?? '';
+        final agent = data['agent'];
+        if (agent is! Map) {
+          await _cleanupFailedLogin();
+          throw 'Invalid agent information received from login API';
+        }
+
+        final id = agent['id']?.toString() ?? '';
+        final fName = agent['full_name']?.toString() ?? '';
+        final fullName = agent['full_name']?.toString() ?? '';
+        final user = agent['user'];
+        final phoneNumber = (user is Map ? user['phone_number'] : null)?.toString() ?? '';
+        final profileImage = (user is Map ? user['profile_image'] : null)?.toString() ?? '';
+
+        if (accessToken.isEmpty || id.isEmpty) {
+          await _cleanupFailedLogin();
+          throw 'Missing authentication data from server response';
+        }
+        await _secureStorage.write(key: SharedPreferenceStrings.accessToken, value: accessToken);
         await _secureStorage.write(key: SharedPreferenceStrings.id, value: id.toString());
         await _secureStorage.write(key: SharedPreferenceStrings.firstName, value: fName);
         await _secureStorage.write(key: SharedPreferenceStrings.fullName, value: fullName);
@@ -205,6 +250,7 @@ class AuthController extends Notifier<AuthState> {
         return false;
       }
     } catch (e) {
+      await _cleanupFailedLogin();
       state = state.copyWith(
         isLoading: false,
         error: e.toString(),
