@@ -641,36 +641,117 @@ class Plot {
   final int id;
   final String plotNumber;
   final int projectId;
+  final String? projectName;
   final double area;
+  final double? saleableSize;
+  final double? sizeSqYd;
   final double price;
   final String dimensions;
   final String facing;
   final String remark;
   final String status;
+  final double? width;
+  final double? length;
+  final String? sitePlanUrl;
+  final String? primaryImage;
+  final int imagesCount;
+  final bool hasActiveHold;
+  final bool hasActiveBooking;
+  final String? createdAt;
 
   Plot({
     required this.id,
     required this.plotNumber,
     required this.projectId,
+    this.projectName,
     required this.area,
+    this.saleableSize,
+    this.sizeSqYd,
     required this.price,
     required this.dimensions,
     required this.facing,
     required this.remark,
     required this.status,
+    this.width,
+    this.length,
+    this.sitePlanUrl,
+    this.primaryImage,
+    this.imagesCount = 0,
+    this.hasActiveHold = false,
+    this.hasActiveBooking = false,
+    this.createdAt,
   });
 
   factory Plot.fromJson(Map<String, dynamic> json) {
+    // Map plot_code to plotNumber
+    final plotCode = json['plot_code'];
+    final plotNumber = plotCode != null 
+        ? plotCode.toString() 
+        : json['plot_number'] ?? json['plotNumber'] ?? '';
+    
+    // Map project field (can be int or string)
+    int projectId = 0;
+    if (json['project'] != null) {
+      if (json['project'] is int) {
+        projectId = json['project'] as int;
+      } else if (json['project'] is String) {
+        projectId = int.tryParse(json['project']) ?? 0;
+      }
+    } else if (json['project_id'] != null) {
+      projectId = json['project_id'] is int 
+          ? json['project_id'] as int 
+          : (json['project_id'] is String ? int.tryParse(json['project_id']) ?? 0 : 0);
+    } else if (json['projectId'] != null) {
+      projectId = json['projectId'] is int 
+          ? json['projectId'] as int 
+          : (json['projectId'] is String ? int.tryParse(json['projectId']) ?? 0 : 0);
+    }
+    
+    // Map area - prefer total_area, fallback to area
+    final area = _parseDouble(json['total_area']) ?? 
+                 _parseDouble(json['area']) ?? 0.0;
+    
+    // Build dimensions from width and length if available
+    String dimensions;
+    if (json['width'] != null && json['length'] != null) {
+      final width = _parseDouble(json['width']) ?? 0.0;
+      final length = _parseDouble(json['length']) ?? 0.0;
+      dimensions = '${width.toStringAsFixed(0)} x ${length.toStringAsFixed(0)}';
+    } else {
+      dimensions = json['dimensions'] ?? '';
+    }
+    
+    // Map facing - prefer facing_display for display, but store both
+    final facing = json['facing_display'] ?? json['facing'] ?? '';
+    
+    // Map status_display to remark
+    final remark = json['status_display'] ?? json['remark'] ?? '';
+    
     return Plot(
       id: json['id'] ?? json['plot_id'] ?? 0,
-      plotNumber: json['plot_number'] ?? json['plot_number'] ?? json['plotNumber'] ?? '',
-      projectId: json['project'] ?? json['project_id'] ?? json['projectId'] ?? 0,
-      area: _parseDouble(json['total_area']) ?? _parseDouble(json['area']) ?? 0.0,
+      plotNumber: plotNumber,
+      projectId: projectId,
+      projectName: json['project_name']?.toString(),
+      area: area,
+      saleableSize: _parseDouble(json['saleable_size']),
+      sizeSqYd: _parseDouble(json['size_sq_yd']),
       price: _parseDouble(json['price']) ?? 0.0,
-      dimensions: json['dimensions'] ?? '${json['width'] ?? 0} x ${json['length'] ?? 0}',
-      facing: json['facing_display'] ?? json['facing'] ?? '',
-      remark: json['status_display'] ?? json['remark'] ?? json['status'] ?? '',
-      status: json['status'] ?? 'available',
+      dimensions: dimensions,
+      facing: facing,
+      remark: remark,
+      status: json['status']?.toString() ?? 'available',
+      width: _parseDouble(json['width']),
+      length: _parseDouble(json['length']),
+      sitePlanUrl: json['site_plan_url']?.toString(),
+      primaryImage: json['primary_image']?.toString(),
+      imagesCount: json['images_count'] is int 
+          ? json['images_count'] as int 
+          : (json['images_count'] is String 
+              ? int.tryParse(json['images_count']) ?? 0 
+              : 0),
+      hasActiveHold: json['has_active_hold'] == true || json['has_active_hold'] == 'true',
+      hasActiveBooking: json['has_active_booking'] == true || json['has_active_booking'] == 'true',
+      createdAt: json['created_at']?.toString(),
     );
   }
 
@@ -685,14 +766,30 @@ class Plot {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
+      'plot_code': plotNumber,
       'plot_number': plotNumber,
+      'project': projectId,
       'project_id': projectId,
+      'project_name': projectName,
+      'total_area': area,
       'area': area,
+      'saleable_size': saleableSize,
+      'size_sq_yd': sizeSqYd,
       'price': price,
+      'width': width,
+      'length': length,
       'dimensions': dimensions,
       'facing': facing,
-      'remark': remark,
+      'facing_display': facing,
       'status': status,
+      'status_display': remark,
+      'remark': remark,
+      'site_plan_url': sitePlanUrl,
+      'primary_image': primaryImage,
+      'images_count': imagesCount,
+      'has_active_hold': hasActiveHold,
+      'has_active_booking': hasActiveBooking,
+      'created_at': createdAt,
     };
   }
 
