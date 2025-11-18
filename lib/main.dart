@@ -2,16 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
-// Add these new imports
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:permission_handler/permission_handler.dart';
 
-// Add this import for our new provider
-
+import 'config/constant/app_strings.dart';
 import 'config/routes.dart';
 import 'config/theme.dart';
+import 'module/providers/organization_provider.dart';
 import 'utils/flutter_web_error_handler.dart';
 
 final scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
@@ -154,6 +153,10 @@ class MyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final organizationState = ref.watch(organizationProvider);
+    final organizationName =
+        organizationState.asData?.value?.name ?? GlobalStrings.appName;
+
     // Initialize FCM token and request notification permissions when app starts
     // WidgetsBinding.instance.addPostFrameCallback((_) async {
     //   if (!kIsWeb) {
@@ -189,7 +192,7 @@ class MyApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       key: navigatorKey,
       scaffoldMessengerKey: scaffoldMessengerKey,
-      title: 'Vistarak',
+      title: organizationName,
       theme: lightTheme,
       // Define light theme
       // darkTheme: darkTheme,

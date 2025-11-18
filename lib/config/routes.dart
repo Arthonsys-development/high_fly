@@ -10,11 +10,13 @@ import '../module/screens/authentication/signIn_screen.dart';
 import '../module/screens/authentication/signUp_screen.dart';
 import '../module/screens/authentication/otp_verification_screen.dart';
 import '../module/screens/dashboard/dashboard_screen.dart';
+import '../module/screens/onboarding/splash_screen.dart';
 import '../module/screens/visitors/visit_detail_screen.dart';
 import '../module/screens/profile/profile_screen.dart';
 import '../module/widgets/add_visit_dialog.dart';
 
 class Routes {
+  static String splash = '/';
   static String bottomBar = '/bottomBar';
   static String signIn = '/signIn';
   static String signUp = '/signUp';
@@ -31,53 +33,52 @@ final _auth = FirebaseAuth.instance;
 
 final GoRouter router = GoRouter(
   redirect: (context, state) async {
-    // Add a small delay to allow flags to be set
     await Future.delayed(const Duration(milliseconds: 100));
-    
-    debugPrint('Redirect check called for path: ${state.uri.toString()}');
+
+    final location = state.uri.toString();
+    debugPrint('Redirect check called for path: $location');
     debugPrint('isPickingImage flag: ${Routes.isPickingImage}');
-    
-    // Don't redirect if we're in the middle of picking an image
+
     if (Routes.isPickingImage) {
       debugPrint('Preventing redirect during image picking');
       return null;
     }
-    
-    // Don't redirect if we're already on the add visit screen
-    if (state.uri.toString() == Routes.addVisitScreen) {
+
+    if (location == Routes.addVisitScreen) {
       debugPrint('Already on add visit screen, no redirect needed');
       return null;
     }
-    
-    // Don't redirect if we're already on the visit detail screen
-    if (state.uri.toString() == Routes.visitDetailScreen) {
+
+    if (location == Routes.visitDetailScreen) {
       debugPrint('Already on visit detail screen, no redirect needed');
       return null;
     }
-    
+
     final isLoggedIn = _auth.currentUser != null;
     debugPrint('isLoggedIn: $isLoggedIn');
-    
-    final isSigningIn = state.uri.toString() == Routes.signIn || state.uri.toString() == '/';
+
+    final isSplash = location == Routes.splash;
+    final isSigningIn = location == Routes.signIn;
+    final isSignUp = location == Routes.signUp;
+
+    debugPrint('isSplash: $isSplash');
     debugPrint('isSigningIn: $isSigningIn');
-    
-    final isSignUp = state.uri.toString() == Routes.signUp;
     debugPrint('isSignUp: $isSignUp');
-    
-    // If user is logged in and trying to access sign in or root, redirect to dashboard
-    // But only if we're not currently on a screen that should stay active
-    if (isLoggedIn && (isSigningIn || state.uri.toString() == '/')) {
+
+    if (isLoggedIn && isSigningIn) {
       debugPrint('User is logged in, redirecting to dashboard');
       return Routes.dashboardScreen;
     }
-    
-    // If user is not logged in and trying to access protected routes, redirect to sign in
-    if (!isLoggedIn && state.uri.toString() == Routes.dashboardScreen) {
+    if (isLoggedIn && isSplash) {
+      debugPrint('User is logged in but allowing splash to run for boot tasks');
+      return null;
+    }
+
+    if (!isLoggedIn && location == Routes.dashboardScreen) {
       debugPrint('User is not logged in, redirecting to sign in');
       return Routes.signIn;
     }
-    
-    debugPrint('No redirect needed for path: ${state.uri.toString()}');
+
     return null;
   },
   errorBuilder: (context, state) => const Scaffold(
@@ -98,8 +99,8 @@ final GoRouter router = GoRouter(
   ),
   routes: [
     GoRoute(
-      path: '/',
-      builder: (context, state) => const SignInScreen(),
+      path: Routes.splash,
+      builder: (context, state) => const SplashScreen(),
     ),
     GoRoute(
       path: Routes.signIn,

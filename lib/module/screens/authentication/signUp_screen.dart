@@ -19,6 +19,8 @@ import '../../../config/constant/app_strings.dart';
 import '../../../config/constant/const_assets.dart';
 import '../../global/widgets/custom_text_field.dart';
 import '../../utils/app_fonts.dart';
+import '../../providers/organization_provider.dart';
+import '../../widgets/organization_logo.dart';
 import 'otp_verification_screen.dart';
 
 class SignUpScreen extends ConsumerStatefulWidget {
@@ -461,7 +463,10 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     );
   }
 
-  Widget _buildMobileLayout() {
+  Widget _buildMobileLayout({
+    required String heading,
+    required String subheading,
+  }) {
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -470,33 +475,31 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
           children: [
             Align(
               alignment: Alignment.center,
-              child: Image.asset(
-                ImageAssets.highFlyLogo,
-                fit: BoxFit.fill,
+              child: OrganizationLogo(
                 width: 250,
                 height: 150,
-                // h
+                fit: BoxFit.contain,
               ),
             ),
-
-            // SizedBox(height: 30),
-            // Padding(
-            //   padding: const EdgeInsets.symmetric(horizontal: 30.0),
-            //   child: Text(
-            //     SignInScreenString.heading1,
-            //     style: TextStyle(
-            //       fontSize: 30,
-            //       fontWeight: FontWeight.w500,
-            //       color: Colors.black,
-            //     ),
-            //   ),
-            // ),
-            // SizedBox(height: 10),
+            /*const SizedBox(height: 24),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 30.0),
               child: Text(
-                SignInScreenString.heading2,
-                style: TextStyle(
+                heading,
+                style: const TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ), */
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 30.0),
+              child: Text(
+                subheading,
+                style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w400,
                   color: AppColors.secondaryTextColor,
@@ -585,7 +588,10 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     );
   }
 
-  Widget _buildTabletDesktopLayout() {
+  Widget _buildTabletDesktopLayout({
+    required String heading,
+    required String subheading,
+  }) {
     return Center(
       child: SingleChildScrollView(
         child: Container(
@@ -612,31 +618,31 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
             crossAxisAlignment: CrossAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Image.asset(
-                ImageAssets.highFlyLogo,
-                width: Responsive.isDesktop(context) ? 120 : 100,
+              OrganizationLogo(
+                width: Responsive.isDesktop(context) ? 140 : 110,
+                height: Responsive.isDesktop(context) ? 140 : 110,
               ),
-              // SizedBox(height: 30),
-              // Text(
-              //   SignInScreenString.heading1,
-              //   style: TextStyle(
-              //     fontSize: Responsive.isDesktop(context) ? 36 : 32,
-              //     fontWeight: FontWeight.w500,
-              //     color: Colors.black,
-              //   ),
-              //   textAlign: TextAlign.center,
-              // ),
-              // SizedBox(height: 16),
+              const SizedBox(height: 24),
               Text(
-                SignInScreenString.heading2,
+                heading,
                 style: TextStyle(
+                  fontSize: Responsive.isDesktop(context) ? 34 : 30,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                subheading,
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w400,
                   color: AppColors.secondaryTextColor,
                 ),
                 textAlign: TextAlign.center,
               ),
-              SizedBox(height: 30),
+              const SizedBox(height: 30),
               _buildProfilePhotoSection(),
               SizedBox(height: 30),
               // Two-column layout for desktop, single column for tablet
@@ -948,14 +954,31 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   }
 
   @override
+  @override
   Widget build(BuildContext context) {
+    final organizationState = ref.watch(organizationProvider);
+    final organizationName =
+        organizationState.asData?.value?.name ?? GlobalStrings.appName;
+    final heading = "";//'${organizationName.toUpperCase()} VISITS';
+    final subheading =
+        'Join $organizationName to access your real estate management dashboard';
+
     return Scaffold(
       backgroundColor: Responsive.isMobile(context) ? Colors.white : Colors.grey[50],
       body: SafeArea(
         child: Responsive(
-          mobile: _buildMobileLayout(),
-          tablet: _buildTabletDesktopLayout(),
-          desktop: _buildTabletDesktopLayout(),
+          mobile: _buildMobileLayout(
+            heading: heading,
+            subheading: subheading,
+          ),
+          tablet: _buildTabletDesktopLayout(
+            heading: heading,
+            subheading: subheading,
+          ),
+          desktop: _buildTabletDesktopLayout(
+            heading: heading,
+            subheading: subheading,
+          ),
         ),
       ),
     );

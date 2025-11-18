@@ -23,6 +23,8 @@ import 'package:highfly/data/repository/firebase_auth_repository.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../providers/analytics_provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import '../../providers/organization_provider.dart';
+import '../../widgets/organization_logo.dart';
 
 enum OtpScreenType { signIn, signUp }
 
@@ -520,7 +522,7 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
     }
   }
 
-  Widget _buildMobileLayout() {
+  Widget _buildMobileLayout(String organizationName) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0),
       child: SingleChildScrollView(
@@ -531,14 +533,21 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
             children: [
               Align(
                 alignment: Alignment.center,
-                child: Image.asset(
-                  ImageAssets.highFlyLogo,
-                  fit: BoxFit.fill,
-                  width: 250,
-                  height: 150,
+                child: OrganizationLogo(
+                  width: 220,
+                  height: 140,
                 ),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 12),
+              Text(
+                organizationName,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 30.0),
                 child: Text(
@@ -675,7 +684,7 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
     );
   }
 
-  Widget _buildTabletDesktopLayout() {
+  Widget _buildTabletDesktopLayout(String organizationName) {
     return Center(
       child: SingleChildScrollView(
         child: Container(
@@ -704,11 +713,20 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
               crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Image.asset(
-                  ImageAssets.highFlyLogo,
-                  width: Responsive.isDesktop(context) ? 120 : 100,
+                OrganizationLogo(
+                  width: Responsive.isDesktop(context) ? 140 : 120,
+                  height: Responsive.isDesktop(context) ? 120 : 100,
                 ),
-                SizedBox(height: 40),
+                const SizedBox(height: 16),
+                Text(
+                  organizationName,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
                 Text(
                   'Enter OTP',
                   style: TextStyle(
@@ -842,13 +860,17 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final organizationState = ref.watch(organizationProvider);
+    final organizationName =
+        organizationState.asData?.value?.name ?? GlobalStrings.appName;
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Responsive(
-          mobile: _buildMobileLayout(),
-          tablet: _buildTabletDesktopLayout(),
-          desktop: _buildTabletDesktopLayout(),
+          mobile: _buildMobileLayout(organizationName),
+          tablet: _buildTabletDesktopLayout(organizationName),
+          desktop: _buildTabletDesktopLayout(organizationName),
         ),
       ),
     );

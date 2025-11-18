@@ -4,11 +4,13 @@ import 'package:go_router/go_router.dart';
 import 'package:highfly/config/constant/app_colors.dart';
 import 'package:highfly/config/routes.dart';
 import '../providers/auth_provider.dart';
+import '../providers/organization_provider.dart';
 import '../global/widgets/custom_text_field.dart';
 import '../global/widgets/custom_button.dart';
 import '../../config/constant/app_strings.dart';
 import '../../config/constant/const_assets.dart';
 import '../utils/app_fonts.dart';
+import 'organization_logo.dart';
 
 class WebPhoneAuthWidget extends ConsumerStatefulWidget {
   const WebPhoneAuthWidget({super.key});
@@ -33,6 +35,12 @@ class _WebPhoneAuthWidgetState extends ConsumerState<WebPhoneAuthWidget> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authControllerProvider);
     final authController = ref.read(authControllerProvider.notifier);
+    final organizationState = ref.watch(organizationProvider);
+    final organizationName =
+        organizationState.asData?.value?.name ?? GlobalStrings.appName;
+    final heading = '${organizationName.toUpperCase()} VISITS';
+    final subheading =
+        'Sign in to access your $organizationName real estate management dashboard';
 
     // Listen to auth state changes for errors
     ref.listen<AuthState>(authControllerProvider, (previous, next) {
@@ -58,9 +66,9 @@ class _WebPhoneAuthWidgetState extends ConsumerState<WebPhoneAuthWidget> {
             // Logo
             Align(
               alignment: Alignment.center,
-              child: Image.asset(
-                ImageAssets.highFlyLogo,
-                width: 100,
+              child: OrganizationLogo(
+                width: 120,
+                height: 80,
               ),
             ),
             const SizedBox(height: 30),
@@ -69,8 +77,8 @@ class _WebPhoneAuthWidgetState extends ConsumerState<WebPhoneAuthWidget> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 30.0),
               child: Text(
-                SignInScreenString.heading1,
-                style: TextStyle(
+                heading,
+                style: const TextStyle(
                   fontSize: 30,
                   fontWeight: FontWeight.w500,
                   color: Colors.black,
@@ -83,8 +91,8 @@ class _WebPhoneAuthWidgetState extends ConsumerState<WebPhoneAuthWidget> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 30.0),
               child: Text(
-                SignInScreenString.heading2,
-                style: TextStyle(
+                subheading,
+                style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w400,
                   color: AppColors.secondaryTextColor,

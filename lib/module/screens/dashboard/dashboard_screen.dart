@@ -284,7 +284,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               onPressed: toggleSideMenu,
             ),
 
-          const SizedBox(width: 12),
+          //const SizedBox(width: 12),
           Text(
             _getPageTitle(),
             style: const TextStyle(
@@ -309,19 +309,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   String _getPageTitle() {
     switch (selectedMenuIndex) {
       case 0:
-        return 'Vistarak - Projects';
+        return 'Projects';
       case 1:
-        return 'Vistarak - Visits';
+        return 'Visits';
       case 2:
-        return 'Vistarak - Booking';
+        return 'Booking';
       case 3:
-        return 'Vistarak - Holds';
+        return 'Holds';
       case 4:
-        return 'Vistarak - Bookings';
+        return 'Bookings';
       case 5:
-        return 'Vistarak - Profile';
+        return 'Profile';
       default:
-        return 'Vistarak Dashboard';
+        return 'Dashboard';
     }
   }
 

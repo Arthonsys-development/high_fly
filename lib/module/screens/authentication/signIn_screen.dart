@@ -12,6 +12,8 @@ import '../../../config/constant/app_strings.dart';
 import '../../../config/constant/const_assets.dart';
 import '../../global/widgets/custom_text_field.dart';
 import '../../utils/app_fonts.dart';
+import '../../providers/organization_provider.dart';
+import '../../widgets/organization_logo.dart';
 import 'otp_verification_screen.dart';
 
 class SignInScreen extends ConsumerStatefulWidget {
@@ -89,7 +91,10 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
   }
 
 
-  Widget _buildMobileLayout() {
+  Widget _buildMobileLayout({
+    required String heading,
+    required String subheading,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0),
       child: SingleChildScrollView(
@@ -100,32 +105,31 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
             children: [
               Align(
                 alignment: Alignment.center,
-                child: Image.asset(
-                  ImageAssets.highFlyLogo,
-                  fit: BoxFit.fill,
+                child: OrganizationLogo(
                   width: 250,
                   height: 150,
-                  // h
+                  fit: BoxFit.contain,
                 ),
               ),
-              // SizedBox(height: 30),
-              // Padding(
-              //   padding: const EdgeInsets.symmetric(horizontal: 30.0),
-              //   child: Text(
-              //     SignInScreenString.heading1,
-              //     style: TextStyle(
-              //       fontSize: 30,
-              //       fontWeight: FontWeight.w500,
-              //       color: Colors.black,
-              //     ),
-              //   ),
-              // ),
-              // SizedBox(height: 10),
+              const SizedBox(height: 24),
+             /* Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 30.0),
+                child: Text(
+                  heading,
+                  style: const TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              const SizedBox(height: 12), */
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 30.0),
                 child: Text(
-                  SignInScreenString.heading2,
-                  style: TextStyle(
+                  subheading,
+                  style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w400,
                     color: AppColors.secondaryTextColor,
@@ -168,7 +172,10 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
     );
   }
 
-  Widget _buildTabletDesktopLayout() {
+  Widget _buildTabletDesktopLayout({
+    required String heading,
+    required String subheading,
+  }) {
     return Center(
       child: SingleChildScrollView(
         child: Container(
@@ -197,13 +204,13 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
               crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Image.asset(
-                  ImageAssets.highFlyLogo,
-                  width: Responsive.isDesktop(context) ? 120 : 100,
+                OrganizationLogo(
+                  width: Responsive.isDesktop(context) ? 140 : 110,
+                  height: Responsive.isDesktop(context) ? 140 : 110,
                 ),
-                SizedBox(height: 40),
+                const SizedBox(height: 32),
                 Text(
-                  SignInScreenString.heading1,
+                  heading,
                   style: TextStyle(
                     fontSize: Responsive.isDesktop(context) ? 36 : 32,
                     fontWeight: FontWeight.w500,
@@ -211,17 +218,17 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                   ),
                   textAlign: TextAlign.center,
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 Text(
-                  SignInScreenString.heading2,
-                  style: TextStyle(
+                  subheading,
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w400,
                     color: AppColors.secondaryTextColor,
                   ),
                   textAlign: TextAlign.center,
                 ),
-                SizedBox(height: 40),
+                const SizedBox(height: 40),
                 CustomTextField(
                   controller: _phoneController,
                   titleText: 'Phone number',
@@ -259,6 +266,13 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final organizationState = ref.watch(organizationProvider);
+    final organizationName =
+        organizationState.asData?.value?.name ?? GlobalStrings.appName;
+    final heading = "";//'${organizationName.toUpperCase()} VISITS';
+    final subheading =
+        'Sign in to access your $organizationName real estate management dashboard';
+
     // Listen to auth state changes for errors and navigation
     ref.listen<AuthState>(authControllerProvider, (previous, next) {
       if (next.error != null) {
@@ -309,9 +323,18 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
               ),
             )
           : */Responsive(
-                mobile: _buildMobileLayout(),
-                tablet: _buildTabletDesktopLayout(),
-                desktop: _buildTabletDesktopLayout(),
+                mobile: _buildMobileLayout(
+                  heading: heading,
+                  subheading: subheading,
+                ),
+                tablet: _buildTabletDesktopLayout(
+                  heading: heading,
+                  subheading: subheading,
+                ),
+                desktop: _buildTabletDesktopLayout(
+                  heading: heading,
+                  subheading: subheading,
+                ),
               ),
       ),
     );

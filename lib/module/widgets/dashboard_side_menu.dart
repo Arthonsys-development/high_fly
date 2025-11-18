@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:highfly/config/constant/app_colors.dart';
-import 'package:highfly/config/constant/const_assets.dart';
 import '../../config/constant/app_strings.dart';
+import '../providers/organization_provider.dart';
 import '../utils/responsive.dart';
+import 'organization_logo.dart';
 
 class DashboardSideMenu extends StatefulWidget {
   final int selectedIndex;
@@ -96,33 +97,18 @@ class _DashboardSideMenuState extends State<DashboardSideMenu> {
               children: [
                 // Header
                 Container(
-                  // height: 100,
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color:  AppColors.primaryColor.withOpacity(0.1),
+                    color: AppColors.primaryColor.withOpacity(0.1),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        // width: 150,
-                        // height: 100,
-                        decoration: BoxDecoration(
-                          // color:  AppColors.primaryColor,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Image.asset(ImageAssets.highFlyLogo),
-                      ),
-                      /*const SizedBox(width: 12),
-                      const Text(
-                        'Vistarak',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.primaryTextColor,
-                        ),
-                      ),*/
-                    ],
+                  child: _OrganizationHeader(
+                    showName: true,
+                    logoHeight: isTablet ? 56 : 72,
+                    textStyle: TextStyle(
+                      fontSize: isTablet ? 15 : 17,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.primaryTextColor,
+                    ),
                   ),
                 ),
 
@@ -225,7 +211,6 @@ class _DashboardSideMenuState extends State<DashboardSideMenu> {
                         }
 
                         final userData = snapshot.data!;
-                        final userName = userData['name'] ?? 'Guest User';
                         final profilePhoto = userData['photo'];
 
                         return CircleAvatar(
@@ -431,6 +416,61 @@ class _DashboardSideMenuState extends State<DashboardSideMenu> {
   }
 }
 
+class _OrganizationHeader extends ConsumerWidget {
+  const _OrganizationHeader({
+    this.showName = true,
+    this.logoHeight = 64,
+    this.textStyle,
+  });
+
+  final bool showName;
+  final double logoHeight;
+  final TextStyle? textStyle;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final organizationState = ref.watch(organizationProvider);
+    final organizationName =
+        organizationState.asData?.value?.name ?? GlobalStrings.appName;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            height: logoHeight,
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: OrganizationLogo(
+                  height: logoHeight - 8,
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ),
+          ),
+          if (showName) ...[
+            const SizedBox(height: 8),
+            Text(
+              organizationName,
+              style: textStyle ??
+                  const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primaryTextColor,
+                  ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
 // Mobile Drawer Menu
 class MobileSideMenuDrawer extends ConsumerWidget {
   final int selectedIndex;
@@ -483,25 +523,14 @@ class MobileSideMenuDrawer extends ConsumerWidget {
         children: [
           // Header
           Container(
-            height: 120,
-            // padding: const EdgeInsets.all(20),
+            height: 150,
             decoration: BoxDecoration(
-              color:  AppColors.primaryColor.withOpacity(0.1),
+              color: AppColors.primaryColor.withOpacity(0.1),
             ),
-            child: SafeArea(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 200,
-                    height: 100,
-                    decoration: BoxDecoration(
-                      // color:  AppColors.primaryColor,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Image.asset(ImageAssets.highFlyLogo, fit: BoxFit.cover,),
-                  ),
-                ],
+            child: const SafeArea(
+              child: _OrganizationHeader(
+                showName: false,
+                logoHeight: 70,
               ),
             ),
           ),
