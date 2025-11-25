@@ -4,7 +4,6 @@ import '../../../data/models/payment_model.dart';
 import '../../../config/constant/app_colors.dart';
 import '../../global/widgets/custom_text_field.dart';
 import 'header_icon_widget.dart';
-import 'file_upload_widget_new.dart';
 import 'pdf_upload_widget.dart';
 import 'payment_method_selection_dialog.dart';
 import 'action_buttons.dart';
@@ -125,7 +124,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
           CustomTextField(
             titleText: 'Payment Amount',
             controller: _paymentAmountController,
-            isMandatory: true,
+            isMandatory: false,
             keyboardType: TextInputType.number,
             hintText: 'Enter Payment Amount',
             borderRadius: 6,
@@ -145,7 +144,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
               titleText: 'Payment Method',
               controller: _paymentMethodController,
               hintText: 'Select Payment Method',
-              isMandatory: true,
+              isMandatory: false,
               borderRadius: 6,
               enabled: false,
               suffixIcon: const Icon(
@@ -166,7 +165,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
               titleText: 'Cheque Number',
               controller: _chequeNumberController,
               hintText: 'Enter cheque number',
-              isMandatory: true,
+              isMandatory: false,
               borderRadius: 6,
               maxLength: 6,
               keyboardType: TextInputType.number,
@@ -185,7 +184,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                 titleText: 'Cheque Date',
                 controller: _chequeDateController,
                 hintText: 'Select cheque date',
-                isMandatory: true,
+                isMandatory: false,
                 borderRadius: 6,
                 enabled: false,
                 suffixIcon: const Icon(
@@ -206,7 +205,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
               titleText: 'Payment Type',
               controller: _paymentTypeController,
               hintText: 'Select Payment Type',
-              isMandatory: true,
+              isMandatory: false,
               borderRadius: 6,
               enabled: false,
               suffixIcon: const Icon(
@@ -223,7 +222,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
             titleText: 'PAN Number',
             controller: _panNumberController,
             hintText: 'Enter PAN number',
-            isMandatory: true,
+            isMandatory: false,
             borderRadius: 6,
             maxLength: 10,
             onChanged: (value) {
@@ -240,7 +239,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
             titleText: 'Aadhar Number',
             controller: _aadharNumberController,
             hintText: 'Enter Aadhar number',
-            isMandatory: true,
+            isMandatory: false,
             borderRadius: 6,
             maxLength: 12,
             keyboardType: TextInputType.number,
@@ -309,7 +308,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
             PdfUploadWidget(
               label: 'Salary Slip',
               fileName: _paymentDetails.salarySlipPath,
-              isRequired: true,
+              isRequired: false,
               uploadUrl: '/api/documents/upload/', // Replace with actual API endpoint
               placeholderText: 'Upload salary slip (PDF only)',
               onFileSelected: (filePath) {
@@ -324,7 +323,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
             PdfUploadWidget(
               label: 'Form 16A',
               fileName: _paymentDetails.form16APath?.split('/').last,
-              isRequired: true,
+              isRequired: false,
              // acceptedFileTypes: ['pdf', 'jpg', 'jpeg', 'png'],
              uploadUrl: '/api/documents/upload/',
               placeholderText: 'Upload form 16A for reference',
@@ -342,7 +341,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
             titleText: 'Additional Notes',
             controller: _additionalNotesController,
             hintText: 'Enter any additional notes or special instructions',
-            isMandatory: true,
+            isMandatory: false,
             maxLines: 3,
             borderRadius: 6,
             maxLength: 150,
@@ -371,32 +370,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
   }
 
   bool _canProceed() {
-    // Basic validation
-    if (_paymentDetails.paymentAmount.isEmpty ||
-        _paymentDetails.paymentMethodKey.isEmpty ||
-        _paymentDetails.paymentType.isEmpty ||
-        _paymentDetails.panNumber.isEmpty ||
-        _paymentDetails.aadharNumber.isEmpty ||
-        _paymentDetails.additionalNotes.isEmpty) {
-      return false;
-    }
-    
-    // Additional validation for cheque payment method
-    if (_paymentDetails.paymentMethodKey == PaymentMethod.cheque) {
-      if (_paymentDetails.chequeNumber == null || 
-          _paymentDetails.chequeNumber!.isEmpty ||
-          _paymentDetails.chequeDate == null) {
-        return false;
-      }
-    }
-    
-    // Additional validation for salaried individual
-    if (_paymentDetails.isSalariedIndividual) {
-      if (_paymentDetails.salarySlipPath == null || _paymentDetails.form16APath == null) {
-        return false;
-      }
-    }
-    
+    // All fields are optional, so the user can always proceed
     return true;
   }
 

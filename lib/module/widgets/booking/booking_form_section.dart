@@ -18,6 +18,8 @@ class BookingFormSection extends StatefulWidget {
   final String? nextButtonText;
   final local_model.Project? initialProject;
   final local_model.Plot? initialPlot;
+  final VoidCallback? onRefreshProjects;
+  final bool isRefreshingProjects;
 
   const BookingFormSection({
     super.key,
@@ -28,6 +30,8 @@ class BookingFormSection extends StatefulWidget {
     this.nextButtonText,
     this.initialProject,
     this.initialPlot,
+    this.onRefreshProjects,
+    this.isRefreshingProjects = false,
   });
 
   @override
@@ -50,7 +54,10 @@ class _BookingFormSectionState extends State<BookingFormSection> {
       _selectedProject = widget.initialProject;
       _projectController.text = widget.initialProject!.name;
       // Fetch plots for the initial project
-      _fetchPlotsForProject(widget.initialProject!);
+      _fetchPlotsForProject(
+        widget.initialProject!,
+        preserveExistingSelection: true,
+      );
     }
     if (widget.initialPlot != null) {
       _selectedPlot = widget.initialPlot;
@@ -65,15 +72,19 @@ class _BookingFormSectionState extends State<BookingFormSection> {
     super.dispose();
   }
 
-  Future<void> _fetchPlotsForProject(local_model.Project project) async {
-    // Store the current selected plot before clearing
-    final previousPlot = _selectedPlot;
+  Future<void> _fetchPlotsForProject(
+    local_model.Project project, {
+    bool preserveExistingSelection = false,
+  }) async {
+    // Store the current selected plot before clearing (only when we need to preserve it)
+    final previousPlot =
+        preserveExistingSelection ? _selectedPlot ?? widget.initialPlot : null;
     
     setState(() {
       _isLoadingPlots = true;
       _availablePlots = [];
-      // Only clear plot if we don't have an initial plot to preserve
-      if (widget.initialPlot == null) {
+      // Clear plot selection unless explicitly preserving it (e.g., initial load)
+      if (!preserveExistingSelection) {
         _selectedPlot = null;
         _plotController.clear();
       }
@@ -88,18 +99,16 @@ class _BookingFormSectionState extends State<BookingFormSection> {
         final apiPlots = result['data'] as List<Plot>;
         final localPlots = apiPlots.map((plot) => plot.toLocalModel()).toList();
         
-        // If we had a previous plot or initial plot, try to find it in the loaded plots
+        // If we preserved a previous plot, try to find it in the loaded plots
         local_model.Plot? plotToSelect;
-        if (previousPlot != null || widget.initialPlot != null) {
-          final plotToMatch = previousPlot ?? widget.initialPlot;
-          // Try to find the plot in the loaded plots
+        if (previousPlot != null) {
           try {
             plotToSelect = localPlots.firstWhere(
-              (plot) => plot.id == plotToMatch?.id,
+              (plot) => plot.id == previousPlot.id,
             );
           } catch (e) {
-            // If not found, use the stored plot if it exists
-            plotToSelect = plotToMatch;
+            // If not found, fall back to the stored plot so UI keeps showing it
+            plotToSelect = previousPlot;
           }
         }
         
@@ -145,6 +154,41 @@ class _BookingFormSectionState extends State<BookingFormSection> {
             title: 'Select Project & Plot',
             subtitle: 'Choose a project, then select a plot',
           ),
+
+          if (widget.onRefreshProjects != null) ...[
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: widget.isRefreshingProjects
+                    ? null
+                    : widget.onRefreshProjects,
+                icon: widget.isRefreshingProjects
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(
+                        Icons.refresh,
+                        size: 18,
+                        color: AppColors.primaryColor,
+                      ),
+                label: Text(
+                  widget.isRefreshingProjects ? 'Refreshing...' : 'Refresh Projects',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.primaryColor,
+                  ),
+                ),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.primaryColor,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                ),
+              ),
+            ),
+          ],
           
           const SizedBox(height: 40),
           
@@ -275,17 +319,18 @@ class _BookingFormSectionState extends State<BookingFormSection> {
         projects: widget.projects,
         selectedProjectId: _selectedProject?.id,
         onProjectSelected: (project) {
+          // Update project selection and clear current plot immediately
           setState(() {
             _selectedProject = project;
-            _selectedPlot = null; // Reset plot selection when project changes
+            _selectedPlot = null;
             _projectController.text = project?.name ?? '';
-            _plotController.clear(); // Clear plot field when project changes
-            
-            // Fetch plots for the selected project
-            if (project != null) {
-              _fetchPlotsForProject(project);
-            }
+            _plotController.clear();
           });
+
+          // Fetch plots for the selected project (no preservation)
+          if (project != null) {
+            _fetchPlotsForProject(project);
+          }
         },
       ),
     );

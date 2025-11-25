@@ -94,7 +94,7 @@ class _HoldDetailsSectionState extends State<HoldDetailsSection> {
             titleText: 'Associate Name or Self',
             controller: _associateNameController,
             hintText: 'Enter associate name or self',
-            isMandatory: true,
+            isMandatory: false,
             maxLength: 30,
             borderRadius: 6,
             onChanged: (value) {
@@ -111,7 +111,7 @@ class _HoldDetailsSectionState extends State<HoldDetailsSection> {
             titleText: 'RERA Number',
             controller: _reraNumberController,
             hintText: 'Enter RERA number',
-            isMandatory: true,
+            isMandatory: false,
             maxLength: 25,
             borderRadius: 6,
             onChanged: (value) {
@@ -145,7 +145,7 @@ class _HoldDetailsSectionState extends State<HoldDetailsSection> {
             titleText: 'Client\'s Aadhar',
             controller: _clientAadharController,
             hintText: 'Enter client\'s Aadhar number',
-            isMandatory: true,
+            isMandatory: false,
             maxLength: 12,
             keyboardType: TextInputType.number,
             borderRadius: 6,
@@ -179,9 +179,9 @@ class _HoldDetailsSectionState extends State<HoldDetailsSection> {
           // Action buttons
           ActionButtons(
             onPrevious: widget.onPrevious,
-            onNext: _canProceed() ? () => widget.onNext?.call(_holdDetails) : null,
+            onNext: () => widget.onNext?.call(_holdDetails),
             isPreviousEnabled: widget.onPrevious != null,
-            isNextEnabled: _canProceed(),
+            isNextEnabled: true,
             nextButtonText: widget.nextButtonText,
           ),
           
@@ -191,10 +191,4 @@ class _HoldDetailsSectionState extends State<HoldDetailsSection> {
     );
   }
 
-  bool _canProceed() {
-    // Only required fields need to be filled
-    return _holdDetails.associateNameOrSelf.isNotEmpty &&
-           _holdDetails.reraNumber.isNotEmpty &&
-           _holdDetails.clientAadhar.isNotEmpty;
-  }
 }

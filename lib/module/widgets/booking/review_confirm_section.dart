@@ -255,11 +255,11 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
             children: [
               _buildInfoRow(
                 'Name',
-                widget.bookingSummary.selectedCustomer?.name ?? 'N/A',
+                widget.bookingSummary.selectedCustomer?.name ?? '-',
               ),
               _buildInfoRow(
                 'Phone',
-                widget.bookingSummary.selectedCustomer?.phone ?? 'N/A',
+                widget.bookingSummary.selectedCustomer?.phone ?? '-',
               ),
             ],
           ),
@@ -274,19 +274,19 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
             children: [
               _buildInfoRow(
                 'Plot',
-                widget.bookingSummary.selectedPlot?.plotNumber ?? 'N/A',
+                widget.bookingSummary.selectedPlot?.plotNumber ?? '-',
               ),
               _buildInfoRow(
                 'Project',
-                widget.bookingSummary.selectedProject?.name ?? 'N/A',
+                widget.bookingSummary.selectedProject?.name ?? '-',
               ),
               _buildInfoRow(
                 'Area',
-                '${widget.bookingSummary.selectedPlot?.area ?? 'N/A'} sq ft',
+                '${widget.bookingSummary.selectedPlot?.area ?? '-'} sq ft',
               ),
               _buildInfoRow(
                 'Price',
-                '₹${widget.bookingSummary.selectedPlot?.price ?? 'N/A'}',
+                '₹${widget.bookingSummary.selectedPlot?.price ?? '-'}',
               ),
             ],
           ),
@@ -302,15 +302,15 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
               children: [
                 _buildInfoRow(
                   'Amount',
-                  '₹${widget.bookingSummary.paymentDetails?.paymentAmount ?? 'N/A'}',
+                  '₹${widget.bookingSummary.paymentDetails?.paymentAmount ?? '-'}',
                 ),
                 _buildInfoRow(
                   'Method',
-                  widget.bookingSummary.paymentDetails?.paymentMethod ?? 'N/A',
+                  widget.bookingSummary.paymentDetails?.paymentMethod ?? '-',
                 ),
                 _buildInfoRow(
                   'Payment Type',
-                  widget.bookingSummary.paymentDetails?.paymentType ?? 'N/A',
+                  widget.bookingSummary.paymentDetails?.paymentType ?? '-',
                 ),
                 _buildInfoRow(
                   'PAN',
@@ -340,12 +340,12 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
             children: [
               _buildInfoRow(
                 'Account Holder Name',
-                widget.bookingSummary.bankDetails?.accountHolderName ?? 'N/A',
+                widget.bookingSummary.bankDetails?.accountHolderName ?? '-',
               ),
               
               _buildInfoRow(
                 'Branch Name',
-                widget.bookingSummary.bankDetails?.branchName ?? 'N/A',
+                widget.bookingSummary.bankDetails?.branchName ?? '-',
               ),
               _buildInfoRow(
                 'Account Number',
@@ -353,15 +353,15 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
               ),
               _buildInfoRow(
                 'IFSC Code',
-                widget.bookingSummary.bankDetails?.ifscCode ?? 'N/A',
+                widget.bookingSummary.bankDetails?.ifscCode ?? '-',
               ),
               _buildInfoRow(
                 'Account Type',
-                widget.bookingSummary.bankDetails?.accountType ?? 'N/A',
+                widget.bookingSummary.bankDetails?.accountType ?? '-',
               ),
               _buildInfoRow(
                 'Contact Number',
-                widget.bookingSummary.bankDetails?.contactNumber ?? 'N/A',
+                widget.bookingSummary.bankDetails?.contactNumber ?? '-',
               ),
             ],
           ),
@@ -474,7 +474,7 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
   }
 
   String _formatPAN(String? pan) {
-    if (pan == null || pan.isEmpty) return 'N/A';
+    if (pan == null || pan.isEmpty) return '-';
     if (pan.length >= 10) {
       return '${pan.substring(0, 4)} ${pan.substring(4, 8)} ${pan.substring(8)}';
     }
@@ -482,7 +482,7 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
   }
 
   String _formatAadhar(String? aadhar) {
-    if (aadhar == null || aadhar.isEmpty) return 'N/A';
+    if (aadhar == null || aadhar.isEmpty) return '-';
     if (aadhar.length >= 12) {
       return '${aadhar.substring(0, 4)} ${aadhar.substring(4, 8)} ${aadhar.substring(8)}';
     }
@@ -490,7 +490,7 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
   }
 
   String _formatAccountNumber(String? accountNumber) {
-    if (accountNumber == null || accountNumber.isEmpty) return 'N/A';
+    if (accountNumber == null || accountNumber.isEmpty) return '-';
     if (accountNumber.length >= 16) {
       return '${accountNumber.substring(0, 4)} ${accountNumber.substring(4, 8)} ${accountNumber.substring(8, 12)} ${accountNumber.substring(12)}';
     }
@@ -510,7 +510,7 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
         ),
         _buildInfoRow(
           'Team Leader',
-          holdDetails.teamLeaderName ?? 'N/A',
+          holdDetails.teamLeaderName ?? '-',
         ),
         _buildInfoRow(
           'Client Aadhar',
@@ -518,7 +518,7 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
         ),
         _buildInfoRow(
           'Additional Notes',
-          holdDetails.additionalNotes ?? 'N/A',
+          holdDetails.additionalNotes ?? '-',
         ),
       ],
     );

@@ -97,7 +97,7 @@ class _BankDetailsSectionState extends State<BankDetailsSection> {
             titleText: 'Account Holder Name',
             controller: _accountHolderNameController,
             hintText: 'Enter account holder name',
-            isMandatory: true,
+            isMandatory: false,
             borderRadius: 6,
             maxLength: 30,
             onChanged: (value) {
@@ -114,7 +114,7 @@ class _BankDetailsSectionState extends State<BankDetailsSection> {
             titleText: 'Branch Name',
             controller: _branchNameController,
             hintText: 'Enter branch name',
-            isMandatory: true,
+            isMandatory: false,
             borderRadius: 6,
             maxLength: 30,
             onChanged: (value) {
@@ -131,7 +131,7 @@ class _BankDetailsSectionState extends State<BankDetailsSection> {
             titleText: 'Account Number',
             controller: _accountNumberController,
             hintText: 'Enter account number',
-            isMandatory: true,
+            isMandatory: false,
             maxLength: 18,
             keyboardType: TextInputType.number,
             borderRadius: 6,
@@ -152,7 +152,7 @@ class _BankDetailsSectionState extends State<BankDetailsSection> {
             titleText: 'IFSC Code',
             controller: _ifscCodeController,
             hintText: 'Enter IFSC Code',
-            isMandatory: true,
+            isMandatory: false,
             maxLength: 11,
             borderRadius: 6,
             inputFormatters: [
@@ -176,7 +176,7 @@ class _BankDetailsSectionState extends State<BankDetailsSection> {
               titleText: 'Account Type',
               controller: _accountTypeController,
               hintText: 'Select account type',
-              isMandatory: true,
+              isMandatory: false,
               borderRadius: 6,
               enabled: false,
               suffixIcon: const Icon(
@@ -194,7 +194,7 @@ class _BankDetailsSectionState extends State<BankDetailsSection> {
             titleText: 'Contact Number (linked with bank)',
             controller: _contactNumberController,
             hintText: 'Enter contact number',
-            isMandatory: true,
+            isMandatory: false,
             keyboardType: TextInputType.phone,
             borderRadius: 6,
             inputFormatters: [
@@ -213,22 +213,13 @@ class _BankDetailsSectionState extends State<BankDetailsSection> {
           // Action buttons
           ActionButtons(
             onPrevious: widget.onPrevious,
-            onNext: _canProceed() ? () => widget.onNext?.call(_bankDetails) : null,
+            onNext: () => widget.onNext?.call(_bankDetails),
             nextButtonText: widget.nextButtonText,
             isPreviousEnabled: widget.onPrevious != null,
           ),
         ],
       ),
     );
-  }
-
-  bool _canProceed() {
-    return _bankDetails.accountHolderName?.isNotEmpty == true &&
-           _bankDetails.branchName?.isNotEmpty == true &&
-           _bankDetails.accountNumber?.isNotEmpty == true &&
-           _bankDetails.ifscCode?.isNotEmpty == true &&
-           _bankDetails.accountType?.isNotEmpty == true &&
-           _bankDetails.contactNumber?.isNotEmpty == true;
   }
 
   void _showAccountTypeDialog() {

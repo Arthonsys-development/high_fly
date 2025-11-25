@@ -174,7 +174,10 @@ class AuthController extends Notifier<AuthState> {
         }
         
         // Verify login token with backend API
-        final loginTokenRequest = LoginTokenRequest(idToken: idToken);
+        final loginTokenRequest = LoginTokenRequest(
+          idToken: idToken,
+          phoneNumber: state.phoneNumber,
+        );
         final result = await _authApiRepository.verifyToken(loginTokenRequest);
         
         final tokenVerificationSucceeded = result['success'] == true;

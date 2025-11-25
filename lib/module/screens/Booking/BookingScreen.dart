@@ -31,14 +31,14 @@ extension ProjectConversion on Project {
   }
 }
 
-class BookingProcessorScreen extends StatefulWidget {
+class BookingProcessorScreen extends ConsumerStatefulWidget {
   const BookingProcessorScreen({super.key});
 
   @override
-  State<BookingProcessorScreen> createState() => _BookingProcessorScreenState();
+  ConsumerState<BookingProcessorScreen> createState() => _BookingProcessorScreenState();
 }
 
-class _BookingProcessorScreenState extends State<BookingProcessorScreen>
+class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
     with SingleTickerProviderStateMixin {
 
   late TabController _tabController;
@@ -74,6 +74,11 @@ class _BookingProcessorScreenState extends State<BookingProcessorScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    // Always refresh projects when the screen is opened
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(projectsControllerProvider.notifier).loadProjects();
+      ref.read(projectsControllerProvider.notifier).loadActiveProjects();
+    });
   }
 
   @override
@@ -162,7 +167,7 @@ class _BookingProcessorScreenState extends State<BookingProcessorScreen>
         builder: (context, ref, child) {
           final projectsState = ref.watch(projectsControllerProvider);
           
-          if (projectsState.isLoading) {
+          if (projectsState.isLoading && projectsState.projects.isEmpty) {
             return const Center(child: CircularProgressIndicator());
           }
           
@@ -192,6 +197,9 @@ class _BookingProcessorScreenState extends State<BookingProcessorScreen>
             nextButtonText: "Next",
             initialProject: _selectedProject,
             initialPlot: _selectedPlot,
+            onRefreshProjects: () =>
+                ref.read(projectsControllerProvider.notifier).loadProjects(),
+            isRefreshingProjects: projectsState.isLoading,
             onNext: (selectedProject, selectedPlot) {
               setState(() {
                 _selectedProject = selectedProject;
@@ -302,7 +310,7 @@ class _BookingProcessorScreenState extends State<BookingProcessorScreen>
         builder: (context, ref, child) {
           final projectsState = ref.watch(projectsControllerProvider);
           
-          if (projectsState.isLoading) {
+          if (projectsState.isLoading && projectsState.projects.isEmpty) {
             return const Center(child: CircularProgressIndicator());
           }
           
@@ -332,6 +340,9 @@ class _BookingProcessorScreenState extends State<BookingProcessorScreen>
             nextButtonText: "Next",
             initialProject: _selectedProject,
             initialPlot: _selectedPlot,
+            onRefreshProjects: () =>
+                ref.read(projectsControllerProvider.notifier).loadProjects(),
+            isRefreshingProjects: projectsState.isLoading,
             onNext: (selectedProject, selectedPlot) {
               setState(() {
                 _selectedProject = selectedProject;

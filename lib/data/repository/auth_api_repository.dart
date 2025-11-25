@@ -14,6 +14,54 @@ import 'package:dio/dio.dart';
 class AuthApiRepository {
   final ApiClient _apiClient = ApiClient();
 
+  Future<Map<String, dynamic>> verifyPhoneNumber(String phoneNumber) async {
+    try {
+      final response = await _apiClient.post(
+        ApiConstants.verifyPhone,
+        data: {
+          'phone_number': phoneNumber,
+        },
+      );
+
+      return {
+        'success': true,
+        'data': response.data,
+        'message': response.data is Map && response.data['message'] != null
+            ? response.data['message'].toString()
+            : 'Phone number verification successful',
+      };
+    } on DioException catch (e) {
+      debugPrint('DioException in verifyPhoneNumber: ${e.message}');
+      String errorMessage = 'Unable to verify phone number';
+
+      if (e.response != null) {
+        final responseData = e.response?.data;
+        if (responseData is Map<String, dynamic>) {
+          errorMessage = responseData['message']?.toString() ??
+              responseData['detail']?.toString() ??
+              errorMessage;
+        } else if (responseData is String && responseData.isNotEmpty) {
+          errorMessage = responseData;
+        }
+      } else if (e.message != null && e.message!.isNotEmpty) {
+        errorMessage = e.message!;
+      }
+
+      return {
+        'success': false,
+        'error': e.toString(),
+        'message': errorMessage,
+      };
+    } catch (e) {
+      debugPrint('Exception in verifyPhoneNumber: $e');
+      return {
+        'success': false,
+        'error': e.toString(),
+        'message': 'Unable to verify phone number',
+      };
+    }
+  }
+
   // Register user
   Future<Map<String, dynamic>> register(RegisterRequest request) async {
     try {
@@ -646,6 +694,10 @@ class Plot {
   final double? saleableSize;
   final double? sizeSqYd;
   final double price;
+  final double? priceWithPlc;
+  final bool plc;
+  final bool plcApplied;
+  final double? plcPercentage;
   final String dimensions;
   final String facing;
   final String remark;
@@ -659,7 +711,7 @@ class Plot {
   final bool hasActiveBooking;
   final String? createdAt;
 
-  Plot({
+  const Plot({
     required this.id,
     required this.plotNumber,
     required this.projectId,
@@ -668,6 +720,10 @@ class Plot {
     this.saleableSize,
     this.sizeSqYd,
     required this.price,
+    this.priceWithPlc,
+    this.plc = false,
+    this.plcApplied = false,
+    this.plcPercentage,
     required this.dimensions,
     required this.facing,
     required this.remark,
@@ -736,6 +792,10 @@ class Plot {
       saleableSize: _parseDouble(json['saleable_size']),
       sizeSqYd: _parseDouble(json['size_sq_yd']),
       price: _parseDouble(json['price']) ?? 0.0,
+      priceWithPlc: _parseDouble(json['price_with_plc']),
+      plc: _parseBool(json['plc']),
+      plcApplied: _parseBool(json['plc_applied']),
+      plcPercentage: _parseDouble(json['plc_percentage']),
       dimensions: dimensions,
       facing: facing,
       remark: remark,
@@ -755,12 +815,24 @@ class Plot {
     );
   }
 
+  double get effectivePrice => priceWithPlc ?? price;
+
   // Helper method to parse double values from either string or number
   static double? _parseDouble(dynamic value) {
     if (value == null) return null;
     if (value is num) return value.toDouble();
     if (value is String) return double.tryParse(value);
     return null;
+  }
+
+  static bool _parseBool(dynamic value) {
+    if (value is bool) return value;
+    if (value is num) return value != 0;
+    if (value is String) {
+      final normalized = value.toLowerCase();
+      return normalized == 'true' || normalized == '1';
+    }
+    return false;
   }
 
   Map<String, dynamic> toJson() {
@@ -776,6 +848,10 @@ class Plot {
       'saleable_size': saleableSize,
       'size_sq_yd': sizeSqYd,
       'price': price,
+      'price_with_plc': priceWithPlc,
+      'plc': plc,
+      'plc_applied': plcApplied,
+      'plc_percentage': plcPercentage,
       'width': width,
       'length': length,
       'dimensions': dimensions,
@@ -801,9 +877,23 @@ class Plot {
       projectId: projectId.toString(),
       area: area,
       price: price,
+      priceWithPlc: priceWithPlc,
+      plc: plc,
+      plcApplied: plcApplied,
+      plcPercentage: plcPercentage,
       dimensions: dimensions,
       facing: facing,
       remark: remark,
+      saleableSize: saleableSize,
+      sizeSqYd: sizeSqYd,
+      status: status,
+      width: width,
+      length: length,
+      sitePlanUrl: sitePlanUrl,
+      primaryImage: primaryImage,
+      hasActiveHold: hasActiveHold,
+      hasActiveBooking: hasActiveBooking,
+      createdAt: createdAt,
     );
   }
 }

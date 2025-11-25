@@ -273,7 +273,7 @@ class HoldDetailScreen extends StatelessWidget {
           ),
           Expanded(
             child: Text(
-              value.isNotEmpty ? value : 'N/A',
+              value.isNotEmpty ? value : '-',
               style: const TextStyle(
                 fontSize: 14,
                 color: AppColors.primaryTextColor,

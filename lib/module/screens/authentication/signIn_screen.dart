@@ -11,10 +11,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../../config/constant/app_strings.dart';
 import '../../../config/constant/const_assets.dart';
 import '../../global/widgets/custom_text_field.dart';
-import '../../utils/app_fonts.dart';
 import '../../providers/organization_provider.dart';
 import '../../widgets/organization_logo.dart';
 import 'otp_verification_screen.dart';
+import '../../../data/repository/auth_api_repository_provider.dart';
 
 class SignInScreen extends ConsumerStatefulWidget {
   const SignInScreen({super.key});
@@ -28,6 +28,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   String? _pendingPhoneNumber; // Track phone number for navigation
   bool _hasNavigated = false; // Prevent multiple navigations
+  bool _isVerifyingPhone = false;
 
   @override
   void dispose() {
@@ -152,19 +153,19 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
               SizedBox(height: 30),
               submitButton(),
               SizedBox(height: 30),
-              GestureDetector(
-                onTap: () {
-                  context.push(Routes.signUp);
-                },
-                child: Text(
-                  'Need an account? Sign Up',
-                  style: AppFonts.getFont(
-                    weight: FontWeight.w500,
-                    fontSize: 16,
-                    color: AppColors.secondaryTextColor,
-                  ),
-                ),
-              ),
+              // GestureDetector(
+              //   onTap: () {
+              //     context.push(Routes.signUp);
+              //   },
+              //   child: Text(
+              //     'Need an account? Sign Up',
+              //     style: AppFonts.getFont(
+              //       weight: FontWeight.w500,
+              //       fontSize: 16,
+              //       color: AppColors.secondaryTextColor,
+              //     ),
+              //   ),
+              // ),
             ],
           ),
         ),
@@ -242,20 +243,20 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
 
                 SizedBox(height: 40),
                 submitButton(),
-                SizedBox(height: 30),
-                GestureDetector(
-                  onTap: () {
-                    context.push(Routes.signUp);
-                  },
-                  child: Text(
-                    'Need an account? Sign Up',
-                    style: AppFonts.getFont(
-                      weight: FontWeight.w500,
-                      fontSize: 16,
-                      color: AppColors.secondaryTextColor,
-                    ),
-                  ),
-                ),
+                // SizedBox(height: 30),
+                // GestureDetector(
+                //   onTap: () {
+                //     context.push(Routes.signUp);
+                //   },
+                //   child: Text(
+                //     'Need an account? Sign Up',
+                //     style: AppFonts.getFont(
+                //       weight: FontWeight.w500,
+                //       fontSize: 16,
+                //       color: AppColors.secondaryTextColor,
+                //     ),
+                //   ),
+                // ),
               ],
             ),
           ),
@@ -343,11 +344,57 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
 
   Widget submitButton() {
     final authState = ref.watch(authControllerProvider);
+    final isProcessing = authState.isLoading || _isVerifyingPhone;
 
     return CustomButton(
-      onPressed: authState.isLoading ? null : () async {
+      onPressed: isProcessing ? null : () async {
         if (!_formKey.currentState!.validate()) {
           return;
+        }
+
+        try {
+          setState(() {
+            _isVerifyingPhone = true;
+          });
+
+          final rawPhoneNumber = _phoneController.text.trim();
+          final verifyResponse = await ref
+              .read(authApiRepositoryProvider)
+              .verifyPhoneNumber(rawPhoneNumber);
+
+          final apiSuccess = verifyResponse['success'] == true;
+          final apiData = verifyResponse['data'];
+          final existsValue = (apiData is Map
+                  ? apiData['exists']
+                  : null)
+              ?.toString()
+              .toLowerCase();
+          final apiMessage = (apiData is Map
+                  ? apiData['message']
+                  : verifyResponse['message'])
+              ?.toString();
+
+          if (!apiSuccess || existsValue != 'yes') {
+            final message = apiMessage?.isNotEmpty == true
+                ? apiMessage!
+                : 'Phone number not registered';
+            if (mounted) {
+              _showErrorSnackBar(message);
+            }
+            return;
+          }
+        } catch (e) {
+          debugPrint('Error verifying phone number: $e');
+          if (mounted) {
+            _showErrorSnackBar('Unable to verify phone number. Please try again.');
+          }
+          return;
+        } finally {
+          if (mounted) {
+            setState(() {
+              _isVerifyingPhone = false;
+            });
+          }
         }
 
         try {
@@ -370,10 +417,10 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
           }
         }
       },
-      text: authState.isLoading ? 'Loading...' : 'Request OTP',
+      text: isProcessing ? 'Loading...' : 'Request OTP',
       height: 52,
       fontSize: 18,
-      leadingWidget: authState.isLoading
+      leadingWidget: isProcessing
           ? const SizedBox(
               width: 20,
               height: 20,

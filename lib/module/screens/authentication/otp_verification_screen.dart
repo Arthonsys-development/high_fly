@@ -362,7 +362,10 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
         debugPrint('Registration successful, proceeding to verify token');
         
         // After successful registration, call verifyToken to get access token
-        final loginTokenRequest = LoginTokenRequest(idToken: idToken);
+        final loginTokenRequest = LoginTokenRequest(
+          idToken: idToken,
+          phoneNumber: widget.phoneNumber,
+        );
         debugPrint('Calling verifyToken with ID token: $idToken');
         
         final tokenResult = await authApiRepository.verifyToken(loginTokenRequest);

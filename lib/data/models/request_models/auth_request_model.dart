@@ -5,12 +5,17 @@ import 'dart:typed_data' show Uint8List;
 
 class LoginTokenRequest {
   final String idToken;
+  final String? phoneNumber;
 
-  LoginTokenRequest({required this.idToken});
+  LoginTokenRequest({
+    required this.idToken,
+    this.phoneNumber,
+  });
 
   Map<String, dynamic> toJson() {
     return {
       "id_token": idToken,
+      if (phoneNumber != null && phoneNumber!.isNotEmpty) "phone_number": phoneNumber,
     };
   }
 }

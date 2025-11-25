@@ -263,19 +263,19 @@ class _WebPhoneAuthWidgetState extends ConsumerState<WebPhoneAuthWidget> {
             const SizedBox(height: 30),
 
             // Sign up link
-            GestureDetector(
-              onTap: () {
-                context.push(Routes.signUp);
-              },
-              child: Text(
-                'Need an account? Sign Up',
-                style: AppFonts.getFont(
-                  weight: FontWeight.w500,
-                  fontSize: 16,
-                  color: AppColors.secondaryTextColor,
-                ),
-              ),
-            ),
+            // GestureDetector(
+            //   onTap: () {
+            //     context.push(Routes.signUp);
+            //   },
+            //   child: Text(
+            //     'Need an account? Sign Up',
+            //     style: AppFonts.getFont(
+            //       weight: FontWeight.w500,
+            //       fontSize: 16,
+            //       color: AppColors.secondaryTextColor,
+            //     ),
+            //   ),
+            // ),
 
             // Web platform indicator (subtle)
             // if (kIsWeb) ...[

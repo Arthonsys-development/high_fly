@@ -4,6 +4,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:highfly/config/network/tenant_keys.dart';
 import 'package:talker_dio_logger/talker_dio_logger_interceptor.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:highfly/config/routes.dart';
 import 'dart:developer' as dev;
 
 
@@ -22,6 +24,34 @@ class ApiClient {
   
   // Expose secure storage for use in repositories
   FlutterSecureStorage get secureStorage => _secureStorage;
+
+  // Force logout user when 401 is received
+  Future<void> _forceLogout() async {
+    try {
+      debugPrint('API Client: 401 Unauthorized - Forcing logout');
+      
+      // Sign out from Firebase
+      await FirebaseAuth.instance.signOut();
+      debugPrint('API Client: Signed out from Firebase');
+      
+      // Clear all secure storage
+      await _secureStorage.deleteAll();
+      debugPrint('API Client: Cleared secure storage');
+      
+      // Navigate to sign in screen using router
+      // Use a post-frame callback to ensure navigation happens after current frame
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        try {
+          router.go(Routes.signIn);
+          debugPrint('API Client: Navigated to sign in screen');
+        } catch (e) {
+          debugPrint('API Client: Error navigating to sign in: $e');
+        }
+      });
+    } catch (e) {
+      debugPrint('API Client: Error during force logout: $e');
+    }
+  }
 
   void _init() {
     String baseUrl;
@@ -78,12 +108,20 @@ class ApiClient {
         dev.log('API response data: ${response.data}');
         return handler.next(response);
       },
-      onError: (DioException e, handler) {
+      onError: (DioException e, handler) async {
         print('API error: ${e.message}');
         print('Error URL: ${e.requestOptions.uri}');
         if (e.response != null) {
           print('Error status: ${e.response?.statusCode}');
           print('Error data: ${e.response?.data}');
+          
+          // Handle 401 Unauthorized - Force logout
+          if (e.response?.statusCode == 401) {
+            debugPrint('API Client: Received 401 Unauthorized - Forcing logout');
+            await _forceLogout();
+            // Continue with the error so the caller can handle it if needed
+            return handler.next(e);
+          }
         }
         
         // Handle specific error cases
