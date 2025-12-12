@@ -103,16 +103,11 @@ class _HoldBookingScreenState extends State<HoldBookingScreen> {
           ),
         );
 
-        // Navigate back to holds list screen after success
+        // Navigate back to hold detail screen after success
         Future.delayed(const Duration(seconds: 2), () {
           if (mounted) {
-            // Pop back to holds list screen (pop twice: booking screen -> detail screen -> list screen)
-            // Pop the booking screen
-            Navigator.of(context).pop();
-            // Pop the detail screen to go back to list screen
-            if (Navigator.of(context).canPop()) {
-              Navigator.of(context).pop();
-            }
+            // Pop the booking screen and return true to indicate success
+            Navigator.of(context).pop(true);
           }
         });
       }

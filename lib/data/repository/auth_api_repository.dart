@@ -780,8 +780,8 @@ class Plot {
     // Map facing - prefer facing_display for display, but store both
     final facing = json['facing_display'] ?? json['facing'] ?? '';
     
-    // Map status_display to remark
-    final remark = json['status_display'] ?? json['remark'] ?? '';
+    // Prefer explicit remark, but fall back to status_display for older payloads
+    final remark = json['remark'] ?? json['status_display'] ?? '';
     
     return Plot(
       id: json['id'] ?? json['plot_id'] ?? 0,

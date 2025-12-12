@@ -75,7 +75,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('No image captured'),
+              content: Text('No image captured', style: TextStyle(color: Colors.white)),
               backgroundColor:  AppColors.primaryColor,
             ),
           );

@@ -12,6 +12,61 @@ import '../models/booking_list_model.dart';
 class BookingApiRepository {
   final ApiClient _apiClient = ApiClient();
 
+  /// Extract error message from DioException response
+  /// Handles various error response formats:
+  /// - Field-based errors: {"agent": ["message"]}
+  /// - Simple message: {"message": "error message"}
+  /// - Nested errors: {"errors": {...}}
+  /// - String errors: "error message"
+  String _extractErrorMessage(DioException e) {
+    if (e.response?.data != null) {
+      final errorData = e.response!.data;
+      
+      // Handle Map<String, dynamic> error responses
+      if (errorData is Map<String, dynamic>) {
+        // Check for field-based errors (e.g., {"agent": ["message"]})
+        for (var entry in errorData.entries) {
+          if (entry.value is List && (entry.value as List).isNotEmpty) {
+            // Return the first error message from the list
+            return (entry.value as List).first.toString();
+          } else if (entry.value is String) {
+            // Return string value directly
+            return entry.value as String;
+          }
+        }
+        
+        // Check for simple message field
+        if (errorData.containsKey('message')) {
+          if (errorData['message'] is String) {
+            return errorData['message'] as String;
+          } else if (errorData['message'] is List && (errorData['message'] as List).isNotEmpty) {
+            return (errorData['message'] as List).first.toString();
+          }
+        }
+        
+        // Check for errors field (nested structure)
+        if (errorData.containsKey('errors')) {
+          final errors = errorData['errors'];
+          if (errors is Map<String, dynamic>) {
+            for (var entry in errors.entries) {
+              if (entry.value is List && (entry.value as List).isNotEmpty) {
+                return (entry.value as List).first.toString();
+              }
+            }
+          }
+        }
+      }
+      
+      // Handle string error responses
+      if (errorData is String) {
+        return errorData;
+      }
+    }
+    
+    // Fallback to Dio's error message
+    return e.message ?? 'An unknown error occurred';
+  }
+
   /// Create a new plot booking with multipart/form-data
   Future<BookingResponseModel> createBooking(BookingRequestModel request) async {
     try {
@@ -56,7 +111,9 @@ class BookingApiRepository {
       if (e.response?.statusCode == 413) {
         throw Exception('Selected file size Too Large');
       }
-      throw Exception('API Error: ${e.message}');
+      // Extract the actual error message from the API response
+      final errorMessage = _extractErrorMessage(e);
+      throw Exception(errorMessage);
     } catch (e) {
       throw Exception('Unexpected error: $e');
     }
@@ -76,7 +133,9 @@ class BookingApiRepository {
         throw Exception('Failed to create hold: ${response.statusMessage}');
       }
     } on DioException catch (e) {
-      throw Exception('API Error: ${e.message}');
+      // Extract the actual error message from the API response
+      final errorMessage = _extractErrorMessage(e);
+      throw Exception(errorMessage);
     } catch (e) {
       throw Exception('Unexpected error: $e');
     }
@@ -123,6 +182,103 @@ class BookingApiRepository {
       }
     } on DioException catch (e) {
       throw Exception('API Error: ${e.message}');
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
+  /// Update an existing plot hold
+  Future<HoldListModel> updateHold(int holdId, Map<String, dynamic> updateData) async {
+    try {
+      // API endpoint: /api/v1/plot-holds/{id}
+      final endpoint = '${ApiConstants.plotHolds}$holdId/';
+      final response = await _apiClient.patch(
+        endpoint,
+        data: updateData,
+      );
+      
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return HoldListModel.fromJson(response.data);
+      } else {
+        throw Exception('Failed to update hold: ${response.statusMessage}');
+      }
+    } on DioException catch (e) {
+      // Extract the actual error message from the API response
+      final errorMessage = _extractErrorMessage(e);
+      throw Exception(errorMessage);
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
+  /// Update an existing plot booking with multipart/form-data
+  Future<BookingListModel> updateBooking(int bookingId, Map<String, dynamic> updateData) async {
+    try {
+      // API endpoint: /api/v1/plot-bookings/{id}/
+      final endpoint = '${ApiConstants.plotBookings}$bookingId/';
+      
+      // Create FormData for multipart request
+      final Map<String, dynamic> formDataMap = {...updateData};
+      
+      // Add files if they exist and are valid
+      if (updateData['salary_slip_path'] != null && updateData['salary_slip_path'].toString().isNotEmpty) {
+        final salarySlipPath = updateData['salary_slip_path'].toString();
+        // Remove the path from formDataMap since we'll add it as MultipartFile
+        formDataMap.remove('salary_slip_path');
+        
+        // Check if it's a file path (not a URL)
+        if (!salarySlipPath.startsWith('http')) {
+          final salarySlipFile = File(salarySlipPath);
+          if (await salarySlipFile.exists()) {
+            formDataMap['salary_slip'] = await MultipartFile.fromFile(
+              salarySlipPath,
+              filename: 'salary_slip.pdf',
+            );
+          }
+        }
+      }
+      
+      if (updateData['form_16a_path'] != null && updateData['form_16a_path'].toString().isNotEmpty) {
+        final form16APath = updateData['form_16a_path'].toString();
+        // Remove the path from formDataMap since we'll add it as MultipartFile
+        formDataMap.remove('form_16a_path');
+        
+        // Check if it's a file path (not a URL)
+        if (!form16APath.startsWith('http')) {
+          final form16AFile = File(form16APath);
+          if (await form16AFile.exists()) {
+            formDataMap['form_16a'] = await MultipartFile.fromFile(
+              form16APath,
+              filename: 'form_16a.pdf',
+            );
+          }
+        }
+      }
+      
+      final formData = FormData.fromMap(formDataMap);
+
+      // Use patch with FormData (Dio supports multipart with PATCH)
+      final response = await _apiClient.dio.patch(
+        endpoint,
+        data: formData,
+        options: Options(
+          contentType: 'multipart/form-data',
+        ),
+      );
+      
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return BookingListModel.fromJson(response.data);
+      } else {
+        throw Exception('Failed to update booking: ${response.statusMessage}');
+      }
+    } on DioException catch (e) {
+      // Check for 413 status code (Request Entity Too Large)
+      if (e.response?.statusCode == 413) {
+        throw Exception('Selected file size Too Large');
+      }
+      // Extract the actual error message from the API response
+      final errorMessage = _extractErrorMessage(e);
+      throw Exception(errorMessage);
     } catch (e) {
       throw Exception('Unexpected error: $e');
     }

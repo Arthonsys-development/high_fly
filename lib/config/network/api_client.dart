@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:highfly/config/network/tenant_keys.dart';
@@ -77,7 +78,16 @@ class ApiClient {
         'Accept': 'application/json',
         'X-Tenant-API-Key': TenantApiKeyConfig.activeTenantApiKey,
       },
+      // Web-specific configuration
+      followRedirects: true,
     ));
+    
+    // Configure for web platform
+    if (kIsWeb) {
+      // For web, Dio automatically uses XMLHttpRequest
+      // We can add additional web-specific configurations here if needed
+      debugPrint('API Client: Running on web platform - CORS must be enabled on server');
+    }
 
     // Add logging interceptor
     _dio.interceptors.add(TalkerDioLogger());
@@ -111,6 +121,37 @@ class ApiClient {
       onError: (DioException e, handler) async {
         print('API error: ${e.message}');
         print('Error URL: ${e.requestOptions.uri}');
+        
+        // Detect CORS errors on web
+        if (kIsWeb) {
+          final errorMessage = e.message?.toLowerCase() ?? '';
+          final errorString = e.error?.toString().toLowerCase() ?? '';
+          
+          if (errorMessage.contains('xmlhttprequest') || 
+              errorMessage.contains('cors') ||
+              errorString.contains('xmlhttprequest') ||
+              errorString.contains('cors') ||
+              e.type == DioExceptionType.connectionError) {
+            debugPrint('⚠️ CORS Error Detected on Web Platform');
+            debugPrint('The server at ${e.requestOptions.uri} needs to allow CORS requests.');
+            debugPrint('Required CORS headers:');
+            debugPrint('  - Access-Control-Allow-Origin: * (or your domain)');
+            debugPrint('  - Access-Control-Allow-Methods: GET, POST, PUT, DELETE, PATCH, OPTIONS');
+            debugPrint('  - Access-Control-Allow-Headers: Content-Type, Authorization, X-Tenant-API-Key');
+            debugPrint('  - Access-Control-Allow-Credentials: true (if using credentials)');
+            
+            // Create a more helpful error message
+            final corsError = DioException(
+              requestOptions: e.requestOptions,
+              type: DioExceptionType.connectionError,
+              error: 'CORS Error: The server at ${e.requestOptions.uri.host} is not configured to allow requests from this origin. '
+                     'Please configure CORS headers on the server or contact your backend team.',
+              message: 'CORS policy blocked the request. Server must allow cross-origin requests.',
+            );
+            return handler.next(corsError);
+          }
+        }
+        
         if (e.response != null) {
           print('Error status: ${e.response?.statusCode}');
           print('Error data: ${e.response?.data}');
@@ -248,7 +289,12 @@ class ApiClient {
     } else if (error.type == DioExceptionType.cancel) {
       print('Request was cancelled.');
     } else if (error.type == DioExceptionType.connectionError) {
-      print('Connection error. Please check your internet connection.');
+      if (kIsWeb && error.message?.contains('CORS') == true) {
+        print('CORS Error: The server is not configured to allow cross-origin requests.');
+        print('This is a server-side configuration issue. The backend team needs to add CORS headers.');
+      } else {
+        print('Connection error. Please check your internet connection.');
+      }
     }
   }
 }

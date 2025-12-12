@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:highfly/config/network/api_client.dart';
+import 'package:highfly/config/network/api_constants.dart';
 import 'package:highfly/data/models/response_model/organization_response_model.dart';
 
 class OrganizationRepository {
@@ -7,12 +8,10 @@ class OrganizationRepository {
       : _apiClient = apiClient ?? ApiClient();
 
   final ApiClient _apiClient;
-  static const String _organizationEndpoint =
-      'http://64.227.154.65:81/api/v1/organization/';
 
   Future<Organization> fetchOrganization() async {
     try {
-      final response = await _apiClient.get(_organizationEndpoint);
+      final response = await _apiClient.get(ApiConstants.organization);
       if (response.data is! Map<String, dynamic>) {
         throw const FormatException('Unexpected response format');
       }

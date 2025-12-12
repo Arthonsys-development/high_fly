@@ -885,16 +885,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Expanded(
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
                           title,
                           style: TextStyle(
                             color: AppColors.primaryTextColor,
-                            fontSize: isMobile ? 14 : 16,
+                            fontSize: isMobile ? 13 : 16,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -919,7 +921,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                   )
                 ],
               ),
-              const SizedBox(height: 10),
+              //const SizedBox(height: 10),
               if (subtitleLeft != null && subtitleRight != null)
                 isMobile
                     ? Column(

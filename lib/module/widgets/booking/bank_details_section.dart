@@ -37,6 +37,7 @@ class _BankDetailsSectionState extends State<BankDetailsSection> {
   late TextEditingController _ifscCodeController;
   late TextEditingController _contactNumberController;
   late TextEditingController _accountTypeController;
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
@@ -77,12 +78,26 @@ class _BankDetailsSectionState extends State<BankDetailsSection> {
     super.dispose();
   }
 
+  String? _validateContactNumber(String? value) {
+    // Since the field is optional, only validate if user has entered something
+    if (value == null || value.isEmpty) {
+      return null; // Empty is valid since field is optional
+    }
+    // If entered, must be exactly 10 digits
+    if (value.length != 10) {
+      return 'Contact number must be exactly 10 digits';
+    }
+    return null; // Valid
+  }
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.only(top: 20, bottom: 20),
-      child: Column(
-        children: [
+      padding: const EdgeInsets.only(top: 20, bottom: 32),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          children: [
           // Header
           HeaderIconWidget(
             icon:IconsAssets.bankIcon,
@@ -201,6 +216,7 @@ class _BankDetailsSectionState extends State<BankDetailsSection> {
               FilteringTextInputFormatter.digitsOnly,
               LengthLimitingTextInputFormatter(10),
             ],
+            validator: _validateContactNumber,
             onChanged: (value) {
               setState(() {
                 _bankDetails = _bankDetails.copyWith(contactNumber: value);
@@ -213,11 +229,19 @@ class _BankDetailsSectionState extends State<BankDetailsSection> {
           // Action buttons
           ActionButtons(
             onPrevious: widget.onPrevious,
-            onNext: () => widget.onNext?.call(_bankDetails),
+            onNext: () {
+              // Validate form before proceeding
+              if (_formKey.currentState?.validate() ?? true) {
+                widget.onNext?.call(_bankDetails);
+              }
+            },
             nextButtonText: widget.nextButtonText,
             isPreviousEnabled: widget.onPrevious != null,
           ),
-        ],
+          
+          const SizedBox(height: 32),
+          ],
+        ),
       ),
     );
   }

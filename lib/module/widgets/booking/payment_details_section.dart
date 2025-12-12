@@ -106,7 +106,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.only(top: 20, bottom: 20),
+      padding: const EdgeInsets.only(top: 20, bottom: 32),
       child: Column(
         children: [
           const SizedBox(height: 20),
@@ -363,7 +363,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
             nextButtonText: widget.nextButtonText,
           ),
           
-          const SizedBox(height: 20),
+          const SizedBox(height: 32),
         ],
       ),
     );

@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:highfly/config/constant/app_colors.dart';
 import 'package:highfly/data/models/booking_list_model.dart';
-import '../../global/widgets/common_app_bar.dart';
+import 'package:highfly/data/models/payment_model.dart';
+import '../../providers/bookings_provider.dart';
 import 'webview_screen.dart';
+import 'booking_edit_screen.dart';
 
 String _formatStatusDisplay(String statusDisplay) {
   if (statusDisplay.isEmpty) return statusDisplay;
@@ -20,30 +23,118 @@ String _formatStatusDisplay(String statusDisplay) {
   return statusDisplay[0].toUpperCase() + statusDisplay.substring(1).toLowerCase();
 }
 
-class BookingDetailScreen extends StatelessWidget {
+class BookingDetailScreen extends ConsumerStatefulWidget {
   final BookingListModel booking;
 
   const BookingDetailScreen({super.key, required this.booking});
 
   @override
+  ConsumerState<BookingDetailScreen> createState() => _BookingDetailScreenState();
+}
+
+class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
+  late BookingListModel _currentBooking;
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentBooking = widget.booking;
+  }
+
+  bool _isBookingCancelled() {
+    final status = _currentBooking.status.toLowerCase();
+    return (status == 'cancelled' || status == 'canceled') ||
+           (_currentBooking.cancelledAt != null && _currentBooking.cancelledAt!.isNotEmpty);
+  }
+
+  Future<void> _refreshBookingData() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // Refresh bookings list from provider
+      await ref.read(bookingsControllerProvider.notifier).loadBookings();
+      
+      // Find the updated booking in the list
+      final bookings = ref.read(bookingsControllerProvider).bookings;
+      final updatedBooking = bookings.firstWhere(
+        (b) => b.id == _currentBooking.id,
+        orElse: () => _currentBooking,
+      );
+
+      if (mounted) {
+        setState(() {
+          _currentBooking = updatedBooking;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _navigateToEdit() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => BookingEditScreen(booking: _currentBooking),
+      ),
+    );
+
+    // If update was successful, refresh the data
+    if (result == true && mounted) {
+      await _refreshBookingData();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final booking = _currentBooking;
+
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(60),
-        child: commonAppBar(context, "Booking Details"),
+        child: AppBar(
+          title: const Text("Booking Details"),
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back, color: AppColors.primaryTextColor),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          backgroundColor: Colors.white,
+          titleTextStyle: TextStyle(color: AppColors.primaryTextColor, fontSize: 18, fontWeight: FontWeight.bold),
+          iconTheme: IconThemeData(color: AppColors.primaryTextColor),
+          centerTitle: true,
+          elevation: 1,
+          actions: [
+            if (!_isBookingCancelled())
+              IconButton(
+                icon: const Icon(Icons.edit, color: AppColors.primaryColor),
+                onPressed: _isLoading ? null : _navigateToEdit,
+                tooltip: 'Edit Booking',
+              )
+          ],
+        ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Status Card
-            Builder(
-              builder: (context) {
-                Color statusColor;
-                IconData statusIcon;
-                
-                final status = booking.status.toLowerCase();
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Status Card
+                  Builder(
+                    builder: (context) {
+                      Color statusColor;
+                      IconData statusIcon;
+                      
+                      final status = booking.status.toLowerCase();
                 if (status == 'cancelled' || status == 'canceled') {
                   statusColor = Colors.red;
                   statusIcon = Icons.cancel_outlined;
@@ -115,7 +206,9 @@ class BookingDetailScreen extends StatelessWidget {
                 _buildDetailRow('Plot Price', '₹${booking.plotPrice}'),
               if (booking.plotFacing != null && booking.plotFacing!.isNotEmpty)
                 _buildDetailRow('Plot Facing', booking.plotFacing!),
-              _buildDetailRow('Booking Type', booking.bookingType),
+              _buildDetailRow('Booking Type', PaymentType.getValue(booking.bookingType.toLowerCase()).isNotEmpty 
+                  ? PaymentType.getValue(booking.bookingType.toLowerCase()) 
+                  : booking.bookingType),
               _buildDetailRow('Booking Amount', '₹${booking.bookingAmount}'),
               _buildDetailRow('Total Amount', '₹${booking.totalAmount}'),
              // _buildDetailRow('Booking Date', booking.bookingDate),
@@ -138,7 +231,9 @@ class BookingDetailScreen extends StatelessWidget {
             // Payment Information Section
             _buildSectionTitle('Payment Information'),
             _buildDetailCard([
-              _buildDetailRow('Payment Mode', booking.paymentMode),
+              _buildDetailRow('Payment Mode', PaymentMethod.getValue(booking.paymentMode).isNotEmpty 
+                  ? PaymentMethod.getValue(booking.paymentMode) 
+                  : booking.paymentMode),
               _buildDetailRow('Payment Reference', booking.paymentReference),
               if (booking.chequeNumber.isNotEmpty)
                 _buildDetailRow('Cheque Number', booking.chequeNumber),
@@ -154,9 +249,9 @@ class BookingDetailScreen extends StatelessWidget {
             _buildDetailCard([
               _buildDetailRow('PAN Card', booking.panCard),
               _buildDetailRow('Aadhar Card', booking.aadharCard),
-              if (booking.salarySlip != null && booking.salarySlip!.isNotEmpty)
+              if (booking.salaryIndividual && booking.salarySlip != null && booking.salarySlip!.isNotEmpty)
                 _buildDocumentRow(context, 'Salary Slip', booking.salarySlip!),
-              if (booking.form16a != null && booking.form16a!.isNotEmpty)
+              if (booking.salaryIndividual && booking.form16a != null && booking.form16a!.isNotEmpty)
                 _buildDocumentRow(context, 'Form 16A', booking.form16a!),
               if (booking.bankStatement != null && booking.bankStatement!.isNotEmpty)
                 _buildDocumentRow(context, 'Bank Statement', booking.bankStatement!),

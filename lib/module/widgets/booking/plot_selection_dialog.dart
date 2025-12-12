@@ -39,11 +39,12 @@ class _PlotSelectionDialogState extends State<PlotSelectionDialog> {
       if (query.isEmpty) {
         _filteredPlots = widget.plots;
       } else {
-        _filteredPlots = widget.plots
-            .where((plot) =>
-                plot.plotNumber.toLowerCase().contains(query.toLowerCase()) ||
-                plot.remark.toLowerCase().contains(query.toLowerCase()))
-            .toList();
+        final normalizedQuery = query.toLowerCase();
+        _filteredPlots = widget.plots.where((plot) {
+          final remarkText = plot.remark.toLowerCase();
+          return plot.plotNumber.toLowerCase().contains(normalizedQuery) ||
+              remarkText.contains(normalizedQuery);
+        }).toList();
       }
     });
   }
@@ -230,12 +231,27 @@ class _PlotSelectionDialogState extends State<PlotSelectionDialog> {
                                     : AppColors.headingTextColor,
                               ),
                             ),
-                            subtitle: Text(
-                              plot.displayTextOnPopup,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: AppColors.darkGreyColor,
-                              ),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  plot.displayTextOnPopup,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: AppColors.darkGreyColor,
+                                  ),
+                                ),
+                                if (plot.remark.isNotEmpty) ...[
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    plot.remark,
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      color: AppColors.textColor,
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
                             trailing: isSelected
                                 ? const Icon(

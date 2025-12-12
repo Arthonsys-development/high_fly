@@ -20,4 +20,7 @@ class ApiConstants {
   static const String plotHolds = 'plot-holds/';
   static const String holdsList = 'projects/plots/holds/';
   static const String bookingsList = 'projects/plots/bookings/';
+
+  // Organization Endpoints
+  static const String organization = 'organization/';
 }

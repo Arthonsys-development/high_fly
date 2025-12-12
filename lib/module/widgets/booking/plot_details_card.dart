@@ -26,6 +26,7 @@ class PlotDetailsCard extends StatelessWidget {
     final showPlcBreakup =
         priceWithPlc != null && priceWithPlc > 0 && priceWithPlc != plot.price;
     final plcLabel = plot.plcApplied ? 'PLC Applied' : 'PLC Available';
+    final plc = plot.plc ? 'Yes' : 'No';
     final showPlcSummary = plot.plcApplied && plot.priceWithPlc != null;
 
     return Container(
@@ -52,6 +53,7 @@ class PlotDetailsCard extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
                 child: _buildDetailColumn([
@@ -80,7 +82,9 @@ class PlotDetailsCard extends StatelessWidget {
                 child: _buildDetailColumn([
                   _DetailItem('Plot number:', plot.plotNumber),
                   _DetailItem('Facing:', plot.facing),
-                  _DetailItem('Remark:', plot.remark),
+                  if (plot.remark.isNotEmpty)
+                    _DetailItem('Remark:', plot.remark),
+                  _DetailItem('Plc:', plc),
                   if (plot.plc || plot.plcApplied)
                     _DetailItem(plcLabel, plot.plc || plot.plcApplied ? 'Yes' : 'No'),
                   if (plot.status.isNotEmpty)

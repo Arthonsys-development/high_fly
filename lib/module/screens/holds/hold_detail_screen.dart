@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:highfly/config/constant/app_colors.dart';
 import 'package:highfly/data/models/hold_list_model.dart';
-import '../../global/widgets/common_app_bar.dart';
+import 'package:highfly/data/models/payment_model.dart';
+import '../../providers/holds_provider.dart';
 import 'hold_booking_screen.dart';
+import 'hold_edit_screen.dart';
 
 String _formatStatusDisplay(String statusDisplay) {
   if (statusDisplay.isEmpty) return statusDisplay;
@@ -20,201 +23,290 @@ String _formatStatusDisplay(String statusDisplay) {
   return statusDisplay[0].toUpperCase() + statusDisplay.substring(1).toLowerCase();
 }
 
-class HoldDetailScreen extends StatelessWidget {
+class HoldDetailScreen extends ConsumerStatefulWidget {
   final HoldListModel hold;
 
   const HoldDetailScreen({super.key, required this.hold});
 
   @override
+  ConsumerState<HoldDetailScreen> createState() => _HoldDetailScreenState();
+}
+
+class _HoldDetailScreenState extends ConsumerState<HoldDetailScreen> {
+  late HoldListModel _currentHold;
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentHold = widget.hold;
+  }
+
+  Future<void> _refreshHoldData() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // Refresh holds list from provider
+      await ref.read(holdsControllerProvider.notifier).loadHolds();
+      
+      // Find the updated hold in the list
+      final holds = ref.read(holdsControllerProvider).holds;
+      final updatedHold = holds.firstWhere(
+        (h) => h.id == _currentHold.id,
+        orElse: () => _currentHold,
+      );
+
+      if (mounted) {
+        setState(() {
+          _currentHold = updatedHold;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _navigateToEdit() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => HoldEditScreen(hold: _currentHold),
+      ),
+    );
+
+    // If update was successful, refresh the data
+    if (result == true && mounted) {
+      await _refreshHoldData();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final hold = _currentHold;
+
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(60),
-        child: commonAppBar(context, "Hold Details"),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Status Card
-            Builder(
-              builder: (context) {
-                Color statusColor;
-                IconData statusIcon;
-                
-                final status = hold.status.toLowerCase();
-                
-                // Check status first, then isExpired flag
-                if (status == 'active') {
-                  statusColor = Colors.green;
-                  statusIcon = Icons.check_circle_outline;
-                } else if (status == 'expired' || status == 'inactive' || hold.isExpired) {
-                  statusColor = Colors.red;
-                  statusIcon = Icons.error_outline;
-                } else {
-                  statusColor = Colors.orange;
-                  statusIcon = Icons.pending_outlined;
-                }
-                
-                return Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: statusColor,
-                      width: 1,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Status',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: AppColors.lightGreyColor,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            _formatStatusDisplay(hold.statusDisplay),
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                              color: statusColor,
-                            ),
-                          ),
-                        ],
-                      ),
-                      Icon(statusIcon, color: statusColor, size: 32),
-                    ],
-                  ),
-                );
-              },
-            ),
-            const SizedBox(height: 24),
-
-            // Plot Information Section
-            _buildSectionTitle('Plot Information'),
-            _buildDetailCard([
-              _buildDetailRow('Plot No.', hold.plotCode),
-              if (hold.project != null)
-                _buildDetailRow('Project', hold.project!.name),
-              if (hold.plotSize != null && hold.plotSize!.isNotEmpty)
-                _buildDetailRow('Plot Size', hold.plotSize!),
-              if (hold.plotArea != null && hold.plotArea!.isNotEmpty)
-                _buildDetailRow('Plot Area', '${hold.plotArea} sq ft'),
-              if (hold.plotPrice != null && hold.plotPrice!.isNotEmpty)
-                _buildDetailRow('Plot Price', '₹${hold.plotPrice}'),
-              if (hold.plotFacing != null && hold.plotFacing!.isNotEmpty)
-                _buildDetailRow('Plot Facing', hold.plotFacing!),
-              _buildDetailRow('Hold Amount', '₹${hold.holdAmount}'),
-              _buildDetailRow('Hold Until', hold.holdUntil),
-              _buildDetailRow('Created At', hold.createdAt),
-              _buildDetailRow('Updated At', hold.updatedAt),
-            ]),
-            const SizedBox(height: 24),
-
-            // Customer Information Section
-            _buildSectionTitle('Customer Information'),
-            _buildDetailCard([
-              _buildDetailRow('Customer Name', hold.customerName),
-              _buildDetailRow('Phone', hold.customerPhone),
-              if (hold.customerEmail.isNotEmpty)
-                _buildDetailRow('Email', hold.customerEmail),
-            ]),
-            const SizedBox(height: 24),
-
-            // Hold Details Section
-            _buildSectionTitle('Hold Details'),
-            _buildDetailCard([
-              _buildDetailRow('RERA Number', hold.reraNumber),
-              if (hold.teamLeaderName.isNotEmpty)
-                _buildDetailRow('Team Leader', hold.teamLeaderName),
-              _buildDetailRow('Client Aadhar', hold.clientAadhar),
-            ]),
-            const SizedBox(height: 24),
-
-            // Payment Information Section
-            _buildSectionTitle('Payment Information'),
-            _buildDetailCard([
-              _buildDetailRow('Payment Mode', hold.paymentMode),
-              _buildDetailRow('Payment Reference', hold.paymentReference),
-            ]),
-            const SizedBox(height: 24),
-
-            // Bank Details Section
-            _buildSectionTitle('Bank Details'),
-            _buildDetailCard([
-              _buildDetailRow('Account Holder Name', hold.accountHolderName),
-              _buildDetailRow('Branch Name', hold.branchName),
-              _buildDetailRow('Account Number', hold.accountNumber),
-              _buildDetailRow('IFSC Code', hold.ifscCode),
-              _buildDetailRow('Account Type', hold.accountType),
-              _buildDetailRow('Bank Contact', hold.bankContactNumber),
-            ]),
-            const SizedBox(height: 24),
-
-            // Remarks Section
-            if (hold.remarks.isNotEmpty) ...[
-              _buildSectionTitle('Remarks'),
-              _buildDetailCard([
-                _buildDetailRow('Notes', hold.remarks),
-              ]),
-              const SizedBox(height: 24),
-            ],
-
-            // Additional Information
-            // _buildSectionTitle('Additional Information'),
-            // _buildDetailCard([
-            //   _buildDetailRow('Agent Name', hold.agentName),
-            //   _buildDetailRow('Created By', hold.createdBy),
-            //   _buildDetailRow('Updated By', hold.updatedBy),
-            // ]),
-            // const SizedBox(height: 24),
-
-            // Book Now Button (only show if hold is active)
+        child: AppBar(
+          title: const Text("Hold Details"),
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back, color: AppColors.primaryTextColor),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          backgroundColor: Colors.white,
+          titleTextStyle: TextStyle(color: AppColors.primaryTextColor, fontSize: 18, fontWeight: FontWeight.bold),
+          iconTheme: IconThemeData(color: AppColors.primaryTextColor),
+          centerTitle: true,
+          elevation: 1,
+          actions: [
             if (hold.status.toLowerCase() == 'active' && !hold.isExpired)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16.0),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => HoldBookingScreen(hold: hold),
-                        ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryColor,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: const Text(
-                      'Book Now',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
+              IconButton(
+                icon: const Icon(Icons.edit, color: AppColors.primaryColor),
+                onPressed: _isLoading ? null : _navigateToEdit,
+                tooltip: 'Edit Hold',
               ),
           ],
         ),
       ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Status Card
+                  Builder(
+                    builder: (context) {
+                      Color statusColor;
+                      IconData statusIcon;
+                      
+                      final status = hold.status.toLowerCase();
+                      
+                      // Check status first, then isExpired flag
+                      if (status == 'active') {
+                        statusColor = Colors.green;
+                        statusIcon = Icons.check_circle_outline;
+                      } else if (status == 'expired' || status == 'inactive' || hold.isExpired) {
+                        statusColor = Colors.red;
+                        statusIcon = Icons.error_outline;
+                      } else {
+                        statusColor = Colors.orange;
+                        statusIcon = Icons.pending_outlined;
+                      }
+                      
+                      return Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: statusColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: statusColor,
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Status',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: AppColors.lightGreyColor,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  _formatStatusDisplay(hold.statusDisplay),
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w600,
+                                    color: statusColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Icon(statusIcon, color: statusColor, size: 32),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Plot Information Section
+                  _buildSectionTitle('Plot Information'),
+                  _buildDetailCard([
+                    _buildDetailRow('Plot No.', hold.plotCode),
+                    if (hold.project != null)
+                      _buildDetailRow('Project', hold.project!.name),
+                    if (hold.plotSize != null && hold.plotSize!.isNotEmpty)
+                      _buildDetailRow('Plot Size', hold.plotSize!),
+                    if (hold.plotArea != null && hold.plotArea!.isNotEmpty)
+                      _buildDetailRow('Plot Area', '${hold.plotArea} sq ft'),
+                    if (hold.plotPrice != null && hold.plotPrice!.isNotEmpty)
+                      _buildDetailRow('Plot Price', '₹${hold.plotPrice}'),
+                    if (hold.plotFacing != null && hold.plotFacing!.isNotEmpty)
+                      _buildDetailRow('Plot Facing', hold.plotFacing!),
+                  //  _buildDetailRow('Hold Amount', '₹${hold.holdAmount}'),
+                    _buildDetailRow('Hold Until', hold.holdUntil),
+                    _buildDetailRow('Created At', hold.createdAt),
+                    _buildDetailRow('Updated At', hold.updatedAt),
+                  ]),
+                  const SizedBox(height: 24),
+
+                  // Customer Information Section
+                  _buildSectionTitle('Customer Information'),
+                  _buildDetailCard([
+                    _buildDetailRow('Customer Name', hold.customerName),
+                    _buildDetailRow('Phone', hold.customerPhone),
+                    if (hold.customerEmail.isNotEmpty)
+                      _buildDetailRow('Email', hold.customerEmail),
+                  ]),
+                  const SizedBox(height: 24),
+
+                  // Hold Details Section
+                  _buildSectionTitle('Hold Details'),
+                  _buildDetailCard([
+                    _buildDetailRow('RERA Number', hold.reraNumber),
+                    if (hold.teamLeaderName.isNotEmpty)
+                      _buildDetailRow('Team Leader', hold.teamLeaderName),
+                    _buildDetailRow('Client Aadhar', hold.clientAadhar),
+                  ]),
+                  const SizedBox(height: 24),
+
+                  // Payment Information Section
+                  _buildSectionTitle('Payment Information'),
+                  _buildDetailCard([
+                    _buildDetailRow('Payment Mode', PaymentMethod.getValue(hold.paymentMode).isNotEmpty 
+                        ? PaymentMethod.getValue(hold.paymentMode) 
+                        : hold.paymentMode),
+                    _buildDetailRow('Payment Reference', hold.paymentReference),
+                  ]),
+                  const SizedBox(height: 24),
+
+                  // Bank Details Section
+                  _buildSectionTitle('Bank Details'),
+                  _buildDetailCard([
+                    _buildDetailRow('Account Holder Name', hold.accountHolderName),
+                    _buildDetailRow('Branch Name', hold.branchName),
+                    _buildDetailRow('Account Number', hold.accountNumber),
+                    _buildDetailRow('IFSC Code', hold.ifscCode),
+                    _buildDetailRow('Account Type', hold.accountType),
+                    _buildDetailRow('Bank Contact', hold.bankContactNumber),
+                  ]),
+                  const SizedBox(height: 24),
+
+                  // Remarks Section
+                  if (hold.remarks.isNotEmpty) ...[
+                    _buildSectionTitle('Remarks'),
+                    _buildDetailCard([
+                      _buildDetailRow('Notes', hold.remarks),
+                    ]),
+                    const SizedBox(height: 24),
+                  ],
+
+                  // Additional Information
+                  // _buildSectionTitle('Additional Information'),
+                  // _buildDetailCard([
+                  //   _buildDetailRow('Agent Name', hold.agentName),
+                  //   _buildDetailRow('Created By', hold.createdBy),
+                  //   _buildDetailRow('Updated By', hold.updatedBy),
+                  // ]),
+                  // const SizedBox(height: 24),
+
+                  // Book Now Button (only show if hold is active)
+                  if (hold.status.toLowerCase() == 'active' && !hold.isExpired)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16.0),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            final result = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => HoldBookingScreen(hold: hold),
+                              ),
+                            );
+
+                            // If booking was successful, refresh the hold data
+                            if (result == true && mounted) {
+                              await _refreshHoldData();
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primaryColor,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: const Text(
+                            'Book Now',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
     );
   }
 

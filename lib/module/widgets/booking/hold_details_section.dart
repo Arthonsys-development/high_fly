@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../config/constant/const_assets.dart';
 import '../../../data/models/hold_details_model.dart';
 import '../../global/widgets/custom_text_field.dart';
@@ -32,6 +33,7 @@ class _HoldDetailsSectionState extends State<HoldDetailsSection> {
   late TextEditingController _teamLeaderController;
   late TextEditingController _clientAadharController;
   late TextEditingController _additionalNotesController;
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
@@ -72,12 +74,26 @@ class _HoldDetailsSectionState extends State<HoldDetailsSection> {
     super.dispose();
   }
 
+  String? _validateClientAadhar(String? value) {
+    // Since the field is optional, only validate if user has entered something
+    if (value == null || value.isEmpty) {
+      return null; // Empty is valid since field is optional
+    }
+    // If entered, must be exactly 12 digits
+    if (value.length != 12) {
+      return 'Aadhar number must be exactly 12 digits';
+    }
+    return null; // Valid
+  }
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       padding: const EdgeInsets.only(top: 20, bottom: 20),
-      child: Column(
-        children: [
+      child: Form(
+        key: _formKey,
+        child: Column(
+          children: [
           const SizedBox(height: 20),
           
           // Header with icon
@@ -90,21 +106,21 @@ class _HoldDetailsSectionState extends State<HoldDetailsSection> {
           const SizedBox(height: 40),
           
           // Associate Name or Self field
-          CustomTextField(
-            titleText: 'Associate Name or Self',
-            controller: _associateNameController,
-            hintText: 'Enter associate name or self',
-            isMandatory: false,
-            maxLength: 30,
-            borderRadius: 6,
-            onChanged: (value) {
-              setState(() {
-                _holdDetails = _holdDetails.copyWith(associateNameOrSelf: value);
-              });
-            },
-          ),
+          // CustomTextField(
+          //   titleText: 'Associate Name or Self',
+          //   controller: _associateNameController,
+          //   hintText: 'Enter associate name or self',
+          //   isMandatory: false,
+          //   maxLength: 30,
+          //   borderRadius: 6,
+          //   onChanged: (value) {
+          //     setState(() {
+          //       _holdDetails = _holdDetails.copyWith(associateNameOrSelf: value);
+          //     });
+          //   },
+          // ),
           
-          const SizedBox(height: 24),
+          // const SizedBox(height: 24),
           
           // RERA Number field
           CustomTextField(
@@ -149,6 +165,11 @@ class _HoldDetailsSectionState extends State<HoldDetailsSection> {
             maxLength: 12,
             keyboardType: TextInputType.number,
             borderRadius: 6,
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(12),
+            ],
+            validator: _validateClientAadhar,
             onChanged: (value) {
               setState(() {
                 _holdDetails = _holdDetails.copyWith(clientAadhar: value);
@@ -179,14 +200,20 @@ class _HoldDetailsSectionState extends State<HoldDetailsSection> {
           // Action buttons
           ActionButtons(
             onPrevious: widget.onPrevious,
-            onNext: () => widget.onNext?.call(_holdDetails),
+            onNext: () {
+              // Validate form before proceeding
+              if (_formKey.currentState?.validate() ?? true) {
+                widget.onNext?.call(_holdDetails);
+              }
+            },
             isPreviousEnabled: widget.onPrevious != null,
             isNextEnabled: true,
             nextButtonText: widget.nextButtonText,
           ),
           
           const SizedBox(height: 20),
-        ],
+          ],
+        ),
       ),
     );
   }

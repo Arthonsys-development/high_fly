@@ -182,287 +182,178 @@ class _AddVisitDialogState extends ConsumerState<AddVisitDialog>
           onTap: (){
             FocusScope.of(context).unfocus();
           },
-          child: SingleChildScrollView(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 500),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Row(
-                      //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      //   children: [
-                      //     Text(
-                      //       "Add Visit",
-                      //       style: TextStyle(
-                      //         fontSize: 18,
-                      //         color: AppColors.primaryTextColor,
-                      //         fontWeight: FontWeight.bold,
-                      //       ),
-                      //     ),
-                      //     IconButton(
-                      //       icon: const Icon(Icons.close, size: 20),
-                      //       onPressed: () => Navigator.pop(context),
-                      //     ),
-                      //   ],
-                      // ),
-                      // const SizedBox(height: 2),
-                      // Divider(color: AppColors.secondaryTextColor, height: 0.2),
-                      const SizedBox(height: 16),
+          child: kIsWeb 
+            ? _buildWebLayout()
+            : _buildMobileLayout(),
+        ),
+      ),
+    );
+  }
 
-                      _buildCustomTextField(
-                        label: "Visitor Name",
-                        txtController: _visitorNameController,
-                        isRequired: true,
-                        maxLength: 30,
-                        // onChanged: (value) => visitorName = value,
-                        validator: (value) => value == null || value.isEmpty ? "Enter visitor name" : null,
-                      ),
-
-                      const SizedBox(height: 12),
-
-                      _buildCustomTextField(
-                        label: "RERA Number",
-                        txtController: _reraNUmberController,
-                        isRequired: true,
-                        maxLength: 25,
-                        // onChanged: (value) => reraNUmber = value,
-                        validator: (value) => value == null || value.isEmpty ? "Enter your RERA number" : null,
-                      ),
-
-                      const SizedBox(height: 12),
-
-                      _buildCustomTextField(
-                        label: "Team Leader Name",
-                        txtController: _teamLeaderNameController,
-                        isRequired: true,
-                        maxLength: 30,
-                        // onChanged: (value) => teamLeaderName = value,
-                        validator: (value) => value == null || value.isEmpty ? "Enter team leader name" : null,
-                      ),
-
-                      const SizedBox(height: 12),
-
-                      // Visit Type Dropdown
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Text(
-                                "Type",
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.black,
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              Image.asset(
-                                IconsAssets.star,
-                                width: 8,
-                                height: 8,
-                                color: Colors.red,
-                              ),
-                            ],
+  Widget _buildWebLayout() {
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 900),
+          child: Card(
+            elevation: 4,
+            shadowColor: Colors.black.withOpacity(0.1),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Container(
+              padding: const EdgeInsets.all(32.0),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Header Section
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.add_business_rounded,
+                          color: AppColors.primaryColor,
+                          size: 28,
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          "Add Visit",
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primaryTextColor,
                           ),
-                          const SizedBox(height: 4),
-                          DropdownButtonFormField<String>(
-                            value: selectedVisitType,
-                            hint: Text(
-                              "Select type",
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                            decoration: InputDecoration(
-                              isDense: true,
-                              fillColor: Colors.white,
-                              filled: true,
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 14,
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide: const BorderSide(
-                                  color: AppColors.primaryTextColor,
-                                  width: 0.5,
-                                ),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide: const BorderSide(
-                                  color: Colors.black26,
-                                  width: 1,
-                                ),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide: const BorderSide(
-                                  color: AppColors.primaryTextColor,
-                                  width: 1,
-                                ),
-                              ),
-                              errorBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide: const BorderSide(
-                                  color: Colors.red,
-                                  width: 1.2,
-                                ),
-                              ),
-                              focusedErrorBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide: const BorderSide(
-                                  color: Colors.red,
-                                  width: 1.5,
-                                ),
-                              ),
-                            ),
-                            dropdownColor: Colors.white,
-                            items: visitTypes.map((visitType) {
-                              return DropdownMenuItem<String>(
-                                value: visitType['key'],
-                                child: Text(
-                                  visitType['label']!,
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                            onChanged: (value) {
-                              setState(() {
-                                selectedVisitType = value;
-                              });
-                              debugPrint('Visit type changed to: $value');
-                              // If Project Visit is selected, show warning based on already-checked distance
-                              if (value == 'project_visit') {
-                                // Check distance - trigger check even if location not ready yet
-                                _checkDistanceFromProject();
-                                // Also schedule checks to ensure location is ready
-                                Future.delayed(const Duration(milliseconds: 500), () {
-                                  if (mounted && selectedVisitType == 'project_visit') {
-                                    _checkDistanceFromProject();
-                                  }
-                                });
-                                Future.delayed(const Duration(milliseconds: 1500), () {
-                                  if (mounted && selectedVisitType == 'project_visit') {
-                                    _checkDistanceFromProject();
-                                  }
-                                });
-                              } else {
-                                // Clear warning for other types
-                                setState(() {
-                                  _isTooFarFromProject = false;
-                                });
-                              }
-                            },
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return "Select visit type";
-                              }
-                              return null;
-                            },
-                            icon: const Icon(
-                              Icons.arrow_drop_down,
-                              color: AppColors.secondaryTextColor,
-                            ),
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: Colors.black,
-                            ),
-                          ),
-                        ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      "Fill in the details to add a new visit",
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: AppColors.secondaryTextColor,
                       ),
-                      
-                      // Warning message if too far from project for project visit
-                      if (_isTooFarFromProject && selectedVisitType == 'project_visit')
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: Row(
+                    ),
+                    const SizedBox(height: 32),
+
+                    // Two Column Layout for Web
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Left Column
+                        Expanded(
+                          child: Column(
                             children: [
-                              Icon(
-                                Icons.warning_amber_rounded,
-                                color: Colors.orange,
-                                size: 18,
+                              _buildCustomTextField(
+                                label: "Visitor Name",
+                                txtController: _visitorNameController,
+                                isRequired: true,
+                                maxLength: 30,
+                                validator: (value) => value == null || value.isEmpty ? "Enter visitor name" : null,
                               ),
-                              const SizedBox(width: 6),
-                              Expanded(
-                                child: Text(
-                                  'You are more than 100 meters away from the project location.',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.orange[800],
-                                    fontStyle: FontStyle.italic,
-                                  ),
-                                ),
+                              const SizedBox(height: 20),
+                              _buildCustomTextField(
+                                label: "RERA Number",
+                                txtController: _reraNUmberController,
+                                isRequired: true,
+                                maxLength: 25,
+                                validator: (value) => value == null || value.isEmpty ? "Enter your RERA number" : null,
+                              ),
+                              const SizedBox(height: 20),
+                              _buildCustomTextField(
+                                label: "Team Leader Name",
+                                txtController: _teamLeaderNameController,
+                                isRequired: true,
+                                maxLength: 30,
+                                validator: (value) => value == null || value.isEmpty ? "Enter team leader name" : null,
                               ),
                             ],
                           ),
                         ),
-
-                      const SizedBox(height: 12),
-
-                      _buildVisitorPhotoSection(),
-                      const SizedBox(height: 12),
-
-                      _buildCustomTextField(
-                        label: "Comments",
-                        txtController: _commentsController,
-                        maxLines: 3,
-                        maxLength: 150,
-                        // onChanged: (value) => comments = value,
-                      ),
-                      const SizedBox(height: 20),
-
-                      Row(
-                        children: [
-                          // Expanded(
-                          //   child: SizedBox(
-                          //     height: 40,
-                          //     child: OutlinedButton(
-                          //       style: ButtonStyle(
-                          //         side: WidgetStateProperty.all(
-                          //           BorderSide(color: AppColors.primaryTextColor),
-                          //         ),
-
-                          //       ),
-                          //       onPressed: () => context.go(Routes.dashboardScreen),
-                          //       child: const Text("Cancel", style: TextStyle(color: AppColors.primaryTextColor),),
-                          //     ),
-                          //   ),
-                          // ),
-
-                          Expanded(
-                            child: CustomButton(
-                              backgroundColor: Colors.white,
-                              textColor: AppColors.primaryTextColor,
-                              borderColor: AppColors.primaryTextColor,
-                              height: 40,
-                              text: "Cancel",
-                              onPressed:() => context.go(Routes.dashboardScreen),
-                            ),
+                        const SizedBox(width: 24),
+                        // Right Column
+                        Expanded(
+                          child: Column(
+                            children: [
+                              _buildVisitTypeDropdown(),
+                              if (_isTooFarFromProject && selectedVisitType == 'project_visit')
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 8.0),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.warning_amber_rounded,
+                                        color: Colors.orange,
+                                        size: 18,
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Expanded(
+                                        child: Text(
+                                          'You are more than 100 meters away from the project location.',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.orange[800],
+                                            fontStyle: FontStyle.italic,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              const SizedBox(height: 20),
+                              _buildVisitorPhotoSection(),
+                            ],
                           ),
+                        ),
+                      ],
+                    ),
 
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: CustomButton(
-                              height: 40,
-                              text: _isSaving ? "Saving..." : "Save Visit",
-                              onPressed: _isSaving ? null : _saveVisit,
-                            ),
+                    const SizedBox(height: 20),
+
+                    // Comments Section (Full Width)
+                    _buildCustomTextField(
+                      label: "Comments",
+                      txtController: _commentsController,
+                      maxLines: 3,
+                      maxLength: 150,
+                    ),
+
+                    const SizedBox(height: 32),
+
+                    // Action Buttons
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        SizedBox(
+                          width: 140,
+                          child: CustomButton(
+                            backgroundColor: Colors.white,
+                            textColor: AppColors.primaryTextColor,
+                            borderColor: AppColors.primaryTextColor,
+                            height: 48,
+                            text: "Cancel",
+                            onPressed: () => context.go(Routes.dashboardScreen),
                           ),
-                        ],
-                      ),
-                    ],
-                  ),
+                        ),
+                        const SizedBox(width: 16),
+                        SizedBox(
+                          width: 140,
+                          child: CustomButton(
+                            height: 48,
+                            text: _isSaving ? "Saving..." : "Save Visit",
+                            onPressed: _isSaving ? null : _saveVisit,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -472,7 +363,260 @@ class _AddVisitDialogState extends ConsumerState<AddVisitDialog>
     );
   }
 
+  Widget _buildMobileLayout() {
+    return SingleChildScrollView(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 500),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 16),
+
+                _buildCustomTextField(
+                  label: "Visitor Name",
+                  txtController: _visitorNameController,
+                  isRequired: true,
+                  maxLength: 30,
+                  validator: (value) => value == null || value.isEmpty ? "Enter visitor name" : null,
+                ),
+
+                const SizedBox(height: 12),
+
+                _buildCustomTextField(
+                  label: "RERA Number",
+                  txtController: _reraNUmberController,
+                  isRequired: true,
+                  maxLength: 25,
+                  validator: (value) => value == null || value.isEmpty ? "Enter your RERA number" : null,
+                ),
+
+                const SizedBox(height: 12),
+
+                _buildCustomTextField(
+                  label: "Team Leader Name",
+                  txtController: _teamLeaderNameController,
+                  isRequired: true,
+                  maxLength: 30,
+                  validator: (value) => value == null || value.isEmpty ? "Enter team leader name" : null,
+                ),
+
+                const SizedBox(height: 12),
+
+                _buildVisitTypeDropdown(),
+                
+                // Warning message if too far from project for project visit
+                if (_isTooFarFromProject && selectedVisitType == 'project_visit')
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.warning_amber_rounded,
+                          color: Colors.orange,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            'You are more than 100 meters away from the project location.',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.orange[800],
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                const SizedBox(height: 12),
+
+                _buildVisitorPhotoSection(),
+                const SizedBox(height: 12),
+
+                _buildCustomTextField(
+                  label: "Comments",
+                  txtController: _commentsController,
+                  maxLines: 3,
+                  maxLength: 150,
+                ),
+                const SizedBox(height: 20),
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: CustomButton(
+                        backgroundColor: Colors.white,
+                        textColor: AppColors.primaryTextColor,
+                        borderColor: AppColors.primaryTextColor,
+                        height: 40,
+                        text: "Cancel",
+                        onPressed: () => context.go(Routes.dashboardScreen),
+                      ),
+                    ),
+
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: CustomButton(
+                        height: 40,
+                        text: _isSaving ? "Saving..." : "Save Visit",
+                        onPressed: _isSaving ? null : _saveVisit,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVisitTypeDropdown() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              "Type",
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: Colors.black,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Image.asset(
+              IconsAssets.star,
+              width: 8,
+              height: 8,
+              color: Colors.red,
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        DropdownButtonFormField<String>(
+          value: selectedVisitType,
+          hint: Text(
+            "Select type",
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey[600],
+            ),
+          ),
+          decoration: InputDecoration(
+            isDense: true,
+            fillColor: Colors.white,
+            filled: true,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 14,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(
+                color: AppColors.primaryTextColor,
+                width: 0.5,
+              ),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(
+                color: Colors.black26,
+                width: 1,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(
+                color: AppColors.primaryTextColor,
+                width: 1,
+              ),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(
+                color: Colors.red,
+                width: 1.2,
+              ),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(
+                color: Colors.red,
+                width: 1.5,
+              ),
+            ),
+          ),
+          dropdownColor: Colors.white,
+          items: visitTypes.map((visitType) {
+            return DropdownMenuItem<String>(
+              value: visitType['key'],
+              child: Text(
+                visitType['label']!,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.black,
+                ),
+              ),
+            );
+          }).toList(),
+          onChanged: (value) {
+            setState(() {
+              selectedVisitType = value;
+            });
+            debugPrint('Visit type changed to: $value');
+            // If Project Visit is selected, show warning based on already-checked distance
+            if (value == 'project_visit') {
+              // Check distance - trigger check even if location not ready yet
+              _checkDistanceFromProject();
+              // Also schedule checks to ensure location is ready
+              Future.delayed(const Duration(milliseconds: 500), () {
+                if (mounted && selectedVisitType == 'project_visit') {
+                  _checkDistanceFromProject();
+                }
+              });
+              Future.delayed(const Duration(milliseconds: 1500), () {
+                if (mounted && selectedVisitType == 'project_visit') {
+                  _checkDistanceFromProject();
+                }
+              });
+            } else {
+              // Clear warning for other types
+              setState(() {
+                _isTooFarFromProject = false;
+              });
+            }
+          },
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return "Select visit type";
+            }
+            return null;
+          },
+          icon: const Icon(
+            Icons.arrow_drop_down,
+            color: AppColors.secondaryTextColor,
+          ),
+          style: const TextStyle(
+            fontSize: 14,
+            color: Colors.black,
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildVisitorPhotoSection() {
+    final photoSize = kIsWeb ? 140.0 : 100.0;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -499,31 +643,41 @@ class _AddVisitDialogState extends ConsumerState<AddVisitDialog>
         GestureDetector(
           onTap: _showImageSourceDialog,
           child: Container(
-            height: 100,
-            width: 100,
+            height: photoSize,
+            width: photoSize,
             decoration: BoxDecoration(
-              border: Border.all(color: AppColors.secondaryTextColor),
-              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: AppColors.secondaryTextColor,
+                width: kIsWeb ? 2 : 1,
+              ),
+              borderRadius: BorderRadius.circular(kIsWeb ? 12 : 8),
               color: Colors.grey[100],
+              boxShadow: kIsWeb ? [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ] : null,
             ),
             child: _pickedImage != null || _webImage != null
                 ? ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(kIsWeb ? 12 : 8),
                     child: kIsWeb 
                         ? (_webImage != null
                             ? Image.memory(
                                 _webImage!,
                                 fit: BoxFit.cover,
-                                width: 100,
-                                height: 100,
+                                width: photoSize,
+                                height: photoSize,
                               )
                             : Container())
                         : (_pickedImage != null
                             ? Image.file(
                                 File(_pickedImage!.path),
                                 fit: BoxFit.cover,
-                                width: 100,
-                                height: 100,
+                                width: photoSize,
+                                height: photoSize,
                               )
                             : Container()),
                   )
@@ -533,12 +687,13 @@ class _AddVisitDialogState extends ConsumerState<AddVisitDialog>
                       Icon(
                         Icons.camera_alt_outlined,
                         color: AppColors.secondaryTextColor,
-                        size: 30,
+                        size: kIsWeb ? 36 : 30,
                       ),
+                      const SizedBox(height: 4),
                       Text(
-                        "Tap to upload",
+                        kIsWeb ? "Click to upload" : "Tap to upload",
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: kIsWeb ? 13 : 12,
                           color: AppColors.secondaryTextColor,
                         ),
                       ),
@@ -677,7 +832,7 @@ class _AddVisitDialogState extends ConsumerState<AddVisitDialog>
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('No image captured'),
+              content: Text('No image captured', style: TextStyle(color: Colors.white)),
               backgroundColor:  AppColors.primaryColor,
             ),
           );
@@ -863,6 +1018,7 @@ class _AddVisitDialogState extends ConsumerState<AddVisitDialog>
     TextInputType? keyboardType,
     int? maxLength,
   }) {
+    final isWeb = kIsWeb;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -870,8 +1026,8 @@ class _AddVisitDialogState extends ConsumerState<AddVisitDialog>
           children: [
             Text(
               label,
-              style: const TextStyle(
-                fontSize: 14,
+              style: TextStyle(
+                fontSize: isWeb ? 15 : 14,
                 fontWeight: FontWeight.w500,
                 color: Colors.black,
               ),
@@ -886,7 +1042,7 @@ class _AddVisitDialogState extends ConsumerState<AddVisitDialog>
               ),
           ],
         ),
-        const SizedBox(height: 4),
+        SizedBox(height: isWeb ? 8 : 4),
         TextFormField(
           controller: txtController,
           validator: validator,
@@ -894,8 +1050,8 @@ class _AddVisitDialogState extends ConsumerState<AddVisitDialog>
           maxLines: maxLines,
           keyboardType: keyboardType,
           maxLength: maxLength,
-          style: const TextStyle(
-            fontSize: 14,
+          style: TextStyle(
+            fontSize: isWeb ? 15 : 14,
             color: Colors.black,
           ),
           cursorColor: AppColors.primaryTextColor,
@@ -904,39 +1060,39 @@ class _AddVisitDialogState extends ConsumerState<AddVisitDialog>
             fillColor: Colors.white,
             filled: true,
             contentPadding: EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: maxLines > 1 ? 12 : 14,
+              horizontal: isWeb ? 16 : 12,
+              vertical: isWeb ? (maxLines > 1 ? 16 : 18) : (maxLines > 1 ? 12 : 14),
             ),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(
+              borderRadius: BorderRadius.circular(isWeb ? 10 : 8),
+              borderSide: BorderSide(
                 color: AppColors.primaryTextColor,
-                width: 0.5,
+                width: isWeb ? 1 : 0.5,
               ),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(
-                color: Colors.black26,
-                width: 1,
+              borderRadius: BorderRadius.circular(isWeb ? 10 : 8),
+              borderSide: BorderSide(
+                color: isWeb ? Colors.grey[300]! : Colors.black26,
+                width: isWeb ? 1.5 : 1,
               ),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(
-                color: AppColors.primaryTextColor,
-                width: 1,
+              borderRadius: BorderRadius.circular(isWeb ? 10 : 8),
+              borderSide: BorderSide(
+                color: AppColors.primaryColor,
+                width: isWeb ? 2 : 1,
               ),
             ),
             errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(isWeb ? 10 : 8),
               borderSide: const BorderSide(
                 color: Colors.red,
                 width: 1.2,
               ),
             ),
             focusedErrorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(isWeb ? 10 : 8),
               borderSide: const BorderSide(
                 color: Colors.red,
                 width: 1.5,
@@ -1054,44 +1210,81 @@ class _AddVisitDialogState extends ConsumerState<AddVisitDialog>
 
   // Save visit method
   Future<void> _saveVisit() async {
-    if (_formKey.currentState!.validate()) {
-      // Check if visitor photo is picked
-      if ((_pickedImage == null && _webImage == null)) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Visitor photo is required to save visit. Please select a photo.', style: TextStyle(color: Colors.white)),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-        return;
+    debugPrint('_saveVisit called');
+    
+    if (!_formKey.currentState!.validate()) {
+      debugPrint('Form validation failed');
+      return;
+    }
+    
+    debugPrint('Form validation passed');
+    
+    // Check if visitor photo is picked
+    if ((_pickedImage == null && _webImage == null)) {
+      debugPrint('Visitor photo not selected');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Visitor photo is required to save visit. Please select a photo.', style: TextStyle(color: Colors.white)),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
-      
-      // Check location permission before proceeding
-      final locationPermissionGranted = await _checkLocationPermission();
-      
-      if (!locationPermissionGranted) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Location permission is required to save visit. Please enable location permission in settings.', style: TextStyle(color: Colors.white)),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-        return;
+      return;
+    }
+    
+    debugPrint('Visitor photo check passed');
+    
+    // Check location permission before proceeding
+    // On web, we'll be more lenient and allow proceeding even if permission is not granted
+    // The location will be requested when getting current location
+    debugPrint('Checking location permission...');
+    final locationPermissionGranted = await _checkLocationPermission();
+    debugPrint('Location permission result: $locationPermissionGranted');
+    
+    if (!locationPermissionGranted && !kIsWeb) {
+      debugPrint('Location permission denied (mobile)');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Location permission is required to save visit. Please enable location permission in settings.', style: TextStyle(color: Colors.white)),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
-      
-      setState(() {
-        _isSaving = true;
-      });
+      return;
+    }
+    
+    // On web, we'll proceed even if permission check fails, as browser will prompt
+    if (!locationPermissionGranted && kIsWeb) {
+      debugPrint('Location permission not granted on web, but proceeding (browser will prompt)');
+    }
+    
+    debugPrint('Setting saving state');
+    setState(() {
+      _isSaving = true;
+    });
 
+    try {
+      debugPrint('Getting current location...');
+      // Get current location before creating the visit
+      // If location fails, we'll use default values (0.0, 0.0)
       try {
-        // Get current location before creating the visit
         await _getCurrentLocation();
+        debugPrint('Location obtained: $_currentLatitude, $_currentLongitude');
+      } catch (locationError) {
+        debugPrint('Error getting location, will use default values: $locationError');
+        // Set default values if location fails
+        if (_currentLatitude.isEmpty || _currentLongitude.isEmpty) {
+          _currentLatitude = '0.0';
+          _currentLongitude = '0.0';
+        }
+      }
 
+        debugPrint('Reading user ID from secure storage...');
         String id = await _secureStorage.read(key: SharedPreferenceStrings.id) ?? '';
+        debugPrint('User ID: $id');
+        
         // Compute is_at_project_location: true if within 100m, else false
         bool isAtProjectLocation = false;
         final userLat = double.tryParse(_currentLatitude);
@@ -1107,7 +1300,10 @@ class _AddVisitDialogState extends ConsumerState<AddVisitDialog>
           );
           isAtProjectLocation = (within == true);
         }
+        debugPrint('isAtProjectLocation: $isAtProjectLocation');
+        
         // Create the visit request
+        debugPrint('Creating visit request...');
         final visitRequest = CreateVisitRequest(
           projectId: widget.project.id.toString(),
           visitorName: _visitorNameController.text,
@@ -1123,10 +1319,13 @@ class _AddVisitDialogState extends ConsumerState<AddVisitDialog>
           type: selectedVisitType ?? 'office_visit', // Default to office_visit if not selected
           isAtProjectLocation: isAtProjectLocation,
         );
+        debugPrint('Visit request created, calling API...');
 
         // Call the API to create the visit
         final authApiRepository = AuthApiRepository();
+        debugPrint('About to call createVisit API...');
         final result = await authApiRepository.createVisit(visitRequest);
+        debugPrint('API call completed. Result: $result');
 
         if (result['success']) {
           // Log analytics event for visit creation
@@ -1173,7 +1372,9 @@ class _AddVisitDialogState extends ConsumerState<AddVisitDialog>
             );
           }
         }
-      } catch (e) {
+      } catch (e, stackTrace) {
+        debugPrint('Error creating visit: $e');
+        debugPrint('Stack trace: $stackTrace');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -1183,6 +1384,7 @@ class _AddVisitDialogState extends ConsumerState<AddVisitDialog>
           );
         }
       } finally {
+        debugPrint('Finally block - resetting saving state');
         if (mounted) {
           setState(() {
             _isSaving = false;
@@ -1197,9 +1399,21 @@ class _AddVisitDialogState extends ConsumerState<AddVisitDialog>
     try {
       // For web platform, check using geolocator
       if (kIsWeb) {
-        final permission = await Geolocator.checkPermission();
-        return permission == LocationPermission.whileInUse || 
-               permission == LocationPermission.always;
+        debugPrint('Checking location permission for web...');
+        var permission = await Geolocator.checkPermission();
+        debugPrint('Initial permission status: $permission');
+        
+        // If denied, try to request permission
+        if (permission == LocationPermission.denied) {
+          debugPrint('Permission denied, requesting...');
+          permission = await Geolocator.requestPermission();
+          debugPrint('Permission after request: $permission');
+        }
+        
+        final isGranted = permission == LocationPermission.whileInUse || 
+                          permission == LocationPermission.always;
+        debugPrint('Location permission granted: $isGranted');
+        return isGranted;
       }
       
       // For mobile platforms, use permission_handler
@@ -1217,8 +1431,13 @@ class _AddVisitDialogState extends ConsumerState<AddVisitDialog>
       }
     } catch (e) {
       debugPrint('Error checking location permission: $e');
+      // On web, if permission check fails, we'll still try to proceed
+      // as the location might be obtained through browser prompt
+      if (kIsWeb) {
+        debugPrint('Permission check failed on web, will attempt to get location anyway');
+        return true; // Allow proceeding, location will be requested when getting location
+      }
       return false;
     }
   }
 
-}

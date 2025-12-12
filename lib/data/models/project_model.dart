@@ -87,7 +87,7 @@ class Plot {
     this.length,
     required this.dimensions,
     required this.facing,
-    required this.remark,
+    this.remark = '',
     this.status = '',
     this.plc = false,
     this.plcApplied = false,
