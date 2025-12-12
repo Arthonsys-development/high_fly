@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:highfly/config/constant/app_colors.dart';
 import 'package:highfly/data/models/hold_list_model.dart';
@@ -118,10 +119,15 @@ class _HoldDetailScreenState extends ConsumerState<HoldDetailScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+              padding: EdgeInsets.all(kIsWeb ? 32.0 : 16.0),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: kIsWeb ? 1200 : double.infinity,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                   // Status Card
                   Builder(
                     builder: (context) {
@@ -143,13 +149,13 @@ class _HoldDetailScreenState extends ConsumerState<HoldDetailScreen> {
                       }
                       
                       return Container(
-                        padding: const EdgeInsets.all(16),
+                        padding: EdgeInsets.all(kIsWeb ? 20 : 16),
                         decoration: BoxDecoration(
                           color: statusColor.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(kIsWeb ? 16 : 12),
                           border: Border.all(
                             color: statusColor,
-                            width: 1,
+                            width: kIsWeb ? 1.5 : 1,
                           ),
                         ),
                         child: Row(
@@ -158,32 +164,33 @@ class _HoldDetailScreenState extends ConsumerState<HoldDetailScreen> {
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
+                                Text(
                                   'Status',
                                   style: TextStyle(
-                                    fontSize: 14,
+                                    fontSize: kIsWeb ? 15 : 14,
                                     color: AppColors.lightGreyColor,
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
-                                const SizedBox(height: 4),
+                                SizedBox(height: kIsWeb ? 6 : 4),
                                 Text(
                                   _formatStatusDisplay(hold.statusDisplay),
                                   style: TextStyle(
-                                    fontSize: 18,
+                                    fontSize: kIsWeb ? 20 : 18,
                                     fontWeight: FontWeight.w600,
                                     color: statusColor,
+                                    letterSpacing: kIsWeb ? 0.3 : 0,
                                   ),
                                 ),
                               ],
                             ),
-                            Icon(statusIcon, color: statusColor, size: 32),
+                            Icon(statusIcon, color: statusColor, size: kIsWeb ? 36 : 32),
                           ],
                         ),
                       );
                     },
                   ),
-                  const SizedBox(height: 24),
+                  SizedBox(height: kIsWeb ? 32 : 24),
 
                   // Plot Information Section
                   _buildSectionTitle('Plot Information'),
@@ -204,27 +211,65 @@ class _HoldDetailScreenState extends ConsumerState<HoldDetailScreen> {
                     _buildDetailRow('Created At', hold.createdAt),
                     _buildDetailRow('Updated At', hold.updatedAt),
                   ]),
-                  const SizedBox(height: 24),
+                  SizedBox(height: kIsWeb ? 32 : 24),
 
-                  // Customer Information Section
-                  _buildSectionTitle('Customer Information'),
-                  _buildDetailCard([
-                    _buildDetailRow('Customer Name', hold.customerName),
-                    _buildDetailRow('Phone', hold.customerPhone),
-                    if (hold.customerEmail.isNotEmpty)
-                      _buildDetailRow('Email', hold.customerEmail),
-                  ]),
-                  const SizedBox(height: 24),
+                  // Customer Information and Hold Details in a row for web
+                  if (kIsWeb)
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildSectionTitle('Customer Information'),
+                              _buildDetailCard([
+                                _buildDetailRow('Customer Name', hold.customerName),
+                                _buildDetailRow('Phone', hold.customerPhone),
+                                if (hold.customerEmail.isNotEmpty)
+                                  _buildDetailRow('Email', hold.customerEmail),
+                              ]),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 24),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildSectionTitle('Hold Details'),
+                              _buildDetailCard([
+                                _buildDetailRow('RERA Number', hold.reraNumber),
+                                if (hold.teamLeaderName.isNotEmpty)
+                                  _buildDetailRow('Team Leader', hold.teamLeaderName),
+                                _buildDetailRow('Client Aadhar', hold.clientAadhar),
+                              ]),
+                            ],
+                          ),
+                        ),
+                      ],
+                    )
+                  else ...[
+                    // Customer Information Section
+                    _buildSectionTitle('Customer Information'),
+                    _buildDetailCard([
+                      _buildDetailRow('Customer Name', hold.customerName),
+                      _buildDetailRow('Phone', hold.customerPhone),
+                      if (hold.customerEmail.isNotEmpty)
+                        _buildDetailRow('Email', hold.customerEmail),
+                    ]),
+                    const SizedBox(height: 24),
 
-                  // Hold Details Section
-                  _buildSectionTitle('Hold Details'),
-                  _buildDetailCard([
-                    _buildDetailRow('RERA Number', hold.reraNumber),
-                    if (hold.teamLeaderName.isNotEmpty)
-                      _buildDetailRow('Team Leader', hold.teamLeaderName),
-                    _buildDetailRow('Client Aadhar', hold.clientAadhar),
-                  ]),
-                  const SizedBox(height: 24),
+                    // Hold Details Section
+                    _buildSectionTitle('Hold Details'),
+                    _buildDetailCard([
+                      _buildDetailRow('RERA Number', hold.reraNumber),
+                      if (hold.teamLeaderName.isNotEmpty)
+                        _buildDetailRow('Team Leader', hold.teamLeaderName),
+                      _buildDetailRow('Client Aadhar', hold.clientAadhar),
+                    ]),
+                  ],
+                  SizedBox(height: kIsWeb ? 32 : 24),
 
                   // Payment Information Section
                   _buildSectionTitle('Payment Information'),
@@ -234,7 +279,7 @@ class _HoldDetailScreenState extends ConsumerState<HoldDetailScreen> {
                         : hold.paymentMode),
                     _buildDetailRow('Payment Reference', hold.paymentReference),
                   ]),
-                  const SizedBox(height: 24),
+                  SizedBox(height: kIsWeb ? 32 : 24),
 
                   // Bank Details Section
                   _buildSectionTitle('Bank Details'),
@@ -246,7 +291,7 @@ class _HoldDetailScreenState extends ConsumerState<HoldDetailScreen> {
                     _buildDetailRow('Account Type', hold.accountType),
                     _buildDetailRow('Bank Contact', hold.bankContactNumber),
                   ]),
-                  const SizedBox(height: 24),
+                  SizedBox(height: kIsWeb ? 32 : 24),
 
                   // Remarks Section
                   if (hold.remarks.isNotEmpty) ...[
@@ -254,7 +299,7 @@ class _HoldDetailScreenState extends ConsumerState<HoldDetailScreen> {
                     _buildDetailCard([
                       _buildDetailRow('Notes', hold.remarks),
                     ]),
-                    const SizedBox(height: 24),
+                    SizedBox(height: kIsWeb ? 32 : 24),
                   ],
 
                   // Additional Information
@@ -269,9 +314,9 @@ class _HoldDetailScreenState extends ConsumerState<HoldDetailScreen> {
                   // Book Now Button (only show if hold is active)
                   if (hold.status.toLowerCase() == 'active' && !hold.isExpired)
                     Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 16.0),
+                      padding: EdgeInsets.symmetric(vertical: kIsWeb ? 24.0 : 16.0),
                       child: SizedBox(
-                        width: double.infinity,
+                        width: kIsWeb ? 300 : double.infinity,
                         child: ElevatedButton(
                           onPressed: () async {
                             final result = await Navigator.push(
@@ -288,15 +333,19 @@ class _HoldDetailScreenState extends ConsumerState<HoldDetailScreen> {
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primaryColor,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
+                            padding: EdgeInsets.symmetric(
+                              vertical: kIsWeb ? 18 : 16,
+                              horizontal: kIsWeb ? 32 : 16,
                             ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(kIsWeb ? 12 : 8),
+                            ),
+                            elevation: kIsWeb ? 2 : 1,
                           ),
-                          child: const Text(
+                          child: Text(
                             'Book Now',
                             style: TextStyle(
-                              fontSize: 18,
+                              fontSize: kIsWeb ? 16 : 18,
                               fontWeight: FontWeight.w600,
                               color: Colors.white,
                             ),
@@ -304,7 +353,9 @@ class _HoldDetailScreenState extends ConsumerState<HoldDetailScreen> {
                         ),
                       ),
                     ),
-                ],
+                    ],
+                  ),
+                ),
               ),
             ),
     );
@@ -312,13 +363,14 @@ class _HoldDetailScreenState extends ConsumerState<HoldDetailScreen> {
 
   Widget _buildSectionTitle(String title) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12.0),
+      padding: EdgeInsets.only(bottom: kIsWeb ? 16.0 : 12.0),
       child: Text(
         title,
-        style: const TextStyle(
-          fontSize: 20,
+        style: TextStyle(
+          fontSize: kIsWeb ? 22 : 20,
           fontWeight: FontWeight.w600,
           color: AppColors.primaryTextColor,
+          letterSpacing: kIsWeb ? 0.5 : 0,
         ),
       ),
     );
@@ -326,18 +378,22 @@ class _HoldDetailScreenState extends ConsumerState<HoldDetailScreen> {
 
   Widget _buildDetailCard(List<Widget> children) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(kIsWeb ? 24 : 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(kIsWeb ? 16 : 12),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 4,
-            offset: const Offset(0, 2),
+            color: Colors.grey.withOpacity(kIsWeb ? 0.08 : 0.1),
+            spreadRadius: kIsWeb ? 0 : 1,
+            blurRadius: kIsWeb ? 8 : 4,
+            offset: Offset(0, kIsWeb ? 4 : 2),
           ),
         ],
+        border: kIsWeb ? Border.all(
+          color: Colors.grey.withOpacity(0.1),
+          width: 1,
+        ) : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -348,16 +404,16 @@ class _HoldDetailScreenState extends ConsumerState<HoldDetailScreen> {
 
   Widget _buildDetailRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12.0),
+      padding: EdgeInsets.only(bottom: kIsWeb ? 16.0 : 12.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 140,
+            width: kIsWeb ? 180 : 140,
             child: Text(
               '$label:',
-              style: const TextStyle(
-                fontSize: 14,
+              style: TextStyle(
+                fontSize: kIsWeb ? 15 : 14,
                 color: AppColors.lightGreyColor,
                 fontWeight: FontWeight.w500,
               ),
@@ -366,10 +422,11 @@ class _HoldDetailScreenState extends ConsumerState<HoldDetailScreen> {
           Expanded(
             child: Text(
               value.isNotEmpty ? value : '-',
-              style: const TextStyle(
-                fontSize: 14,
+              style: TextStyle(
+                fontSize: kIsWeb ? 15 : 14,
                 color: AppColors.primaryTextColor,
                 fontWeight: FontWeight.w400,
+                height: kIsWeb ? 1.5 : 1.4,
               ),
             ),
           ),

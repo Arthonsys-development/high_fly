@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../global/widgets/profile_picture.dart';
@@ -9,6 +10,7 @@ import '../../../config/constant/app_colors.dart';
 import '../../utils/app_fonts.dart';
 import '../../../main.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../../data/models/response_model/profile_model.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -26,6 +28,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   String? _fullNameError;
   String? _emailError;
   String? _teamLeaderNameError;
+  
+  // Track previous profile to avoid unnecessary controller updates
+  ProfileResponseData? _previousProfile;
+  bool _isInitialLoad = true;
 
   @override
   void initState() {
@@ -49,10 +55,29 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   void _updateControllers(ProfileState state) {
+    // Never update controllers while user is editing to avoid overwriting input
+    if (state.isEditing) {
+      return;
+    }
+    
     if (state.profile != null) {
-      _fullNameController.text = state.profile!.fullName ?? '';
-      _emailController.text = state.profile!.user?.email ?? '';
-      _teamLeaderNameController.text = state.profile!.teamLeaderName ?? '';
+      final currentProfile = state.profile!;
+      
+      // Check if this is a different profile (by ID) or initial load
+      // This ensures we update on initial load or when switching profiles
+      final isDifferentProfile = _previousProfile == null || 
+          _previousProfile!.id != currentProfile.id;
+      
+      // Only update controllers on initial load or when profile ID changed
+      // We don't update when user is typing because that would overwrite their input
+      if (_isInitialLoad || isDifferentProfile) {
+        _fullNameController.text = currentProfile.fullName ?? '';
+        _emailController.text = currentProfile.user?.email ?? '';
+        _teamLeaderNameController.text = currentProfile.teamLeaderName ?? '';
+        
+        _previousProfile = currentProfile;
+        _isInitialLoad = false;
+      }
     }
   }
 
@@ -96,9 +121,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Widget build(BuildContext context) {
     final profileState = ref.watch(profileProvider);
     
-    // Update controllers when profile state changes
+    // Update controllers when profile state changes (only when not editing)
+    if (!profileState.isEditing) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _updateControllers(profileState);
+      });
+    }
+    
+    // Handle errors and edit mode
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _updateControllers(profileState);
       // Only parse errors if there's an error and we're not currently editing
       if (profileState.error != null && !profileState.isEditing) {
         _parseFieldErrors(profileState.error);
@@ -133,17 +164,26 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   child: Text('No profile data available'),
                 )
               : SingleChildScrollView(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    children: [
-                      _buildProfileSettingsHeader(),
-                      const SizedBox(height: 32),
-                      _buildProfilePicture(profileState),
-                      const SizedBox(height: 32),
-                      _buildProfileForm(profileState),
-                      const SizedBox(height: 32),
-                      _buildActionButtons(profileState),
-                    ],
+                  padding: EdgeInsets.all(kIsWeb ? 32.0 : 20.0),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: kIsWeb ? 800 : double.infinity,
+                      ),
+                      child: Column(
+                        children: [
+                          _buildProfileSettingsHeader(),
+                          SizedBox(height: kIsWeb ? 40 : 32),
+                          _buildProfilePicture(profileState),
+                          SizedBox(height: kIsWeb ? 40 : 32),
+                          _buildProfileForm(profileState),
+                          if (profileState.isEditing) ...[
+                            SizedBox(height: kIsWeb ? 40 : 32),
+                            _buildActionButtons(profileState),
+                          ],
+                        ],
+                      ),
+                    ),
                   ),
                 ),
     );
@@ -156,16 +196,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           'PROFILE SETTINGS',
           style: AppFonts.getFont(
             weight: AppFonts.bold,
-            fontSize: 24,
+            fontSize: kIsWeb ? 28 : 24,
             color: Colors.black,
+          ).copyWith(
+            letterSpacing: kIsWeb ? 1.2 : 0,
           ),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: kIsWeb ? 12 : 8),
         Text(
           'Update your profile details.',
           style: AppFonts.getFont(
             weight: AppFonts.regular,
-            fontSize: 16,
+            fontSize: kIsWeb ? 18 : 16,
             color: AppColors.secondaryTextColor,
           ),
         ),
@@ -180,13 +222,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         onEditPressed: () {
           _showImageSourceDialog();
         },
-        size: 120,
+        size: kIsWeb ? 150 : 120,
       ),
     );
   }
 
   Widget _buildProfileForm(ProfileState state) {
-    return Column(
+    final formContent = Column(
       children: [
         // Full Name Field
         ProfileTextField(
@@ -204,16 +246,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           isReadOnly: !state.isEditing,
         ),
         if (_fullNameError != null) ...[
-          const SizedBox(height: 4),
-          Text(
-            _fullNameError!,
-            style: const TextStyle(
-              color: Colors.red,
-              fontSize: 12,
+          SizedBox(height: kIsWeb ? 6 : 4),
+          Padding(
+            padding: EdgeInsets.only(left: kIsWeb ? 16 : 0),
+            child: Text(
+              _fullNameError!,
+              style: TextStyle(
+                color: Colors.red,
+                fontSize: kIsWeb ? 13 : 12,
+              ),
             ),
           ),
         ],
-        const SizedBox(height: 20),
+        SizedBox(height: kIsWeb ? 24 : 20),
         
         // Phone Number Field (Read-only)
         ProfileTextField(
@@ -224,7 +269,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           maxLength: 10,
           isReadOnly: true,
         ),
-        const SizedBox(height: 20),
+        SizedBox(height: kIsWeb ? 24 : 20),
         
         // Rera Number Field (Read-only)
         ProfileTextField(
@@ -234,7 +279,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           enabled: false,
           isReadOnly: true,
         ),
-        const SizedBox(height: 20),
+        SizedBox(height: kIsWeb ? 24 : 20),
         
         // Team Leader Name Field
         ProfileTextField(
@@ -252,16 +297,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           isReadOnly: !state.isEditing,
         ),
         if (_teamLeaderNameError != null) ...[
-          const SizedBox(height: 4),
-          Text(
-            _teamLeaderNameError!,
-            style: const TextStyle(
-              color: Colors.red,
-              fontSize: 12,
+          SizedBox(height: kIsWeb ? 6 : 4),
+          Padding(
+            padding: EdgeInsets.only(left: kIsWeb ? 16 : 0),
+            child: Text(
+              _teamLeaderNameError!,
+              style: TextStyle(
+                color: Colors.red,
+                fontSize: kIsWeb ? 13 : 12,
+              ),
             ),
           ),
         ],
-        const SizedBox(height: 20),
+        SizedBox(height: kIsWeb ? 24 : 20),
         
         // ID Number Field (Read-only)
         ProfileTextField(
@@ -273,43 +321,109 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ),
       ],
     );
+
+    if (kIsWeb) {
+      return Container(
+        padding: const EdgeInsets.all(32),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.08),
+              spreadRadius: 0,
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+          border: Border.all(
+            color: Colors.grey.withOpacity(0.1),
+            width: 1,
+          ),
+        ),
+        child: formContent,
+      );
+    } else {
+      return formContent;
+    }
   }
 
   Widget _buildActionButtons(ProfileState state) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        CustomButton(
-          width: 100,
-          text: 'Cancel',
-          onPressed: state.isEditing ? () {
-            ref.read(profileProvider.notifier).toggleEditMode();
-            // Reset controllers to original values
-            if (state.profile != null) {
-              _fullNameController.text = state.profile!.fullName ?? '';
-              _emailController.text = state.profile!.user?.email ?? '';
-              _teamLeaderNameController.text = state.profile!.teamLeaderName ?? '';
-            }
-          } : null,
-          backgroundColor: const Color(0xfff5f5f5),
-          textColor: Colors.black,
-          height: 48,
-          borderRadius: 4,
+    if (kIsWeb) {
+      return Center(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CustomButton(
+              width: 140,
+              text: 'Cancel',
+              onPressed: () {
+                ref.read(profileProvider.notifier).toggleEditMode();
+                // Reset controllers to original values
+                if (state.profile != null) {
+                  _fullNameController.text = state.profile!.fullName ?? '';
+                  _emailController.text = state.profile!.user?.email ?? '';
+                  _teamLeaderNameController.text = state.profile!.teamLeaderName ?? '';
+                }
+              },
+              backgroundColor: const Color(0xfff5f5f5),
+              textColor: Colors.black,
+              height: 52,
+              borderRadius: 8,
+            ),
+            const SizedBox(width: 16),
+            CustomButton(
+              width: 140,
+              text: 'Update',
+              onPressed: () {
+                ref.read(profileProvider.notifier).saveProfile();
+              },
+              backgroundColor: AppColors.primaryColor,
+              textColor: Colors.white,
+              height: 52,
+              borderRadius: 8,
+              isLoading: state.isLoading,
+            ),
+          ],
         ),
-        CustomButton(
-          width: 100,
-          text: 'Update',
-          onPressed: state.isEditing ? () {
-            ref.read(profileProvider.notifier).saveProfile();
-          } : null,
-          backgroundColor: AppColors.primaryColor,
-          textColor: Colors.white,
-          height: 48,
-          borderRadius: 4,
-          isLoading: state.isLoading,
-        ),
-      ],
-    );
+      );
+    } else {
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          CustomButton(
+            width: 100,
+            text: 'Cancel',
+            onPressed: () {
+              ref.read(profileProvider.notifier).toggleEditMode();
+              // Reset controllers to original values
+              if (state.profile != null) {
+                _fullNameController.text = state.profile!.fullName ?? '';
+                _emailController.text = state.profile!.user?.email ?? '';
+                _teamLeaderNameController.text = state.profile!.teamLeaderName ?? '';
+              }
+            },
+            backgroundColor: const Color(0xfff5f5f5),
+            textColor: Colors.black,
+            height: 48,
+            borderRadius: 4,
+          ),
+          CustomButton(
+            width: 100,
+            text: 'Update',
+            onPressed: () {
+              ref.read(profileProvider.notifier).saveProfile();
+            },
+            backgroundColor: AppColors.primaryColor,
+            textColor: Colors.white,
+            height: 48,
+            borderRadius: 4,
+            isLoading: state.isLoading,
+          ),
+        ],
+      );
+    }
   }
 
   void _showLogoutDialog(BuildContext context) {

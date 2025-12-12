@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -10,6 +11,9 @@ import '../../../data/models/response_model/visit_response_model.dart';
 import '../../global/widgets/custom_button.dart';
 import '../../providers/visits_provider.dart';
 import '../../utils/responsive.dart';
+
+// Conditional import for web image widget
+import 'web_image_widget.dart' if (dart.library.io) 'web_image_widget_stub.dart';
 
 class VisitorsScreen extends ConsumerStatefulWidget {
   const VisitorsScreen({super.key});
@@ -225,7 +229,7 @@ class _VisitorsScreenState extends ConsumerState<VisitorsScreen>
     final filteredVisits = _getFilteredVisits(visitsState.visits);
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(20.0),
+      padding: const EdgeInsets.all(24.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -236,8 +240,23 @@ class _VisitorsScreenState extends ConsumerState<VisitorsScreen>
                 "Visits",
                 style: TextStyle(
                   color: AppColors.primaryTextColor,
-                  fontSize: 28,
+                  fontSize: 32,
                   fontWeight: FontWeight.w700,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryBackgroundColor,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  "${filteredVisits.length} ${filteredVisits.length == 1 ? 'Visit' : 'Visits'}",
+                  style: const TextStyle(
+                    color: AppColors.primaryTextColor,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ],
@@ -246,44 +265,50 @@ class _VisitorsScreenState extends ConsumerState<VisitorsScreen>
           const SizedBox(height: 24),
 
           // Search field for desktop
-          Padding(
-            padding: const EdgeInsets.all(15.0),
-            child: SizedBox(
-              width: MediaQuery.of(context).size.width / 3,
-              height: 50,
-              child: TextField(
-                controller: _searchController,
-                cursorColor: AppColors.primaryColor,
-                style: const TextStyle(fontSize: 14, color: AppColors.primaryTextColor),
-                decoration: InputDecoration(
-                  hintText: "Search by project or visitor name...",
-                  prefixIcon: const Icon(Icons.search, size: 20, color: AppColors.primaryColor,),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(
-                      color: AppColors.secondaryTextColor,
-                      width: 1.5,
-                    ),
+          Container(
+            margin: const EdgeInsets.only(bottom: 20),
+            width: MediaQuery.of(context).size.width / 3,
+            child: TextField(
+              controller: _searchController,
+              cursorColor: AppColors.primaryColor,
+              style: const TextStyle(fontSize: 14, color: AppColors.primaryTextColor),
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: Colors.white,
+                hintText: "Search by project or visitor name...",
+                prefixIcon: const Icon(Icons.search, size: 20, color: AppColors.primaryColor,),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(
+                    color: Colors.grey[300]!,
+                    width: 1,
                   ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(
-                      color: AppColors.secondaryTextColor,
-                      width: 1,
-                    ),
-                  ),
-                  suffixIcon: _searchQuery.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear, size: 20, color: AppColors.primaryColor),
-                          onPressed: () {
-                            _searchController.clear();
-                            setState(() {
-                              _searchQuery = '';
-                            });
-                          },
-                        )
-                      : null,
                 ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(
+                    color: Colors.grey[300]!,
+                    width: 1,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(
+                    color: AppColors.primaryColor,
+                    width: 2,
+                  ),
+                ),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, size: 20, color: AppColors.primaryColor),
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() {
+                            _searchQuery = '';
+                          });
+                        },
+                      )
+                    : null,
               ),
             ),
           ),
@@ -291,8 +316,10 @@ class _VisitorsScreenState extends ConsumerState<VisitorsScreen>
           // Show empty state message when there are no visits
           if (filteredVisits.isEmpty)
             _buildEmptyStateMessage()
+          else if (kIsWeb)
+            _buildEnhancedVisitorsTable(filteredVisits)
           else
-            _buildVisitorsTable(filteredVisits),
+            _buildSimpleVisitorsTable(filteredVisits),
         ],
       ),
     );
@@ -331,30 +358,13 @@ class _VisitorsScreenState extends ConsumerState<VisitorsScreen>
                     child: ClipRRect(
                       borderRadius: BorderRadiusGeometry.circular(10),
                       child: visit.visitorPhoto != null && visit.visitorPhoto!.isNotEmpty
-                          ? Image.network(
-                                visit.visitorPhoto!,
-                                fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          // Fallback to default image if network image fails
-                          return  Icon(Icons.image, size: 40, color: Colors.grey);
-                        },
-                                loadingBuilder: (context, child, loadingProgress) {
-                                  // Show loading indicator while image is loading
-                                  if (loadingProgress == null) return child;
-                                  return const Center(
-                                    child: SizedBox(
-                                      height: 30,
-                                      width: 30,
-                                      child: CircularProgressIndicator(
-                                        color: AppColors.primaryColor,
-                                        strokeWidth: 2,
-                                        value: null, // Indeterminate progress
-                                      ),
-                                    ),
-                                  );
-                                },
-                            )
-                          : Image.asset(ImageAssets.highFlyLogo),
+                          ? _buildWebCompatibleImage(visit.visitorPhoto!, 80, 80)
+                          : Image.asset(
+                              ImageAssets.highFlyLogo,
+                              fit: BoxFit.cover,
+                              width: 80,
+                              height: 80,
+                            ),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -442,145 +452,287 @@ class _VisitorsScreenState extends ConsumerState<VisitorsScreen>
     );
   }
 
-  Widget _buildVisitorsTable(List<Visit> visits) {
+  Widget _buildSimpleVisitorsTable(List<Visit> visits) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: ConstrainedBox(
-              constraints: BoxConstraints(minWidth: MediaQuery.of(context).size.width - 40),
-              child: DataTable(
-                showCheckboxColumn: false,
-                columnSpacing: 20,
-                columns: const [
-                  DataColumn(
-                    label: Text(
-                      "Project",
-                      style: TextStyle(
-                        color: AppColors.primaryTextColor,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minWidth: MediaQuery.of(context).size.width - 40),
+          child: DataTable(
+            showCheckboxColumn: false,
+            columnSpacing: 20,
+            columns: const [
+              DataColumn(
+                label: Text(
+                  "Project",
+                  style: TextStyle(
+                    color: AppColors.primaryTextColor,
+                    fontWeight: FontWeight.w700,
                   ),
-                  DataColumn(
-                    label: Text(
-                      "Visitor",
-                      style: TextStyle(
-                        color: AppColors.primaryTextColor,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
+                ),
+              ),
+              DataColumn(
+                label: Text(
+                  "Visitor",
+                  style: TextStyle(
+                    color: AppColors.primaryTextColor,
+                    fontWeight: FontWeight.w700,
                   ),
-                  DataColumn(
-                    label: Text(
-                      "Date & Time",
-                      style: TextStyle(color: AppColors.primaryTextColor),
-                    ),
+                ),
+              ),
+              DataColumn(
+                label: Text(
+                  "Date & Time",
+                  style: TextStyle(color: AppColors.primaryTextColor),
+                ),
+              ),
+              DataColumn(
+                label: Text(
+                  "Photo",
+                  style: TextStyle(color: AppColors.primaryTextColor),
+                ),
+              ),
+              DataColumn(
+                label: Text(
+                  "Actions",
+                  style: TextStyle(color: AppColors.primaryTextColor),
+                ),
+              ),
+            ],
+            rows: visits.map((visit) {
+              return DataRow(
+                cells: [
+                  DataCell(Text(visit.projectName)),
+                  DataCell(Text(visit.visitorName)),
+                  DataCell(Text(Utils.formatDateTime(visit.visitDateTime))),
+                  DataCell(
+                    visit.visitorPhoto != null && visit.visitorPhoto!.isNotEmpty
+                        ? Container(
+                            height: 40,
+                            width: 40,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.grey[100],
+                            ),
+                            child: ClipOval(
+                              child: _buildWebCompatibleImage(visit.visitorPhoto!, 40, 40),
+                            ),
+                          )
+                        : Container(
+                            height: 40,
+                            width: 40,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.grey[100],
+                            ),
+                            child: ClipOval(
+                              child: Image.asset(
+                                ImageAssets.highFlyLogo,
+                                fit: BoxFit.cover,
+                                width: 40,
+                                height: 40,
+                              ),
+                            ),
+                          ),
                   ),
-                  DataColumn(
-                    label: Text(
-                      "Photo",
-                      style: TextStyle(color: AppColors.primaryTextColor),
-                    ),
-                  ),
-                  DataColumn(
-                    label: Text(
-                      "Comments",
-                      style: TextStyle(color: AppColors.primaryTextColor),
-                    ),
-                  ),
-                  DataColumn(
-                    label: Text(
-                      "Actions",
-                      style: TextStyle(color: AppColors.primaryTextColor),
+                  DataCell(
+                    IconButton(
+                      icon: const Icon(Icons.visibility),
+                      onPressed: () {
+                        if (!_isDisposed && mounted) {
+                          context.push(Routes.visitDetailScreen, extra: visit);
+                        }
+                      },
                     ),
                   ),
                 ],
-                rows: visits.map((visit) {
-                  return DataRow(
-                    cells: [
-                      DataCell(Text(visit.projectName)),
-                      DataCell(Text(visit.visitorName)),
-                      // DataCell(Text("${visit.visitDate.toString().split(' ')[0]}\n${visit.visitTime}")),
-                      DataCell(Text(Utils.formatDateTime(visit.visitDateTime))),
-                      DataCell(
-                        visit.visitorPhoto != null && visit.visitorPhoto!.isNotEmpty
-                            ? Container(
-                                height: 40,
-                                width: 40,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                ),
-                                child: ClipOval(
-                                  child: Image.network(
-                                    visit.visitorPhoto!,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      // Fallback to default image if network image fails
-                                      return  Icon(Icons.image, size: 40, color: Colors.grey);
-                                    },
-                                    loadingBuilder: (context, child, loadingProgress) {
-                                      // Show loading indicator while image is loading
-                                      if (loadingProgress == null) return child;
-                                      return const Center(
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          value: null, // Indeterminate progress
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ),
-                              )
-                            : Container(
-                                height: 40,
-                                width: 40,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                ),
-                                child: ClipOval(
-                                  child: Image.asset(
-                                    ImageAssets.highFlyLogo,
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                              ),
-                      ),
-                      DataCell(
-                        SizedBox(
-                          width: 200,
-                          child: Text(
-                            visit.comments ?? '',
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ),
-                      DataCell(
-                        IconButton(
-                          icon: const Icon(Icons.visibility),
-                          onPressed: () {
-                            if (!_isDisposed && mounted) {
-                              // Navigate to visit detail screen instead of showing dialog
-                              context.push(Routes.visitDetailScreen, extra: visit);
-                            }
-                          },
-                        ),
-                      ),
-                    ],
-                  );
-                }).toList(),
-              ),
-            ),
+              );
+            }).toList(),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEnhancedVisitorsTable(List<Visit> visits) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
+      child: Column(
+        children: [
+          // Table Header
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: AppColors.primaryBackgroundColor,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(12),
+                topRight: Radius.circular(12),
+              ),
+            ),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 120,
+                  child: _buildTableHeader("Visitor Photo"),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: _buildTableHeader("Visitor Name"),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: _buildTableHeader("Project"),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: _buildTableHeader("Date & Time"),
+                ),
+                SizedBox(
+                  width: 100,
+                  child: _buildTableHeader(""),
+                ),
+              ],
+            ),
+          ),
+          
+          // Table Rows
+          ...visits.asMap().entries.map((entry) {
+            final visit = entry.value;
+            final isLast = entry.key == visits.length - 1;
+            return _buildEnhancedVisitRow(visit, isLast);
+          }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTableHeader(String text) {
+    return Text(
+      text,
+      style: const TextStyle(
+        color: AppColors.primaryTextColor,
+        fontWeight: FontWeight.w700,
+        fontSize: 14,
+      ),
+    );
+  }
+
+  Widget _buildEnhancedVisitRow(Visit visit, bool isLast) {
+    return InkWell(
+      onTap: () {
+        if (!_isDisposed && mounted) {
+          context.push(Routes.visitDetailScreen, extra: visit);
+        }
+      },
+      hoverColor: Colors.grey[50],
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: Colors.grey[200]!,
+              width: isLast ? 0 : 1,
+            ),
+          ),
+        ),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 120,
+              child: _buildVisitorPhoto(visit.visitorPhoto),
+            ),
+            Expanded(
+              flex: 2,
+              child: Text(
+                visit.visitorName,
+                style: const TextStyle(
+                  color: AppColors.primaryTextColor,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 2,
+              child: Text(
+                visit.projectName,
+                style: const TextStyle(
+                  color: AppColors.primaryTextColor,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 2,
+              child: Text(
+                Utils.formatDateTime(visit.visitDateTime),
+                style: const TextStyle(
+                  color: AppColors.primaryTextColor,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+            SizedBox(
+              width: 100,
+              child: IconButton(
+                icon: const Icon(Icons.more_vert, size: 20),
+                color: AppColors.primaryColor,
+                onPressed: () {
+                  if (!_isDisposed && mounted) {
+                    context.push(Routes.visitDetailScreen, extra: visit);
+                  }
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVisitorPhoto(String? photoUrl) {
+    return Container(
+      height: 50,
+      width: 50,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.grey[300]!, width: 1),
+        color: Colors.grey[100],
+      ),
+      child: ClipOval(
+        child: photoUrl != null && photoUrl.isNotEmpty
+            ? _buildWebCompatibleImage(photoUrl, 50, 50)
+            : Image.asset(
+                ImageAssets.highFlyLogo,
+                fit: BoxFit.cover,
+                width: 50,
+                height: 50,
+              ),
+      ),
+    );
+  }
+
+  Widget _buildWebCompatibleImage(String imageUrl, double width, double height) {
+    // Use the conditionally imported widget (web version on web, stub on mobile)
+    return WebImageWidget(
+      imageUrl: imageUrl,
+      width: width,
+      height: height,
     );
   }
 

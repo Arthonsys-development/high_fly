@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../config/constant/const_assets.dart';
 import '../../../data/models/customer_model.dart';
@@ -68,13 +69,19 @@ class _CustomerSelectionSectionState extends ConsumerState<CustomerSelectionSect
 
   @override
   Widget build(BuildContext context) {
+    final spacing = kIsWeb ? 28.0 : 20.0;
+    final largeSpacing = kIsWeb ? 48.0 : 40.0;
+    
     return SingleChildScrollView(
-      padding: const EdgeInsets.only(top: 20, bottom: 20),
+      padding: EdgeInsets.only(
+        top: kIsWeb ? 24 : 20,
+        bottom: kIsWeb ? 24 : 20,
+      ),
       child: Form(
         key: _formKey,
         child: Column(
           children: [
-            const SizedBox(height: 20),
+            SizedBox(height: kIsWeb ? 24 : 20),
             
             // Header with icon
             HeaderIconWidget(
@@ -83,7 +90,7 @@ class _CustomerSelectionSectionState extends ConsumerState<CustomerSelectionSect
               subtitle: 'Enter customer details to create a new customer',
             ),
             
-            const SizedBox(height: 40),
+            SizedBox(height: largeSpacing),
             
             // Customer name field
             CustomTextField(
@@ -101,7 +108,7 @@ class _CustomerSelectionSectionState extends ConsumerState<CustomerSelectionSect
               },
             ),
             
-            const SizedBox(height: 20),
+            SizedBox(height: spacing),
             
             // Customer phone field
             CustomTextField(
@@ -123,7 +130,7 @@ class _CustomerSelectionSectionState extends ConsumerState<CustomerSelectionSect
               },
             ),
             
-            const SizedBox(height: 32),
+            SizedBox(height: kIsWeb ? 36 : 32),
             
             // Customer details card (show created customer info)
             if (_selectedCustomer != null)
@@ -131,7 +138,7 @@ class _CustomerSelectionSectionState extends ConsumerState<CustomerSelectionSect
                 selectedCustomer: _selectedCustomer,
               ),
             
-            const SizedBox(height: 40),
+            SizedBox(height: largeSpacing),
             
             // Action buttons
             ActionButtons(
@@ -142,7 +149,7 @@ class _CustomerSelectionSectionState extends ConsumerState<CustomerSelectionSect
               nextButtonText: _isLoading ? 'Creating...' : widget.nextButtonText,
             ),
             
-            const SizedBox(height: 20),
+            SizedBox(height: kIsWeb ? 24 : 20),
           ],
         ),
       ),

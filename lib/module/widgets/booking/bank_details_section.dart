@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart';
 import 'package:highfly/config/constant/const_assets.dart';
 import 'package:highfly/config/utils.dart';
@@ -92,8 +93,14 @@ class _BankDetailsSectionState extends State<BankDetailsSection> {
 
   @override
   Widget build(BuildContext context) {
+    final spacing = kIsWeb ? 28.0 : 24.0;
+    final largeSpacing = kIsWeb ? 48.0 : 40.0;
+    
     return SingleChildScrollView(
-      padding: const EdgeInsets.only(top: 20, bottom: 32),
+      padding: EdgeInsets.only(
+        top: kIsWeb ? 24 : 20,
+        bottom: kIsWeb ? 36 : 32,
+      ),
       child: Form(
         key: _formKey,
         child: Column(
@@ -105,7 +112,7 @@ class _BankDetailsSectionState extends State<BankDetailsSection> {
             subtitle: 'Enter bank information',
           ),
           
-          const SizedBox(height: 40),
+          SizedBox(height: largeSpacing),
           
           // Account Holder Name field
           CustomTextField(
@@ -122,7 +129,7 @@ class _BankDetailsSectionState extends State<BankDetailsSection> {
             },
           ),
           
-          const SizedBox(height: 24),
+          SizedBox(height: spacing),
           
           // Branch Name field
           CustomTextField(
@@ -139,7 +146,7 @@ class _BankDetailsSectionState extends State<BankDetailsSection> {
             },
           ),
           
-          const SizedBox(height: 24),
+          SizedBox(height: spacing),
           
           // Account Number field
           CustomTextField(
@@ -160,7 +167,7 @@ class _BankDetailsSectionState extends State<BankDetailsSection> {
             },
           ),
           
-          const SizedBox(height: 24),
+          SizedBox(height: spacing),
           
           // IFSC Code field
          CustomTextField(
@@ -182,7 +189,7 @@ class _BankDetailsSectionState extends State<BankDetailsSection> {
             },
           ),
           
-          const SizedBox(height: 24),
+          SizedBox(height: spacing),
           
           // Account Type field
           GestureDetector(
@@ -202,7 +209,7 @@ class _BankDetailsSectionState extends State<BankDetailsSection> {
             ),
           ),
           
-          const SizedBox(height: 24),
+          SizedBox(height: spacing),
           
           // Contact Number field
           CustomTextField(
@@ -224,7 +231,7 @@ class _BankDetailsSectionState extends State<BankDetailsSection> {
             },
           ),
           
-          const SizedBox(height: 40),
+          SizedBox(height: largeSpacing),
           
           // Action buttons
           ActionButtons(
@@ -239,7 +246,7 @@ class _BankDetailsSectionState extends State<BankDetailsSection> {
             isPreviousEnabled: widget.onPrevious != null,
           ),
           
-          const SizedBox(height: 32),
+          SizedBox(height: kIsWeb ? 36 : 32),
           ],
         ),
       ),

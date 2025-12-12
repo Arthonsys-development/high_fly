@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart';
 import 'package:highfly/config/constant/const_assets.dart';
 
@@ -53,62 +54,69 @@ class CustomTextField extends StatelessWidget {
     InputDecoration buildDecoration() {
       // Adjust vertical padding dynamically
       final verticalPadding = height != null ? (height! / 2.8) - 4 : 15.0;
+      
+      // Web-specific enhancements
+      final webPadding = kIsWeb ? 16.0 : 20.0;
+      final webVerticalPadding = kIsWeb ? (height != null ? (height! / 2.5) - 4 : 18.0) : verticalPadding;
+      final webBorderWidth = kIsWeb ? 1.5 : 1.0;
+      final webFocusedBorderWidth = kIsWeb ? 2.0 : 1.0;
+      final webBorderRadius = kIsWeb ? borderRadius + 2 : borderRadius;
 
       return InputDecoration(
         hintText: hintText,
         counterText: '',
         prefixIcon: prefixIcon,
         counter: null,
-        hintStyle: const TextStyle(
-          color: Color.fromARGB(255, 178, 178, 178), // Placeholder color
-          fontSize: 14,
+        hintStyle: TextStyle(
+          color: const Color.fromARGB(255, 178, 178, 178), // Placeholder color
+          fontSize: kIsWeb ? 15 : 14,
         ),
         suffixIcon: suffixIcon,
-        fillColor: const Color(0xFFF9FBFF), // TextField background color
+        fillColor: kIsWeb ? Colors.white : const Color(0xFFF9FBFF), // TextField background color
         filled: true,
         isDense: true,
         contentPadding: EdgeInsets.symmetric(
-          horizontal: 20, // 20px padding on start and end
-          vertical: verticalPadding,
+          horizontal: webPadding, // Web has slightly less horizontal padding
+          vertical: webVerticalPadding,
         ),
         // Default border
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(borderRadius),
-          borderSide: const BorderSide(
-            color: Color(0xFFDDDDDD), // TextField border color
-            width: 1,
+          borderRadius: BorderRadius.circular(webBorderRadius),
+          borderSide: BorderSide(
+            color: kIsWeb ? const Color(0xFFE5E7EB) : const Color(0xFFDDDDDD), // TextField border color
+            width: webBorderWidth,
           ),
         ),
         // Border when enabled but not focused
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(borderRadius),
-          borderSide: const BorderSide(
-            color: Color(0xFFDDDDDD), // TextField border color
-            width: 1,
+          borderRadius: BorderRadius.circular(webBorderRadius),
+          borderSide: BorderSide(
+            color: kIsWeb ? const Color(0xFFE5E7EB) : const Color(0xFFDDDDDD), // TextField border color
+            width: webBorderWidth,
           ),
         ),
         // Border when focused
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(borderRadius),
-          borderSide: const BorderSide(
-            color: Color(0xFFDDDDDD), // TextField border color
-            width: 1,
+          borderRadius: BorderRadius.circular(webBorderRadius),
+          borderSide: BorderSide(
+            color: kIsWeb ? const Color(0xFF3B82F6) : const Color(0xFFDDDDDD), // Blue focus color for web
+            width: webFocusedBorderWidth,
           ),
         ),
         // Border when error occurs
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(borderRadius),
-          borderSide: const BorderSide(
-            // color: AppColors.error,
-            width: 1.2,
+          borderRadius: BorderRadius.circular(webBorderRadius),
+          borderSide: BorderSide(
+            color: kIsWeb ? const Color(0xFFEF4444) : const Color(0xFFDDDDDD),
+            width: kIsWeb ? 1.5 : 1.2,
           ),
         ),
         // Border when focused and error occurs
         focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(borderRadius),
-          borderSide: const BorderSide(
-            // color: AppColors.error,
-            width: 1.5,
+          borderRadius: BorderRadius.circular(webBorderRadius),
+          borderSide: BorderSide(
+            color: kIsWeb ? const Color(0xFFEF4444) : const Color(0xFFDDDDDD),
+            width: kIsWeb ? 2.0 : 1.5,
           ),
         ),
       );
@@ -122,13 +130,14 @@ class CustomTextField extends StatelessWidget {
       maxLines: maxLines,
       maxLength: maxLength,
       enabled: enabled,
-      cursorColor: const Color(0xFF475569), // Entered text color
+      cursorColor: kIsWeb ? const Color(0xFF3B82F6) : const Color(0xFF475569), // Blue cursor for web
       inputFormatters: inputFormatters,
       onChanged: onChanged, // ✅ Pass the callback
       decoration: buildDecoration(),
-      style: const TextStyle(
-        fontSize: 14,
-        color: Color(0xFF475569), // Entered text color
+      style: TextStyle(
+        fontSize: kIsWeb ? 15 : 14,
+        color: const Color(0xFF475569), // Entered text color
+        fontWeight: kIsWeb ? FontWeight.w400 : FontWeight.normal,
       ),
     );
 
@@ -143,7 +152,7 @@ class CustomTextField extends StatelessWidget {
                 titleText!,
                 style: labelStyle ?? AppFonts.getFont(
                   weight: AppFonts.medium,
-                  fontSize: 14,
+                  fontSize: kIsWeb ? 15 : 14,
                   color: Colors.black,
                 ),
               ),
@@ -162,7 +171,7 @@ class CustomTextField extends StatelessWidget {
               ]
             ],
           ),
-          SizedBox(height: contentSpace ?? 12),
+          SizedBox(height: contentSpace ?? (kIsWeb ? 14 : 12)),
         ],
         textField,
       ],

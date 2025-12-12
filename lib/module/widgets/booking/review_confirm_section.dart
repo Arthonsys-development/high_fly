@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -232,8 +233,121 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
 
   @override
   Widget build(BuildContext context) {
+    final spacing = kIsWeb ? 20.0 : 16.0;
+    final largeSpacing = kIsWeb ? 40.0 : 40.0;
+    
+    // Build all cards
+    final customerCard = _buildInfoCard(
+      icon: IconsAssets.personIcon,
+      iconColor: AppColors.primaryColor,
+      title: 'Customer Information',
+      children: [
+        _buildInfoRow(
+          'Name',
+          widget.bookingSummary.selectedCustomer?.name ?? '-',
+        ),
+        _buildInfoRow(
+          'Phone',
+          widget.bookingSummary.selectedCustomer?.phone ?? '-',
+        ),
+      ],
+    );
+    
+    final plotCard = _buildInfoCard(
+      icon: IconsAssets.locationIcon,
+      iconColor: Colors.red,
+      title: 'Plot Information',
+      children: [
+        _buildInfoRow(
+          'Plot',
+          widget.bookingSummary.selectedPlot?.plotNumber ?? '-',
+        ),
+        _buildInfoRow(
+          'Project',
+          widget.bookingSummary.selectedProject?.name ?? '-',
+        ),
+        _buildInfoRow(
+          'Area',
+          '${widget.bookingSummary.selectedPlot?.area ?? '-'} sq ft',
+        ),
+        _buildInfoRow(
+          'Price',
+          '₹${widget.bookingSummary.selectedPlot?.price ?? '-'}',
+        ),
+      ],
+    );
+    
+    final paymentCard = !widget.isHoldFlow
+        ? _buildInfoCard(
+            icon: IconsAssets.cardIcon,
+            iconColor: AppColors.primaryColor,
+            title: 'Payment Information',
+            children: [
+              _buildInfoRow(
+                'Amount',
+                '₹${widget.bookingSummary.paymentDetails?.paymentAmount ?? '-'}',
+              ),
+              _buildInfoRow(
+                'Method',
+                widget.bookingSummary.paymentDetails?.paymentMethod ?? '-',
+              ),
+              _buildInfoRow(
+                'Payment Type',
+                widget.bookingSummary.paymentDetails?.paymentType ?? '-',
+              ),
+              _buildInfoRow(
+                'PAN',
+                _formatPAN(widget.bookingSummary.paymentDetails?.panNumber),
+              ),
+              _buildInfoRow(
+                'Aadhar',
+                _formatAadhar(widget.bookingSummary.paymentDetails?.aadharNumber),
+              ),
+            ],
+          )
+        : null;
+    
+    final holdCard = widget.isHoldFlow && widget.bookingSummary.holdDetails != null
+        ? _buildHoldDetailsCard()
+        : null;
+    
+    final bankCard = _buildInfoCard(
+      icon: IconsAssets.bankIcon,
+      iconColor: Colors.brown,
+      title: 'Bank Details',
+      children: [
+        _buildInfoRow(
+          'Account Holder Name',
+          widget.bookingSummary.bankDetails?.accountHolderName ?? '-',
+        ),
+        _buildInfoRow(
+          'Branch Name',
+          widget.bookingSummary.bankDetails?.branchName ?? '-',
+        ),
+        _buildInfoRow(
+          'Account Number',
+          _formatAccountNumber(widget.bookingSummary.bankDetails?.accountNumber),
+        ),
+        _buildInfoRow(
+          'IFSC Code',
+          widget.bookingSummary.bankDetails?.ifscCode ?? '-',
+        ),
+        _buildInfoRow(
+          'Account Type',
+          widget.bookingSummary.bankDetails?.accountType ?? '-',
+        ),
+        _buildInfoRow(
+          'Contact Number',
+          widget.bookingSummary.bankDetails?.contactNumber ?? '-',
+        ),
+      ],
+    );
+    
     return SingleChildScrollView(
-      padding: const EdgeInsets.only(top: 20, bottom: 20),
+      padding: EdgeInsets.only(
+        top: kIsWeb ? 20 : 20,
+        bottom: kIsWeb ? 20 : 20,
+      ),
       child: Column(
         children: [
           // Header
@@ -245,138 +359,131 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
             subtitle: 'Please review all details',
           ),
           
-          const SizedBox(height: 40),
+          SizedBox(height: largeSpacing),
           
-          // Customer Information Card
-          _buildInfoCard(
-            icon: IconsAssets.personIcon,
-            iconColor: AppColors.primaryColor,
-            title: 'Customer Information',
-            children: [
-              _buildInfoRow(
-                'Name',
-                widget.bookingSummary.selectedCustomer?.name ?? '-',
-              ),
-              _buildInfoRow(
-                'Phone',
-                widget.bookingSummary.selectedCustomer?.phone ?? '-',
-              ),
-            ],
-          ),
-          
-          const SizedBox(height: 16),
-          
-          // Plot Information Card
-          _buildInfoCard(
-            icon: IconsAssets.locationIcon,
-            iconColor: Colors.red,
-            title: 'Plot Information',
-            children: [
-              _buildInfoRow(
-                'Plot',
-                widget.bookingSummary.selectedPlot?.plotNumber ?? '-',
-              ),
-              _buildInfoRow(
-                'Project',
-                widget.bookingSummary.selectedProject?.name ?? '-',
-              ),
-              _buildInfoRow(
-                'Area',
-                '${widget.bookingSummary.selectedPlot?.area ?? '-'} sq ft',
-              ),
-              _buildInfoRow(
-                'Price',
-                '₹${widget.bookingSummary.selectedPlot?.price ?? '-'}',
-              ),
-            ],
-          ),
-          
-          const SizedBox(height: 16),
-          
-          // Payment Information Card
-          if (!widget.isHoldFlow)
-            _buildInfoCard(
-              icon: IconsAssets.cardIcon,
-              iconColor: AppColors.primaryColor,
-              title: 'Payment Information',
-              children: [
-                _buildInfoRow(
-                  'Amount',
-                  '₹${widget.bookingSummary.paymentDetails?.paymentAmount ?? '-'}',
+          // Web: Use Grid Layout with max width, Mobile: Stacked Layout
+          if (kIsWeb)
+            Center(
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 1200),
+                width: double.infinity,
+                child: _buildWebLayout(
+                  customerCard: customerCard,
+                  plotCard: plotCard,
+                  paymentCard: paymentCard,
+                  holdCard: holdCard,
+                  bankCard: bankCard,
+                  spacing: spacing,
                 ),
-                _buildInfoRow(
-                  'Method',
-                  widget.bookingSummary.paymentDetails?.paymentMethod ?? '-',
-                ),
-                _buildInfoRow(
-                  'Payment Type',
-                  widget.bookingSummary.paymentDetails?.paymentType ?? '-',
-                ),
-                _buildInfoRow(
-                  'PAN',
-                  _formatPAN(widget.bookingSummary.paymentDetails?.panNumber),
-                ),
-                _buildInfoRow(
-                  'Aadhar',
-                  _formatAadhar(widget.bookingSummary.paymentDetails?.aadharNumber),
-                ),
-              ],
+              ),
+            )
+          else
+            _buildMobileLayout(
+              customerCard: customerCard,
+              plotCard: plotCard,
+              paymentCard: paymentCard,
+              holdCard: holdCard,
+              bankCard: bankCard,
+              spacing: spacing,
             ),
           
-          const SizedBox(height: 16),
-          
-          // Hold Details Card (only for hold flow)
-          if (widget.isHoldFlow && widget.bookingSummary.holdDetails != null)
-            _buildHoldDetailsCard(),
-          
-          if (widget.isHoldFlow && widget.bookingSummary.holdDetails != null)
-            const SizedBox(height: 16),
-          
-          // Bank Details Card
-          _buildInfoCard(
-            icon: IconsAssets.bankIcon,
-            iconColor: Colors.brown,
-            title: 'Bank Details',
-            children: [
-              _buildInfoRow(
-                'Account Holder Name',
-                widget.bookingSummary.bankDetails?.accountHolderName ?? '-',
-              ),
-              
-              _buildInfoRow(
-                'Branch Name',
-                widget.bookingSummary.bankDetails?.branchName ?? '-',
-              ),
-              _buildInfoRow(
-                'Account Number',
-                _formatAccountNumber(widget.bookingSummary.bankDetails?.accountNumber),
-              ),
-              _buildInfoRow(
-                'IFSC Code',
-                widget.bookingSummary.bankDetails?.ifscCode ?? '-',
-              ),
-              _buildInfoRow(
-                'Account Type',
-                widget.bookingSummary.bankDetails?.accountType ?? '-',
-              ),
-              _buildInfoRow(
-                'Contact Number',
-                widget.bookingSummary.bankDetails?.contactNumber ?? '-',
-              ),
-            ],
-          ),
-          
-          const SizedBox(height: 40),
+          SizedBox(height: largeSpacing),
           
           // Action buttons
-          ActionButtons(
-            onPrevious: widget.onPrevious,
-            onNext: _isLoading ? null : _handleBookingAction,
-            nextButtonText: _isLoading ? 'Processing...' : widget.nextButtonText,
-            isPreviousEnabled: widget.onPrevious != null && !_isLoading,
-          ),
+          if (kIsWeb)
+            Center(
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 1200),
+                width: double.infinity,
+                child: ActionButtons(
+                  onPrevious: widget.onPrevious,
+                  onNext: _isLoading ? null : _handleBookingAction,
+                  nextButtonText: _isLoading ? 'Processing...' : widget.nextButtonText,
+                  isPreviousEnabled: widget.onPrevious != null && !_isLoading,
+                ),
+              ),
+            )
+          else
+            ActionButtons(
+              onPrevious: widget.onPrevious,
+              onNext: _isLoading ? null : _handleBookingAction,
+              nextButtonText: _isLoading ? 'Processing...' : widget.nextButtonText,
+              isPreviousEnabled: widget.onPrevious != null && !_isLoading,
+            ),
         ],
       ),
+    );
+  }
+
+  Widget _buildWebLayout({
+    required Widget customerCard,
+    required Widget plotCard,
+    required Widget? paymentCard,
+    required Widget? holdCard,
+    required Widget bankCard,
+    required double spacing,
+  }) {
+    return Column(
+      children: [
+        // First row: Customer and Plot cards side by side
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: customerCard,
+            ),
+            SizedBox(width: spacing),
+            Expanded(
+              child: plotCard,
+            ),
+          ],
+        ),
+        
+        SizedBox(height: spacing),
+        
+        // Second row: Payment/Hold and Bank cards side by side
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (paymentCard != null || holdCard != null) ...[
+              Expanded(
+                child: paymentCard ?? holdCard!,
+              ),
+              SizedBox(width: spacing),
+            ],
+            Expanded(
+              child: bankCard,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMobileLayout({
+    required Widget customerCard,
+    required Widget plotCard,
+    required Widget? paymentCard,
+    required Widget? holdCard,
+    required Widget bankCard,
+    required double spacing,
+  }) {
+    return Column(
+      children: [
+        customerCard,
+        SizedBox(height: spacing),
+        plotCard,
+        if (paymentCard != null) ...[
+          SizedBox(height: spacing),
+          paymentCard,
+        ],
+        if (holdCard != null) ...[
+          SizedBox(height: spacing),
+          holdCard,
+        ],
+        SizedBox(height: spacing),
+        bankCard,
+      ],
     );
   }
 
@@ -386,54 +493,79 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
     required String title,
     required List<Widget> children,
   }) {
+    final iconSize = kIsWeb ? 24.0 : 22.0;
+    final padding = kIsWeb ? 24.0 : 20.0;
+    final titleSize = kIsWeb ? 17.0 : 16.0;
+    final iconSpacing = kIsWeb ? 12.0 : 12.0;
+    final contentSpacing = kIsWeb ? 20.0 : 16.0;
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(padding),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(kIsWeb ? 12 : 12),
+        border: kIsWeb ? Border.all(
+          color: const Color(0xFFE5E7EB),
+          width: 1,
+        ) : null,
+        boxShadow: kIsWeb
+            ? [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                  spreadRadius: 0,
+                ),
+              ]
+            : [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              SizedBox(
-                width: 22,
-                height: 22,
-                child: Image.asset(icon, color: iconColor ?? AppColors.primaryColor,)
-              ),/*Container(
-                width: 40,
-                height: 40,
+              Container(
+                padding: EdgeInsets.all(kIsWeb ? 8.0 : 8.0),
                 decoration: BoxDecoration(
-                  color: iconColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
+                  color: (iconColor ?? AppColors.primaryColor).withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(kIsWeb ? 8 : 8),
                 ),
-                child: Icon(
-                  icon,
-                  color: iconColor,
-                  size: 20,
+                child: SizedBox(
+                  width: iconSize - (kIsWeb ? 4.0 : 4.0),
+                  height: iconSize - (kIsWeb ? 4.0 : 4.0),
+                  child: Image.asset(
+                    icon,
+                    color: iconColor ?? AppColors.primaryColor,
+                  ),
                 ),
-              ),*/
-              const SizedBox(width: 12),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.headingTextColor,
+              ),
+              SizedBox(width: iconSpacing),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: titleSize,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.headingTextColor,
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: contentSpacing),
+          if (kIsWeb)
+            Container(
+              height: 1,
+              color: const Color(0xFFF3F4F6),
+              margin: const EdgeInsets.only(bottom: 16),
+            ),
           ...children,
         ],
       ),
@@ -441,28 +573,32 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
   }
 
   Widget _buildInfoRow(String label, String value) {
+    final labelSize = kIsWeb ? 14.0 : 14.0;
+    final valueSize = kIsWeb ? 14.5 : 14.0;
+    final bottomPadding = kIsWeb ? 14.0 : 8.0;
+
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: EdgeInsets.only(bottom: bottomPadding),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
-            flex: 2,
+            flex: kIsWeb ? 3 : 2,
             child: Text(
               '$label:',
-              style: const TextStyle(
-                fontSize: 14,
+              style: TextStyle(
+                fontSize: labelSize,
                 fontWeight: FontWeight.w500,
                 color: AppColors.darkGreyColor,
               ),
             ),
           ),
           Expanded(
-            flex: 3,
+            flex: kIsWeb ? 5 : 3,
             child: Text(
               value,
-              style: const TextStyle(
-                fontSize: 14,
+              style: TextStyle(
+                fontSize: valueSize,
                 fontWeight: FontWeight.w400,
                 color: AppColors.headingTextColor,
               ),

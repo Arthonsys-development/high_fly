@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../../config/constant/app_colors.dart';
 import '../../../data/models/project_model.dart';
 
@@ -31,27 +32,34 @@ class PlotDetailsCard extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      // padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(kIsWeb ? 24 : 20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        // border: Border.all(
-        //   color: AppColors.lightGreyBorderColor,
-        //   width: 1,
-        // ),
+        borderRadius: BorderRadius.circular(kIsWeb ? 12 : 12),
+        border: kIsWeb ? Border.all(
+          color: const Color(0xFFE5E7EB),
+          width: 1,
+        ) : null,
+        boxShadow: kIsWeb ? [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ] : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Plot Details',
             style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
+              fontSize: kIsWeb ? 18 : 16,
+              fontWeight: FontWeight.w600,
               color: AppColors.headingTextColor,
             ),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: kIsWeb ? 20 : 16),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -77,7 +85,7 @@ class PlotDetailsCard extends StatelessWidget {
                     ),
                 ]),
               ),
-              const SizedBox(width: 20),
+              SizedBox(width: kIsWeb ? 32 : 20),
               Expanded(
                 child: _buildDetailColumn([
                   _DetailItem('Plot number:', plot.plotNumber),
@@ -94,7 +102,7 @@ class PlotDetailsCard extends StatelessWidget {
             ],
           ),
           if (showPlcSummary) ...[
-            const SizedBox(height: 24),
+            SizedBox(height: kIsWeb ? 28 : 24),
             _buildPlcSummary(plot),
           ],
         ],
@@ -117,12 +125,13 @@ class PlotDetailsCard extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(kIsWeb ? 20 : 16),
       decoration: BoxDecoration(
         color: AppColors.primaryColor.withOpacity(0.02),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(kIsWeb ? 12 : 12),
         border: Border.all(
           color: AppColors.lightGreyBorderColor,
+          width: kIsWeb ? 1.5 : 1,
         ),
       ),
       child: Column(
@@ -130,19 +139,19 @@ class PlotDetailsCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Text(
+              Text(
                 'PLC:',
                 style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
+                  fontSize: kIsWeb ? 18 : 16,
+                  fontWeight: FontWeight.w600,
                   color: AppColors.headingTextColor,
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: kIsWeb ? 16 : 12),
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 4,
+                padding: EdgeInsets.symmetric(
+                  horizontal: kIsWeb ? 14 : 12,
+                  vertical: kIsWeb ? 6 : 4,
                 ),
                 decoration: BoxDecoration(
                   color: AppColors.successColor.withOpacity(0.12),
@@ -150,8 +159,8 @@ class PlotDetailsCard extends StatelessWidget {
                 ),
                 child: Text(
                   badgeText,
-                  style: const TextStyle(
-                    fontSize: 12,
+                  style: TextStyle(
+                    fontSize: kIsWeb ? 13 : 12,
                     fontWeight: FontWeight.w600,
                     color: AppColors.successColor,
                   ),
@@ -159,29 +168,29 @@ class PlotDetailsCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          const Text(
+          SizedBox(height: kIsWeb ? 20 : 16),
+          Text(
             'Final Price:',
             style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
+              fontSize: kIsWeb ? 18 : 16,
+              fontWeight: FontWeight.w600,
               color: AppColors.headingTextColor,
             ),
           ),
-          const SizedBox(height: 6),
+          SizedBox(height: kIsWeb ? 8 : 6),
           Text(
             '₹${finalPrice.toStringAsFixed(2)}',
-            style: const TextStyle(
-              fontSize: 22,
+            style: TextStyle(
+              fontSize: kIsWeb ? 28 : 22,
               fontWeight: FontWeight.w700,
               color: AppColors.primaryColor,
             ),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: kIsWeb ? 6 : 4),
           Text(
             '(Base ₹${basePrice.toStringAsFixed(2)} + ${plcPercent.toStringAsFixed(2)}% PLC)',
-            style: const TextStyle(
-              fontSize: 14,
+            style: TextStyle(
+              fontSize: kIsWeb ? 15 : 14,
               color: AppColors.darkGreyColor,
             ),
           ),
@@ -192,23 +201,24 @@ class PlotDetailsCard extends StatelessWidget {
 
   Widget _buildDetailRow(_DetailItem item) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.only(bottom: kIsWeb ? 16 : 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             item.label,
-            style: const TextStyle(
-              fontSize: 16,
+            style: TextStyle(
+              fontSize: kIsWeb ? 15 : 16,
               color: AppColors.darkGreyColor,
+              fontWeight: kIsWeb ? FontWeight.w500 : FontWeight.normal,
             ),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: kIsWeb ? 6 : 4),
           Text(
             item.value,
             style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w400,
+              fontSize: kIsWeb ? 17 : 16,
+              fontWeight: item.isHighlighted ? FontWeight.w600 : FontWeight.w400,
               color: item.isHighlighted 
                   ? AppColors.primaryColor 
                   : AppColors.textColor,

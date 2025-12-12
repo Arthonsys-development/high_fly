@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../../config/constant/const_assets.dart';
 import '../../../data/models/payment_model.dart';
 import '../../../config/constant/app_colors.dart';
@@ -105,11 +106,17 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
 
   @override
   Widget build(BuildContext context) {
+    final spacing = kIsWeb ? 28.0 : 24.0;
+    final largeSpacing = kIsWeb ? 48.0 : 40.0;
+    
     return SingleChildScrollView(
-      padding: const EdgeInsets.only(top: 20, bottom: 32),
+      padding: EdgeInsets.only(
+        top: kIsWeb ? 24 : 20,
+        bottom: kIsWeb ? 36 : 32,
+      ),
       child: Column(
         children: [
-          const SizedBox(height: 20),
+          SizedBox(height: kIsWeb ? 24 : 20),
           
           // Header with icon
           HeaderIconWidget(
@@ -118,7 +125,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
             subtitle: 'Enter payment information',
           ),
           
-          const SizedBox(height: 40),
+          SizedBox(height: largeSpacing),
           
           // Payment Amount field
           CustomTextField(
@@ -135,7 +142,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
             },
           ),
           
-          const SizedBox(height: 24),
+          SizedBox(height: spacing),
           
           // Payment Method field
           GestureDetector(
@@ -155,7 +162,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
             ),
           ),
           
-          const SizedBox(height: 24),
+          SizedBox(height: spacing),
           
          
           
@@ -176,7 +183,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
               },
             ),
             
-            const SizedBox(height: 24),
+            SizedBox(height: spacing),
             
             GestureDetector(
               onTap: _showDatePicker,
@@ -195,7 +202,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
               ),
             ),
             
-            const SizedBox(height: 24),
+            SizedBox(height: spacing),
           ],
           
            // Payment Type field
@@ -216,7 +223,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
             ),
           ),
           
-          const SizedBox(height: 24),
+          SizedBox(height: spacing),
           // PAN Number field
           CustomTextField(
             titleText: 'PAN Number',
@@ -232,7 +239,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
             },
           ),
           
-          const SizedBox(height: 24),
+          SizedBox(height: spacing),
           
           // Aadhar Number field
           CustomTextField(
@@ -250,7 +257,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
             },
           ),
           
-          const SizedBox(height: 20),
+          SizedBox(height: kIsWeb ? 24 : 20),
           
           // Salaried Individual checkbox (only visible if Payment Type is Finance)
           if (_selectedPaymentTypeKey == PaymentType.finance) ...[
@@ -333,7 +340,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                 });
               },
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: spacing),
           ],
           
           // Additional Notes field
@@ -352,7 +359,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
             },
           ),
           
-          const SizedBox(height: 40),
+          SizedBox(height: largeSpacing),
           
           // Action buttons
           ActionButtons(
@@ -363,7 +370,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
             nextButtonText: widget.nextButtonText,
           ),
           
-          const SizedBox(height: 32),
+          SizedBox(height: kIsWeb ? 36 : 32),
         ],
       ),
     );

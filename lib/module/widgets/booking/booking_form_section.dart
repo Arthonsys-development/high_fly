@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:highfly/config/constant/const_assets.dart';
 import 'package:highfly/data/repository/auth_api_repository.dart';
 import '../../../data/models/project_model.dart' as local_model;
@@ -142,11 +143,17 @@ class _BookingFormSectionState extends State<BookingFormSection> {
 
   @override
   Widget build(BuildContext context) {
+    final spacing = kIsWeb ? 32.0 : 24.0;
+    final largeSpacing = kIsWeb ? 48.0 : 40.0;
+    
     return SingleChildScrollView(
-      padding: const EdgeInsets.only(top: 20, bottom: 20),
+      padding: EdgeInsets.only(
+        top: kIsWeb ? 24 : 20,
+        bottom: kIsWeb ? 24 : 20,
+      ),
       child: Column(
         children: [
-          const SizedBox(height: 20),
+          SizedBox(height: kIsWeb ? 24 : 20),
           
           // Header with icon
           HeaderIconWidget(
@@ -156,7 +163,7 @@ class _BookingFormSectionState extends State<BookingFormSection> {
           ),
 
           if (widget.onRefreshProjects != null) ...[
-            const SizedBox(height: 12),
+            SizedBox(height: kIsWeb ? 16 : 12),
             Align(
               alignment: Alignment.centerRight,
               child: TextButton.icon(
@@ -176,21 +183,24 @@ class _BookingFormSectionState extends State<BookingFormSection> {
                       ),
                 label: Text(
                   widget.isRefreshingProjects ? 'Refreshing...' : 'Refresh Projects',
-                  style: const TextStyle(
-                    fontSize: 14,
+                  style: TextStyle(
+                    fontSize: kIsWeb ? 15 : 14,
                     fontWeight: FontWeight.w500,
                     color: AppColors.primaryColor,
                   ),
                 ),
                 style: TextButton.styleFrom(
                   foregroundColor: AppColors.primaryColor,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: kIsWeb ? 16 : 12,
+                    vertical: kIsWeb ? 10 : 8,
+                  ),
                 ),
               ),
             ),
           ],
           
-          const SizedBox(height: 40),
+          SizedBox(height: largeSpacing),
           
           // Project selection field
           GestureDetector(
@@ -210,7 +220,7 @@ class _BookingFormSectionState extends State<BookingFormSection> {
             ),
           ),
           
-          const SizedBox(height: 24),
+          SizedBox(height: spacing),
           
           // Plot selection field - only visible after project selection
           if (_selectedProject != null) ...[
@@ -242,7 +252,7 @@ class _BookingFormSectionState extends State<BookingFormSection> {
                       ),
               ),
             ),
-            const SizedBox(height: 32),
+            SizedBox(height: kIsWeb ? 36 : 32),
           ],
           
           // Helper message when no project is selected
@@ -280,7 +290,7 @@ class _BookingFormSectionState extends State<BookingFormSection> {
                 ],
               ),
             ),
-            const SizedBox(height: 32),
+            SizedBox(height: kIsWeb ? 36 : 32),
           ],
           
           // Plot details card
@@ -289,7 +299,7 @@ class _BookingFormSectionState extends State<BookingFormSection> {
             selectedProjectName: _selectedProject?.name,
           ),
           
-          const SizedBox(height: 40),
+          SizedBox(height: largeSpacing),
           
           // Action buttons
           ActionButtons(
@@ -300,7 +310,7 @@ class _BookingFormSectionState extends State<BookingFormSection> {
             nextButtonText: widget.nextButtonText,
           ),
           
-          const SizedBox(height: 20),
+          SizedBox(height: kIsWeb ? 24 : 20),
         ],
       ),
     );

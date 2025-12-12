@@ -1,4 +1,7 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:image_picker/image_picker.dart';
+import 'package:http_parser/http_parser.dart';
 import 'package:highfly/config/network/api_client.dart';
 import 'package:highfly/config/network/api_constants.dart';
 import 'package:highfly/data/models/response_model/profile_model.dart';
@@ -128,15 +131,32 @@ class ProfileApiRepository {
   }
 
   // Upload profile photo
-  Future<ProfileResponseData> uploadProfilePhoto(String imagePath) async {
+  Future<ProfileResponseData> uploadProfilePhoto(XFile imageFile) async {
     try {
       print('📸 ProfileApiRepository: Uploading profile photo...');
       
+      MultipartFile multipartFile;
+      
+      if (kIsWeb) {
+        // For web, read bytes from XFile
+        final bytes = await imageFile.readAsBytes();
+        multipartFile = MultipartFile.fromBytes(
+          bytes,
+          filename: imageFile.name.isNotEmpty ? imageFile.name : 'profile_image.jpg',
+          contentType: MediaType('image', 'jpeg'),
+        );
+        print('📸 ProfileApiRepository: Using bytes for web upload (${bytes.length} bytes)');
+      } else {
+        // For mobile, use file path
+        multipartFile = await MultipartFile.fromFile(
+          imageFile.path,
+          filename: imageFile.name.isNotEmpty ? imageFile.name : 'profile_image.jpg',
+        );
+        print('📸 ProfileApiRepository: Using file path for mobile upload: ${imageFile.path}');
+      }
+      
       final formData = FormData.fromMap({
-        'profile_image': await MultipartFile.fromFile(
-          imagePath,
-          filename: 'profile_image.jpg',
-        ),
+        'profile_image': multipartFile,
       });
 
       // Try different possible endpoints for photo upload

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../../config/constant/app_colors.dart';
 
 class HeaderIconWidget extends StatelessWidget {
@@ -19,40 +20,58 @@ class HeaderIconWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final iconSize = kIsWeb ? 90.0 : 70.0;
+    final iconPadding = kIsWeb ? 18.0 : 12.0;
+    final titleSize = kIsWeb ? 26.0 : 20.0;
+    final subtitleSize = kIsWeb ? 16.0 : 14.0;
+    final spacing = kIsWeb ? 20.0 : 16.0;
+    final subtitleSpacing = kIsWeb ? 10.0 : 8.0;
+
     return Column(
       children: [
         Container(
-          width: 70,
-          height: 70,
+          width: iconSize,
+          height: iconSize,
           decoration: BoxDecoration(
             color: bgColor ?? AppColors.primaryColor.withOpacity(0.1),
             shape: BoxShape.circle,
             border: Border.all(
-              color: const Color.fromARGB(0, 240, 89, 34),
-              width: 2,
+              color: kIsWeb 
+                  ? (iconColor ?? AppColors.primaryColor).withOpacity(0.2)
+                  : const Color.fromARGB(0, 240, 89, 34),
+              width: kIsWeb ? 2.5 : 2,
             ),
+            boxShadow: kIsWeb ? [
+              BoxShadow(
+                color: (iconColor ?? AppColors.primaryColor).withOpacity(0.1),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ] : null,
           ),
           child: Padding(
-            padding: const EdgeInsets.all(12.0),
+            padding: EdgeInsets.all(iconPadding),
             child: Image.asset(icon, color: iconColor ?? AppColors.primaryColor),
           ),
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: spacing),
         Text(
           title,
-          style: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
+          style: TextStyle(
+            fontSize: titleSize,
+            fontWeight: FontWeight.w700,
             color: AppColors.headingTextColor,
+            letterSpacing: kIsWeb ? -0.5 : 0,
           ),
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: subtitleSpacing),
         Text(
           subtitle,
-          style: const TextStyle(
-            fontSize: 14,
+          style: TextStyle(
+            fontSize: subtitleSize,
             color: AppColors.darkGreyColor,
+            fontWeight: kIsWeb ? FontWeight.w400 : FontWeight.normal,
           ),
           textAlign: TextAlign.center,
         ),

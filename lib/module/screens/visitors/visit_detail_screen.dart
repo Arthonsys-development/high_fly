@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:highfly/config/constant/app_colors.dart';
 import 'package:highfly/data/models/response_model/visit_response_model.dart';
 
@@ -12,6 +13,27 @@ class VisitDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (kIsWeb) {
+      return Scaffold(
+        appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(60),
+          child: commonAppBar(context, "Visit Detail"),
+        ),
+        body: Container(
+          color: AppColors.primaryBackgroundColor,
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(vertical: 32.0, horizontal: 24.0),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1200),
+                child: _buildWebContent(context),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(60), child: commonAppBar(context, "Visit Detail")),
@@ -328,6 +350,530 @@ class VisitDetailScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildWebHeader(BuildContext context) {
+    return GestureDetector(
+      onTap: visit.visitorPhoto != null && visit.visitorPhoto!.isNotEmpty
+          ? () => _showFullScreenImage(context, visit.visitorPhoto!)
+          : null,
+      child: MouseRegion(
+        cursor: visit.visitorPhoto != null && visit.visitorPhoto!.isNotEmpty
+            ? SystemMouseCursors.click
+            : SystemMouseCursors.basic,
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.1),
+                spreadRadius: 0,
+                blurRadius: 20,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: Stack(
+              children: [
+            // Visitor Image
+            if (visit.visitorPhoto != null && visit.visitorPhoto!.isNotEmpty)
+              Image.network(
+                visit.visitorPhoto!,
+                width: double.infinity,
+                height: 300,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    height: 300,
+                    color: Colors.grey[200],
+                    child: Center(
+                      child: Image.asset(
+                        ImageAssets.highFlyLogo,
+                        height: 120,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                  );
+                },
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Container(
+                    height: 300,
+                    color: Colors.grey[200],
+                    child: const Center(
+                      child: CircularProgressIndicator(
+                        color: AppColors.primaryColor,
+                      ),
+                    ),
+                  );
+                },
+              )
+            else
+              Container(
+                height: 300,
+                color: Colors.grey[200],
+                child: Center(
+                  child: Image.asset(
+                    ImageAssets.highFlyLogo,
+                    height: 120,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+            // Gradient Overlay
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent,
+                      Colors.black.withOpacity(0.8),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            // Visitor Info
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: Padding(
+                padding: const EdgeInsets.all(32.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      visit.visitorName,
+                      style: const TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryColor.withOpacity(0.9),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.location_on,
+                                color: Colors.white,
+                                size: 16,
+                              ),
+                              const SizedBox(width: 6),
+                              Flexible(
+                                child: Text(
+                                  visit.projectName,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      ),
+      ),
+    );
+  }
+
+  Widget _buildWebContent(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 900) {
+          // Single column layout for smaller screens
+          return Column(
+            children: [
+              _buildWebHeader(context),
+              const SizedBox(height: 24),
+              _buildWebDetailsCard(),
+              if (visit.clientPhoto != null && visit.clientPhoto!.isNotEmpty) ...[
+                const SizedBox(height: 24),
+                _buildWebClientPhotoCard(context),
+              ],
+              const SizedBox(height: 24),
+              _buildWebAdditionalInfoCard(),
+            ],
+          );
+        }
+        // Two column layout for larger screens
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Left Column - Main Details
+            Expanded(
+              flex: 2,
+              child: Column(
+                children: [
+                  _buildWebDetailsCard(),
+                  if (visit.clientPhoto != null && visit.clientPhoto!.isNotEmpty) ...[
+                    const SizedBox(height: 24),
+                    _buildWebClientPhotoCard(context),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(width: 24),
+            // Right Column - Visitor Photo Header and Contact Details
+            Expanded(
+              flex: 1,
+              child: Column(
+                children: [
+                  _buildWebHeader(context),
+                  const SizedBox(height: 24),
+                  _buildWebAdditionalInfoCard(),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildWebDetailsCard() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 0,
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.info_outline,
+                    color: AppColors.primaryColor,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                const Text(
+                  "Visit Information",
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primaryTextColor,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 32),
+            _buildWebDetailRow(
+              icon: Icons.tag,
+              label: "Visit ID",
+              value: visit.id.toString(),
+            ),
+            const Divider(height: 32),
+            _buildWebDetailRow(
+              icon: Icons.calendar_today,
+              label: "Visit Date & Time",
+              value: visit.visitDateTime,
+            ),
+            if (visit.purpose.isNotEmpty) ...[
+              const Divider(height: 32),
+              _buildWebDetailRow(
+                icon: Icons.category,
+                label: "Visit Type",
+                value: _formatVisitType(visit.purpose),
+              ),
+            ],
+            const Divider(height: 32),
+            _buildWebDetailRow(
+              icon: Icons.location_on,
+              label: "At Project Location",
+              value: visit.isAtProjectLocation ? "Yes" : "No",
+              valueColor: visit.isAtProjectLocation
+                  ? AppColors.successColor
+                  : AppColors.secondaryTextColor,
+            ),
+            if (visit.comments != null && visit.comments!.isNotEmpty) ...[
+              const Divider(height: 32),
+              _buildWebDetailRow(
+                icon: Icons.comment,
+                label: "Comments",
+                value: visit.comments!,
+                isMultiline: true,
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWebClientPhotoCard(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 0,
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          children: [
+            const Text(
+              "Client Photo",
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primaryTextColor,
+              ),
+            ),
+            const SizedBox(height: 24),
+            GestureDetector(
+              onTap: () => _showFullScreenImage(context, visit.clientPhoto!),
+              child: Container(
+                height: 200,
+                width: 200,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: AppColors.primaryColor,
+                    width: 3,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primaryColor.withOpacity(0.3),
+                      spreadRadius: 4,
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(100),
+                  child: Image.network(
+                    visit.clientPhoto!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Image.asset(ImageAssets.highFlyLogo);
+                    },
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return const Center(
+                        child: CircularProgressIndicator(
+                          color: AppColors.primaryColor,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWebAdditionalInfoCard() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 0,
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.contact_phone,
+                    color: AppColors.primaryColor,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                const Text(
+                  "Contact Details",
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primaryTextColor,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            if (visit.clientName != null && visit.clientName!.isNotEmpty) ...[
+              _buildWebDetailRow(
+                icon: Icons.person_outline,
+                label: "Client Name",
+                value: visit.clientName!,
+              ),
+              const SizedBox(height: 20),
+            ],
+            if (visit.clientPhone != null && visit.clientPhone!.isNotEmpty) ...[
+              _buildWebDetailRow(
+                icon: Icons.phone,
+                label: "Client Phone",
+                value: visit.clientPhone!,
+              ),
+              const SizedBox(height: 20),
+            ],
+            if (visit.clientInterestLevel != null &&
+                visit.clientInterestLevel!.isNotEmpty) ...[
+              _buildWebDetailRow(
+                icon: Icons.star,
+                label: "Interest Level",
+                value: visit.clientInterestLevel!,
+                valueColor: AppColors.primaryColor,
+              ),
+              const SizedBox(height: 20),
+            ],
+            if (visit.phoneNumber.isNotEmpty) ...[
+              _buildWebDetailRow(
+                icon: Icons.phone_android,
+                label: "Visitor Phone",
+                value: visit.phoneNumber,
+              ),
+              const SizedBox(height: 20),
+            ],
+            if (visit.email != null && visit.email!.isNotEmpty) ...[
+              _buildWebDetailRow(
+                icon: Icons.email,
+                label: "Email",
+                value: visit.email!,
+              ),
+              const SizedBox(height: 20),
+            ],
+            if (visit.createdAt != null && visit.createdAt!.isNotEmpty) ...[
+              const Divider(height: 32),
+              _buildWebDetailRow(
+                icon: Icons.access_time,
+                label: "Created At",
+                value: visit.createdAt!,
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWebDetailRow({
+    required IconData icon,
+    required String label,
+    required String value,
+    Color? valueColor,
+    bool isMultiline = false,
+  }) {
+    return Row(
+      crossAxisAlignment: isMultiline ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: AppColors.primaryColor.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(
+            icon,
+            size: 20,
+            color: AppColors.primaryColor,
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.secondaryTextColor,
+                  letterSpacing: 0.3,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: valueColor ?? AppColors.primaryTextColor,
+                  fontWeight: valueColor != null ? FontWeight.w600 : FontWeight.normal,
+                  height: isMultiline ? 1.5 : 1.2,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../config/constant/app_colors.dart';
@@ -90,6 +91,114 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
 
   @override
   Widget build(BuildContext context) {
+    if (kIsWeb) {
+      // Web-specific layout with centered content and max width
+      return Scaffold(
+        body: Center(
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 1200),
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 40.0, vertical: 30.0),
+            child: Column(
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.1),
+                        spreadRadius: 1,
+                        blurRadius: 10,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  padding: const EdgeInsets.all(32.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Booking Processor",
+                        style: TextStyle(
+                          fontSize: 28,
+                          color: AppColors.headingTextColor,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        "Process bookings or holds using static data",
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: AppColors.lightGreyColor,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      TabBar(
+                        controller: _tabController,
+                        indicatorColor: AppColors.primaryColor,
+                        labelColor: AppColors.primaryColor,
+                        unselectedLabelColor: AppColors.headingTextColor,
+                        indicatorSize: TabBarIndicatorSize.tab,
+                        indicatorWeight: 3.0,
+                        labelStyle: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                        ),
+                        unselectedLabelStyle: const TextStyle(
+                          fontWeight: FontWeight.w500,
+                          fontSize: 16,
+                        ),
+                        tabs: const [
+                          Tab(text: "Book Now"),
+                          Tab(text: "Hold for 24 Hours"),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.1),
+                          spreadRadius: 1,
+                          blurRadius: 10,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    padding: const EdgeInsets.all(32.0),
+                    child: TabBarView(
+                      controller: _tabController,
+                      children: [
+                        // ----------------------------
+                        // 🟠 Book Now Tab
+                        // ----------------------------
+                        _buildCurrentStep("Book Now"),
+
+                        // ----------------------------
+                        // ⚪ Hold for 24 Hours Tab
+                        // ----------------------------
+                        _buildHoldStep("Hold for 24 Hours"),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Mobile layout (original)
     return Scaffold(
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 22.0),
@@ -161,287 +270,323 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
   }
 
   Widget _buildCurrentStep(String actionType) {
-    if (_currentStep == 0) {
-      // Project & Plot Selection Step
-      return Consumer(
-        builder: (context, ref, child) {
-          final projectsState = ref.watch(projectsControllerProvider);
-          
-          if (projectsState.isLoading && projectsState.projects.isEmpty) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          
-          if (projectsState.error != null) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text('Error loading projects: ${projectsState.error}'),
-                  ElevatedButton(
-                    onPressed: () => ref.read(projectsControllerProvider.notifier).loadProjects(),
-                    child: const Text('Retry'),
-                  ),
-                ],
-              ),
+    Widget buildStepContent() {
+      if (_currentStep == 0) {
+        // Project & Plot Selection Step
+        return Consumer(
+          builder: (context, ref, child) {
+            final projectsState = ref.watch(projectsControllerProvider);
+            
+            if (projectsState.isLoading && projectsState.projects.isEmpty) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            
+            if (projectsState.error != null) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text('Error loading projects: ${projectsState.error}'),
+                    ElevatedButton(
+                      onPressed: () => ref.read(projectsControllerProvider.notifier).loadProjects(),
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              );
+            }
+            
+            // Convert API Project models to local Project models
+            final localProjects = projectsState.projects
+                .map((project) => project.toLocalModel())
+                .toList();
+            
+            return BookingFormSection(
+              title: actionType,
+              projects: localProjects,
+              nextButtonText: "Next",
+              initialProject: _selectedProject,
+              initialPlot: _selectedPlot,
+              onRefreshProjects: () =>
+                  ref.read(projectsControllerProvider.notifier).loadProjects(),
+              isRefreshingProjects: projectsState.isLoading,
+              onNext: (selectedProject, selectedPlot) {
+                setState(() {
+                  _selectedProject = selectedProject;
+                  _selectedPlot = selectedPlot;
+                  _selectedPlotPrice = selectedPlot?.price.toString() ?? '85000';
+                  _currentStep = 1; // Move to customer selection
+                });
+              },
             );
-          }
-          
-          // Convert API Project models to local Project models
-          final localProjects = projectsState.projects
-              .map((project) => project.toLocalModel())
-              .toList();
-          
-          return BookingFormSection(
-            title: actionType,
-            projects: localProjects,
-            nextButtonText: "Next",
-            initialProject: _selectedProject,
-            initialPlot: _selectedPlot,
-            onRefreshProjects: () =>
-                ref.read(projectsControllerProvider.notifier).loadProjects(),
-            isRefreshingProjects: projectsState.isLoading,
-            onNext: (selectedProject, selectedPlot) {
-              setState(() {
-                _selectedProject = selectedProject;
-                _selectedPlot = selectedPlot;
-                _selectedPlotPrice = selectedPlot?.price.toString() ?? '85000';
-                _currentStep = 1; // Move to customer selection
-              });
-            },
-          );
-        },
-      );
-    } else if (_currentStep == 1) {
-      // Customer Selection Step
-      return CustomerSelectionSection(
-        title: actionType,
-        customers: customers,
-        nextButtonText: "Next",
-        initialCustomer: _selectedCustomer,
-        onPrevious: () {
-          setState(() {
-            _currentStep = 0; // Go back to project & plot selection
-          });
-        },
-        onNext: (selectedCustomer) {
-          setState(() {
-            _selectedCustomer = selectedCustomer;
-            _currentStep = 2; // Move to payment details
-          });
-        },
-      );
-    } else if (_currentStep == 2) {
-      // Payment Details Step
-      return PaymentDetailsSection(
-        title: actionType,
-        paymentAmount: _selectedPlotPrice,
-        nextButtonText: "Next",
-        initialPaymentDetails: _paymentDetails,
-        onPrevious: () {
-          setState(() {
-            _currentStep = 1; // Go back to customer selection
-          });
-        },
-        onNext: (paymentDetails) {
-          setState(() {
-            _paymentDetails = paymentDetails;
-            _currentStep = 3; // Move to bank details
-          });
-        },
-      );
-    } else if (_currentStep == 3) {
-      // Bank Details Step
-      return BankDetailsSection(
-        title: actionType,
-        nextButtonText: "Next",
-        initialBankDetails: _bankDetails,
-        onPrevious: () {
-          setState(() {
-            _currentStep = 2; // Go back to payment details
-          });
-        },
-        onNext: (bankDetails) {
-          setState(() {
-            _bankDetails = bankDetails;
-            _currentStep = 4; // Move to review & confirm
-          });
-        },
-      );
-    } else {
-      // Review & Confirm Step
-      return Consumer(
-        builder: (context, ref, child) {
-         // final userState = ref.watch(userControllerProvider);
-         // final agentId = userState.user?.id ?? '1'; // Default to '1' if no user data
-         // String agentId = await _secureStorage.read(key: SharedPreferenceStrings.id) ?? '';
+          },
+        );
+      } else if (_currentStep == 1) {
+        // Customer Selection Step
+        return CustomerSelectionSection(
+          title: actionType,
+          customers: customers,
+          nextButtonText: "Next",
+          initialCustomer: _selectedCustomer,
+          onPrevious: () {
+            setState(() {
+              _currentStep = 0; // Go back to project & plot selection
+            });
+          },
+          onNext: (selectedCustomer) {
+            setState(() {
+              _selectedCustomer = selectedCustomer;
+              _currentStep = 2; // Move to payment details
+            });
+          },
+        );
+      } else if (_currentStep == 2) {
+        // Payment Details Step
+        return PaymentDetailsSection(
+          title: actionType,
+          paymentAmount: _selectedPlotPrice,
+          nextButtonText: "Next",
+          initialPaymentDetails: _paymentDetails,
+          onPrevious: () {
+            setState(() {
+              _currentStep = 1; // Go back to customer selection
+            });
+          },
+          onNext: (paymentDetails) {
+            setState(() {
+              _paymentDetails = paymentDetails;
+              _currentStep = 3; // Move to bank details
+            });
+          },
+        );
+      } else if (_currentStep == 3) {
+        // Bank Details Step
+        return BankDetailsSection(
+          title: actionType,
+          nextButtonText: "Next",
+          initialBankDetails: _bankDetails,
+          onPrevious: () {
+            setState(() {
+              _currentStep = 2; // Go back to payment details
+            });
+          },
+          onNext: (bankDetails) {
+            setState(() {
+              _bankDetails = bankDetails;
+              _currentStep = 4; // Move to review & confirm
+            });
+          },
+        );
+      } else {
+        // Review & Confirm Step
+        return Consumer(
+          builder: (context, ref, child) {
+           // final userState = ref.watch(userControllerProvider);
+           // final agentId = userState.user?.id ?? '1'; // Default to '1' if no user data
+           // String agentId = await _secureStorage.read(key: SharedPreferenceStrings.id) ?? '';
 
-          return ReviewConfirmSection(
-            title: "Review & Confirm",
-            nextButtonText: actionType,
-            onPrevious: () {
-              setState(() {
-                _currentStep = 3; // Go back to bank details
-              });
-            },
-            onNext: () {
-              // This will be handled by the ReviewConfirmSection itself
-            },
-            bookingSummary: BookingSummary(
-              selectedProject: _selectedProject,
-              selectedPlot: _selectedPlot,
-              selectedCustomer: _selectedCustomer,
-              paymentDetails: _paymentDetails,
-              bankDetails: _bankDetails,
-            ),
-            isHoldFlow: false,
-          //  agentId: int.parse(agentId),
-            onResetForm: _resetFormData,
-          );
-        },
+            return ReviewConfirmSection(
+              title: "Review & Confirm",
+              nextButtonText: actionType,
+              onPrevious: () {
+                setState(() {
+                  _currentStep = 3; // Go back to bank details
+                });
+              },
+              onNext: () {
+                // This will be handled by the ReviewConfirmSection itself
+              },
+              bookingSummary: BookingSummary(
+                selectedProject: _selectedProject,
+                selectedPlot: _selectedPlot,
+                selectedCustomer: _selectedCustomer,
+                paymentDetails: _paymentDetails,
+                bankDetails: _bankDetails,
+              ),
+              isHoldFlow: false,
+            //  agentId: int.parse(agentId),
+              onResetForm: _resetFormData,
+            );
+          },
+        );
+      }
+    }
+
+    // Wrap content for web with better styling
+    if (kIsWeb) {
+      return SingleChildScrollView(
+        child: Center(
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 800),
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
+            child: buildStepContent(),
+          ),
+        ),
       );
     }
+
+    return buildStepContent();
   }
 
 
   Widget _buildHoldStep(String actionType) {
-    if (_currentHoldStep == 0) {
-      // Project & Plot Selection Step
-      return Consumer(
-        builder: (context, ref, child) {
-          final projectsState = ref.watch(projectsControllerProvider);
-          
-          if (projectsState.isLoading && projectsState.projects.isEmpty) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          
-          if (projectsState.error != null) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text('Error loading projects: ${projectsState.error}'),
-                  ElevatedButton(
-                    onPressed: () => ref.read(projectsControllerProvider.notifier).loadProjects(),
-                    child: const Text('Retry'),
-                  ),
-                ],
-              ),
+    Widget buildStepContent() {
+      if (_currentHoldStep == 0) {
+        // Project & Plot Selection Step
+        return Consumer(
+          builder: (context, ref, child) {
+            final projectsState = ref.watch(projectsControllerProvider);
+            
+            if (projectsState.isLoading && projectsState.projects.isEmpty) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            
+            if (projectsState.error != null) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text('Error loading projects: ${projectsState.error}'),
+                    ElevatedButton(
+                      onPressed: () => ref.read(projectsControllerProvider.notifier).loadProjects(),
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              );
+            }
+            
+            // Convert API Project models to local Project models
+            final localProjects = projectsState.projects
+                .map((project) => project.toLocalModel())
+                .toList();
+            
+            return BookingFormSection(
+              title: actionType,
+              projects: localProjects,
+              nextButtonText: "Next",
+              initialProject: _selectedProject,
+              initialPlot: _selectedPlot,
+              onRefreshProjects: () =>
+                  ref.read(projectsControllerProvider.notifier).loadProjects(),
+              isRefreshingProjects: projectsState.isLoading,
+              onNext: (selectedProject, selectedPlot) {
+                setState(() {
+                  _selectedProject = selectedProject;
+                  _selectedPlot = selectedPlot;
+                  _selectedPlotPrice = selectedPlot?.price.toString() ?? '85000';
+                  _currentHoldStep = 1; // Move to customer selection
+                });
+              },
             );
-          }
-          
-          // Convert API Project models to local Project models
-          final localProjects = projectsState.projects
-              .map((project) => project.toLocalModel())
-              .toList();
-          
-          return BookingFormSection(
-            title: actionType,
-            projects: localProjects,
-            nextButtonText: "Next",
-            initialProject: _selectedProject,
-            initialPlot: _selectedPlot,
-            onRefreshProjects: () =>
-                ref.read(projectsControllerProvider.notifier).loadProjects(),
-            isRefreshingProjects: projectsState.isLoading,
-            onNext: (selectedProject, selectedPlot) {
-              setState(() {
-                _selectedProject = selectedProject;
-                _selectedPlot = selectedPlot;
-                _selectedPlotPrice = selectedPlot?.price.toString() ?? '85000';
-                _currentHoldStep = 1; // Move to customer selection
-              });
-            },
-          );
-        },
-      );
-    } else if (_currentHoldStep == 1) {
-      // Customer Selection Step
-      return CustomerSelectionSection(
-        title: actionType,
-        customers: customers,
-        nextButtonText: "Next",
-        initialCustomer: _selectedCustomer,
-        onPrevious: () {
-          setState(() {
-            _currentHoldStep = 0; // Go back to project & plot selection
-          });
-        },
-        onNext: (selectedCustomer) {
-          setState(() {
-            _selectedCustomer = selectedCustomer;
-            _currentHoldStep = 2; // Move to hold details
-          });
-        },
-      );
-    } else if (_currentHoldStep == 2) {
-      // Hold Details Step
-      return HoldDetailsSection(
-        title: actionType,
-        nextButtonText: "Next",
-        initialHoldDetails: _holdDetails,
-        onPrevious: () {
-          setState(() {
-            _currentHoldStep = 1; // Go back to customer selection
-          });
-        },
-        onNext: (holdDetails) {
-          setState(() {
-            _holdDetails = holdDetails;
-            _currentHoldStep = 3; // Move to payment details
-          });
-        },
-      );
-    }  else if (_currentHoldStep == 3) {
-      // Bank Details Step
-      return BankDetailsSection(
-        title: "Bank Details",
-        nextButtonText: "Next",
-        initialBankDetails: _bankDetails,
-        onPrevious: () {
-          setState(() {
-            _currentHoldStep = 2; // Go back to hold details
-          });
-        },
-        onNext: (bankDetails) {
-          setState(() {
-            _bankDetails = bankDetails;
-            _currentHoldStep = 4; // Move to review & confirm
-          });
-        },
-      );
-    } else {
-      // Review & Confirm Step
-      return Consumer(
-        builder: (context, ref, child) {
-         // final userState = ref.watch(userControllerProvider);
-         // final agentId = userState.user?.id ?? '1'; // Default to '1' if no user data
-          
-          return ReviewConfirmSection(
-            title: "Review & Confirm",
-            nextButtonText: "Hold",
-            onPrevious: () {
-              setState(() {
-                _currentHoldStep = 3; // Go back to bank details
-              });
-            },
-            onNext: () {
-              // This will be handled by the ReviewConfirmSection itself
-            },
-            bookingSummary: BookingSummary(
-              selectedProject: _selectedProject,
-              selectedPlot: _selectedPlot,
-              selectedCustomer: _selectedCustomer,
-              holdDetails: _holdDetails,
-             // paymentDetails: _paymentDetails,
-              bankDetails: _bankDetails,
-            ),
-            isHoldFlow: true,
-          // agentId: int.parse(agentId),
-            onResetForm: _resetFormData,
-          );
-        },
+          },
+        );
+      } else if (_currentHoldStep == 1) {
+        // Customer Selection Step
+        return CustomerSelectionSection(
+          title: actionType,
+          customers: customers,
+          nextButtonText: "Next",
+          initialCustomer: _selectedCustomer,
+          onPrevious: () {
+            setState(() {
+              _currentHoldStep = 0; // Go back to project & plot selection
+            });
+          },
+          onNext: (selectedCustomer) {
+            setState(() {
+              _selectedCustomer = selectedCustomer;
+              _currentHoldStep = 2; // Move to hold details
+            });
+          },
+        );
+      } else if (_currentHoldStep == 2) {
+        // Hold Details Step
+        return HoldDetailsSection(
+          title: actionType,
+          nextButtonText: "Next",
+          initialHoldDetails: _holdDetails,
+          onPrevious: () {
+            setState(() {
+              _currentHoldStep = 1; // Go back to customer selection
+            });
+          },
+          onNext: (holdDetails) {
+            setState(() {
+              _holdDetails = holdDetails;
+              _currentHoldStep = 3; // Move to payment details
+            });
+          },
+        );
+      }  else if (_currentHoldStep == 3) {
+        // Bank Details Step
+        return BankDetailsSection(
+          title: "Bank Details",
+          nextButtonText: "Next",
+          initialBankDetails: _bankDetails,
+          onPrevious: () {
+            setState(() {
+              _currentHoldStep = 2; // Go back to hold details
+            });
+          },
+          onNext: (bankDetails) {
+            setState(() {
+              _bankDetails = bankDetails;
+              _currentHoldStep = 4; // Move to review & confirm
+            });
+          },
+        );
+      } else {
+        // Review & Confirm Step
+        return Consumer(
+          builder: (context, ref, child) {
+           // final userState = ref.watch(userControllerProvider);
+           // final agentId = userState.user?.id ?? '1'; // Default to '1' if no user data
+            
+            return ReviewConfirmSection(
+              title: "Review & Confirm",
+              nextButtonText: "Hold",
+              onPrevious: () {
+                setState(() {
+                  _currentHoldStep = 3; // Go back to bank details
+                });
+              },
+              onNext: () {
+                // This will be handled by the ReviewConfirmSection itself
+              },
+              bookingSummary: BookingSummary(
+                selectedProject: _selectedProject,
+                selectedPlot: _selectedPlot,
+                selectedCustomer: _selectedCustomer,
+                holdDetails: _holdDetails,
+               // paymentDetails: _paymentDetails,
+                bankDetails: _bankDetails,
+              ),
+              isHoldFlow: true,
+            // agentId: int.parse(agentId),
+              onResetForm: _resetFormData,
+            );
+          },
+        );
+      }
+    }
+
+    // Wrap content for web with better styling
+    if (kIsWeb) {
+      return SingleChildScrollView(
+        child: Center(
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 800),
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
+            child: buildStepContent(),
+          ),
+        ),
       );
     }
+
+    return buildStepContent();
   }
 
 }

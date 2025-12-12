@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:highfly/config/constant/app_colors.dart';
 import 'package:highfly/data/models/booking_list_model.dart';
@@ -124,10 +125,15 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+              padding: EdgeInsets.all(kIsWeb ? 32.0 : 16.0),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: kIsWeb ? 1200 : double.infinity,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                   // Status Card
                   Builder(
                     builder: (context) {
@@ -150,13 +156,13 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
                 }
                 
                 return Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: EdgeInsets.all(kIsWeb ? 20 : 16),
                   decoration: BoxDecoration(
                     color: statusColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(kIsWeb ? 16 : 12),
                     border: Border.all(
                       color: statusColor,
-                      width: 1,
+                      width: kIsWeb ? 1.5 : 1,
                     ),
                   ),
                   child: Row(
@@ -165,32 +171,33 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             'Status',
                             style: TextStyle(
-                              fontSize: 14,
+                              fontSize: kIsWeb ? 15 : 14,
                               color: AppColors.lightGreyColor,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
-                          const SizedBox(height: 4),
+                          SizedBox(height: kIsWeb ? 6 : 4),
                           Text(
                             _formatStatusDisplay(booking.statusDisplay),
                             style: TextStyle(
-                              fontSize: 18,
+                              fontSize: kIsWeb ? 20 : 18,
                               fontWeight: FontWeight.w600,
                               color: statusColor,
+                              letterSpacing: kIsWeb ? 0.3 : 0,
                             ),
                           ),
                         ],
                       ),
-                      Icon(statusIcon, color: statusColor, size: 32),
+                      Icon(statusIcon, color: statusColor, size: kIsWeb ? 36 : 32),
                     ],
                   ),
                 );
               },
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: kIsWeb ? 32 : 24),
 
             // Plot Information Section
             _buildSectionTitle('Plot Information'),
@@ -214,35 +221,81 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
              // _buildDetailRow('Booking Date', booking.bookingDate),
               _buildDetailRow('Booked At', booking.bookedAt),
             ]),
-            const SizedBox(height: 24),
+            SizedBox(height: kIsWeb ? 32 : 24),
 
-            // Customer Information Section
-            _buildSectionTitle('Customer Information'),
-            _buildDetailCard([
-              _buildDetailRow('Customer Name', booking.customerName),
-              _buildDetailRow('Phone', booking.customerPhone),
-              if (booking.customerEmail.isNotEmpty)
-                _buildDetailRow('Email', booking.customerEmail),
-              if (booking.customerAddress.isNotEmpty)
-                _buildDetailRow('Address', booking.customerAddress),
-            ]),
-            const SizedBox(height: 24),
+            // Customer Information and Payment Information in a row for web
+            if (kIsWeb)
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSectionTitle('Customer Information'),
+                        _buildDetailCard([
+                          _buildDetailRow('Customer Name', booking.customerName),
+                          _buildDetailRow('Phone', booking.customerPhone),
+                          if (booking.customerEmail.isNotEmpty)
+                            _buildDetailRow('Email', booking.customerEmail),
+                          if (booking.customerAddress.isNotEmpty)
+                            _buildDetailRow('Address', booking.customerAddress),
+                        ]),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 24),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSectionTitle('Payment Information'),
+                        _buildDetailCard([
+                          _buildDetailRow('Payment Mode', PaymentMethod.getValue(booking.paymentMode).isNotEmpty 
+                              ? PaymentMethod.getValue(booking.paymentMode) 
+                              : booking.paymentMode),
+                          _buildDetailRow('Payment Reference', booking.paymentReference),
+                          if (booking.chequeNumber.isNotEmpty)
+                            _buildDetailRow('Cheque Number', booking.chequeNumber),
+                          if (booking.chequeDate != null && booking.chequeDate!.isNotEmpty)
+                            _buildDetailRow('Cheque Date', booking.chequeDate!),
+                          if (booking.paymentDetails.isNotEmpty)
+                            _buildDetailRow('Payment Details', booking.paymentDetails),
+                        ]),
+                      ],
+                    ),
+                  ),
+                ],
+              )
+            else ...[
+              // Customer Information Section
+              _buildSectionTitle('Customer Information'),
+              _buildDetailCard([
+                _buildDetailRow('Customer Name', booking.customerName),
+                _buildDetailRow('Phone', booking.customerPhone),
+                if (booking.customerEmail.isNotEmpty)
+                  _buildDetailRow('Email', booking.customerEmail),
+                if (booking.customerAddress.isNotEmpty)
+                  _buildDetailRow('Address', booking.customerAddress),
+              ]),
+              const SizedBox(height: 24),
 
-            // Payment Information Section
-            _buildSectionTitle('Payment Information'),
-            _buildDetailCard([
-              _buildDetailRow('Payment Mode', PaymentMethod.getValue(booking.paymentMode).isNotEmpty 
-                  ? PaymentMethod.getValue(booking.paymentMode) 
-                  : booking.paymentMode),
-              _buildDetailRow('Payment Reference', booking.paymentReference),
-              if (booking.chequeNumber.isNotEmpty)
-                _buildDetailRow('Cheque Number', booking.chequeNumber),
-              if (booking.chequeDate != null && booking.chequeDate!.isNotEmpty)
-                _buildDetailRow('Cheque Date', booking.chequeDate!),
-              if (booking.paymentDetails.isNotEmpty)
-                _buildDetailRow('Payment Details', booking.paymentDetails),
-            ]),
-            const SizedBox(height: 24),
+              // Payment Information Section
+              _buildSectionTitle('Payment Information'),
+              _buildDetailCard([
+                _buildDetailRow('Payment Mode', PaymentMethod.getValue(booking.paymentMode).isNotEmpty 
+                    ? PaymentMethod.getValue(booking.paymentMode) 
+                    : booking.paymentMode),
+                _buildDetailRow('Payment Reference', booking.paymentReference),
+                if (booking.chequeNumber.isNotEmpty)
+                  _buildDetailRow('Cheque Number', booking.chequeNumber),
+                if (booking.chequeDate != null && booking.chequeDate!.isNotEmpty)
+                  _buildDetailRow('Cheque Date', booking.chequeDate!),
+                if (booking.paymentDetails.isNotEmpty)
+                  _buildDetailRow('Payment Details', booking.paymentDetails),
+              ]),
+            ],
+            SizedBox(height: kIsWeb ? 32 : 24),
 
             // Document Information Section
             _buildSectionTitle('Document Information'),
@@ -258,7 +311,7 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
               if (booking.otherDocuments != null && booking.otherDocuments!.isNotEmpty)
                 _buildDocumentRow(context, 'Other Documents', booking.otherDocuments!),
             ]),
-            const SizedBox(height: 24),
+            SizedBox(height: kIsWeb ? 32 : 24),
 
             // Bank Details Section
             _buildSectionTitle('Bank Details'),
@@ -270,7 +323,7 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
               _buildDetailRow('Account Type', booking.accountType),
               _buildDetailRow('Bank Contact', booking.bankContactNumber),
             ]),
-            const SizedBox(height: 24),
+            SizedBox(height: kIsWeb ? 32 : 24),
 
             // Remarks Section
             if (booking.remarks.isNotEmpty) ...[
@@ -278,7 +331,7 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
               _buildDetailCard([
                 _buildDetailRow('Notes', booking.remarks),
               ]),
-              const SizedBox(height: 24),
+              SizedBox(height: kIsWeb ? 32 : 24),
             ],
 
             // Cancellation Information (if cancelled)
@@ -291,7 +344,7 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
                 if (booking.cancellationReason != null && booking.cancellationReason!.isNotEmpty)
                   _buildDetailRow('Cancellation Reason', booking.cancellationReason!),
               ]),
-              const SizedBox(height: 24),
+              SizedBox(height: kIsWeb ? 32 : 24),
             ],
 
             // Additional Information
@@ -304,21 +357,24 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
             //     _buildDetailRow('From Hold', booking.fromHold!),
             // ]),
             // const SizedBox(height: 24),
-          ],
-        ),
-      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
     );
   }
 
   Widget _buildSectionTitle(String title) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12.0),
+      padding: EdgeInsets.only(bottom: kIsWeb ? 16.0 : 12.0),
       child: Text(
         title,
-        style: const TextStyle(
-          fontSize: 20,
+        style: TextStyle(
+          fontSize: kIsWeb ? 22 : 20,
           fontWeight: FontWeight.w600,
           color: AppColors.primaryTextColor,
+          letterSpacing: kIsWeb ? 0.5 : 0,
         ),
       ),
     );
@@ -326,18 +382,22 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
 
   Widget _buildDetailCard(List<Widget> children) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(kIsWeb ? 24 : 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(kIsWeb ? 16 : 12),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 4,
-            offset: const Offset(0, 2),
+            color: Colors.grey.withOpacity(kIsWeb ? 0.08 : 0.1),
+            spreadRadius: kIsWeb ? 0 : 1,
+            blurRadius: kIsWeb ? 8 : 4,
+            offset: Offset(0, kIsWeb ? 4 : 2),
           ),
         ],
+        border: kIsWeb ? Border.all(
+          color: Colors.grey.withOpacity(0.1),
+          width: 1,
+        ) : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -348,16 +408,16 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
 
   Widget _buildDetailRow(String label, String value, {bool isLink = false}) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12.0),
+      padding: EdgeInsets.only(bottom: kIsWeb ? 16.0 : 12.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           SizedBox(
-            width: 140,
+            width: kIsWeb ? 180 : 140,
             child: Text(
               '$label:',
-              style: const TextStyle(
-                fontSize: 14,
+              style: TextStyle(
+                fontSize: kIsWeb ? 15 : 14,
                 color: AppColors.lightGreyColor,
                 fontWeight: FontWeight.w500,
               ),
@@ -371,20 +431,22 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
                     },
                     child: Text(
                       value,
-                      style: const TextStyle(
-                        fontSize: 14,
+                      style: TextStyle(
+                        fontSize: kIsWeb ? 15 : 14,
                         color: Colors.blue,
                         fontWeight: FontWeight.w400,
                         decoration: TextDecoration.underline,
+                        height: kIsWeb ? 1.5 : 1.4,
                       ),
                     ),
                   )
                 : Text(
                     value.isNotEmpty ? value : '-',
-                    style: const TextStyle(
-                      fontSize: 14,
+                    style: TextStyle(
+                      fontSize: kIsWeb ? 15 : 14,
                       color: AppColors.primaryTextColor,
                       fontWeight: FontWeight.w400,
+                      height: kIsWeb ? 1.5 : 1.4,
                     ),
                   ),
           ),
@@ -401,16 +463,16 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
     }
     
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12.0),
+      padding: EdgeInsets.only(bottom: kIsWeb ? 16.0 : 12.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           SizedBox(
-            width: 140,
+            width: kIsWeb ? 180 : 140,
             child: Text(
               '$label:',
-              style: const TextStyle(
-                fontSize: 14,
+              style: TextStyle(
+                fontSize: kIsWeb ? 15 : 14,
                 color: AppColors.lightGreyColor,
                 fontWeight: FontWeight.w500,
               ),
@@ -423,18 +485,19 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
                 Expanded(
                   child: Text(
                     fileName,
-                    style: const TextStyle(
-                      fontSize: 14,
+                    style: TextStyle(
+                      fontSize: kIsWeb ? 15 : 14,
                       color: AppColors.primaryTextColor,
                       fontWeight: FontWeight.w400,
+                      height: kIsWeb ? 1.5 : 1.4,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: kIsWeb ? 12 : 8),
                 SizedBox(
-                  width: 32,
-                  height: 32,
+                  width: kIsWeb ? 36 : 32,
+                  height: kIsWeb ? 36 : 32,
                   child: IconButton(
                     onPressed: () {
                       Navigator.push(
@@ -447,7 +510,7 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
                         ),
                       );
                     },
-                    icon: const Icon(Icons.visibility, size: 20),
+                    icon: Icon(Icons.visibility, size: kIsWeb ? 22 : 20),
                     color: AppColors.primaryColor,
                     tooltip: 'View',
                     padding: EdgeInsets.zero,
