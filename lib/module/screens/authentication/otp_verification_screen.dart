@@ -717,19 +717,19 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 OrganizationLogo(
-                  width: Responsive.isDesktop(context) ? 140 : 120,
-                  height: Responsive.isDesktop(context) ? 120 : 100,
+                  width: Responsive.isDesktop(context)  ? 240 : 110,
+                  height: Responsive.isDesktop(context) ? 240 : 110,
                 ),
-                const SizedBox(height: 16),
-                Text(
-                  organizationName,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 5),
+                // Text(
+                //   organizationName,
+                //   style: const TextStyle(
+                //     fontSize: 20,
+                //     fontWeight: FontWeight.w600,
+                //   ),
+                //   textAlign: TextAlign.center,
+                // ),
+                // const SizedBox(height: 24),
                 Text(
                   'Enter OTP',
                   style: TextStyle(

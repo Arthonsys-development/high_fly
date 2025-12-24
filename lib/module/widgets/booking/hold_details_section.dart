@@ -100,7 +100,7 @@ class _HoldDetailsSectionState extends State<HoldDetailsSection> {
       child: Form(
         key: _formKey,
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             // Header with icon
             HeaderIconWidget(

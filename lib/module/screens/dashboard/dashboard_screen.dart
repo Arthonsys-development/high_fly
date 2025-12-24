@@ -32,6 +32,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   bool sideMenuVisible = true;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  String? _selectedStatusFilter; // null means "All"
   bool _isDisposed = false;
 
   void onMenuItemSelected(int index) {
@@ -193,15 +194,24 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   }
 
   List<Project> _filterProjects(List<Project> projects, String query) {
-    if (query.isEmpty) {
-      return projects;
-    }
-    
     return projects.where((project) {
-      return project.name.toLowerCase().contains(query) ||
-             project.location.toLowerCase().contains(query) ||
-             project.description.toLowerCase().contains(query) ||
-             project.status.toLowerCase().contains(query);
+      // Filter by status first
+      if (_selectedStatusFilter != null && 
+          project.status.toLowerCase() != _selectedStatusFilter!.toLowerCase()) {
+        return false;
+      }
+      
+      // Filter by search query
+      if (query.isNotEmpty) {
+        return project.name.toLowerCase().contains(query) ||
+               project.location.toLowerCase().contains(query) ||
+               (project.subAddress.isNotEmpty && 
+                project.subAddress.toLowerCase().contains(query)) ||
+               project.description.toLowerCase().contains(query) ||
+               project.status.toLowerCase().contains(query);
+      }
+      
+      return true;
     }).toList();
   }
 
@@ -420,10 +430,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 context,
                 title: "Total Projects",
                 count: projectsState.projects.length.toString(),
-                // subtitleLeft: "Planning: 0",
-                // subtitleRight: "Completed: 0",
+                subtitleLeft: null,
+                subtitleRight: null,
                 icon: IconsAssets.totalProjectIcon,
-                color:  AppColors.primaryColor,
+                color: AppColors.primaryColor,
+                isDesktop: false,
               ),
               _statsCard(
                 context,
@@ -431,6 +442,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 count: projectsState.activeProjects.length.toString(),
                 icon: IconsAssets.activeProjectIcon,
                 color: Colors.green,
+                isDesktop: false,
               ),
             ],
           ),
@@ -448,78 +460,82 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Search Bar - Full width on mobile
+                // Search Bar and Status Filter - Full width on mobile
                 Padding(
                   padding: const EdgeInsets.all(15.0),
-                  child: Row(
+                  child: Column(
                     children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _searchController,
-                          cursorColor: AppColors.primaryTextColor,
-                          style: const TextStyle(fontSize: 14, color: AppColors.primaryTextColor),
-                          decoration: InputDecoration(
-                            hintText: "Search projects...",
-                            prefixIcon: const Icon(Icons.search, size: 20, color: AppColors.primaryTextColor,),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(
-                                color: AppColors.secondaryTextColor, // Normal border color
-                                width: 1.5,
-                              ),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: BorderSide(
-                                color: AppColors.secondaryTextColor, // Border color when focused
-                                width: 1,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      /*Row(
+                      Row(
                         children: [
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: AppColors.primaryColor.withOpacity(0.1),
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: const Color.fromARGB(0, 240, 89, 34),
-                                width: 2,
+                          Expanded(
+                            child: TextField(
+                              controller: _searchController,
+                              cursorColor: AppColors.primaryTextColor,
+                              style: const TextStyle(fontSize: 14, color: AppColors.primaryTextColor),
+                              decoration: InputDecoration(
+                                hintText: "Search projects...",
+                                prefixIcon: const Icon(Icons.search, size: 20, color: AppColors.primaryTextColor,),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide: BorderSide(
+                                    color: AppColors.secondaryTextColor, // Normal border color
+                                    width: 1.5,
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide: BorderSide(
+                                    color: AppColors.secondaryTextColor, // Border color when focused
+                                    width: 1,
+                                  ),
+                                ),
                               ),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(5.0),
-                              child: Image.asset(IconsAssets.listViewIcon, color: AppColors.primaryColor),
-                            ),
-                          ),
-
-                          SizedBox(
-                            width: 5,
-                          ),
-
-                          Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: AppColors.primaryColor.withOpacity(0.1),
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: const Color.fromARGB(0, 240, 89, 34),
-                                width: 2,
-                              ),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(5.0),
-                              child: Image.asset(IconsAssets.listViewIcon, color: AppColors.primaryColor),
                             ),
                           ),
                         ],
-                      )*/
+                      ),
+                      const SizedBox(height: 12),
+                      // Status Filter Dropdown
+                      Container(
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: AppColors.secondaryTextColor,
+                            width: 1.5,
+                          ),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: DropdownButtonFormField<String>(
+                          value: _selectedStatusFilter,
+                          dropdownColor: Colors.white,
+                          decoration: InputDecoration(
+                            hintText: "Filter by Status",
+                            hintStyle: const TextStyle(fontSize: 14, color: AppColors.secondaryTextColor),
+                            prefixIcon: const Icon(Icons.filter_list, size: 20, color: AppColors.primaryTextColor),
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                          ),
+                          items: [
+                            const DropdownMenuItem<String>(
+                              value: null,
+                              child: Text('All Status', style: TextStyle(fontSize: 14, color: AppColors.primaryTextColor)),
+                            ),
+                            const DropdownMenuItem<String>(
+                              value: 'active',
+                              child: Text('Active', style: TextStyle(fontSize: 14, color: AppColors.primaryTextColor)),
+                            ),
+                            const DropdownMenuItem<String>(
+                              value: 'inactive',
+                              child: Text('Inactive', style: TextStyle(fontSize: 14, color: AppColors.primaryTextColor)),
+                            ),
+                          ],
+                          onChanged: (value) {
+                            setState(() {
+                              _selectedStatusFilter = value;
+                            });
+                          },
+                          isExpanded: true,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -621,6 +637,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     final isDesktop = Responsive.isDesktop(context);
     final projectsState = ref.watch(projectsControllerProvider);
     final filteredProjects = _filterProjects(projectsState.projects, _searchQuery);
+    final maxContentWidth = isDesktop ? 1400.0 : double.infinity;
 
     return RefreshIndicator(
       onRefresh: () async {
@@ -631,236 +648,383 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       },
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: EdgeInsets.all(isTablet ? 12.0 : 16.0),
-        child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Title and Refresh Button
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(left: 8.0),
-                child: Text(
-                  "Projects",
-                  style: TextStyle(
-                    color: AppColors.primaryTextColor,
-                    fontSize: isTablet ? 22 : 25,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.refresh, color:  AppColors.primaryColor),
-                onPressed: () {
-                  ref.read(projectsControllerProvider.notifier).loadProjects();
-                  ref.read(projectsControllerProvider.notifier).loadActiveProjects();
-                },
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 20),
-
-          // Stats Cards - Responsive grid
-          isTablet
-              ? Column(
-                  children: [
-                    _statsCard(
-                      context,
-                      title: "Total Projects",
-                      count: projectsState.projects.length.toString(),
-                      subtitleLeft: "Planning: 0",
-                      subtitleRight: "Completed: 0",
-                      icon: IconsAssets.totalProjectIcon,
-                      color:  AppColors.primaryColor,
-                    ),
-                    const SizedBox(height: 12),
-                    _statsCard(
-                      context,
-                      title: "Active Projects",
-                      count: projectsState.activeProjects.length.toString(),
-                      icon: IconsAssets.activeProjectIcon,
-                      color: Colors.green,
-                    ),
-                  ],
-                )
-              : Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: _statsCard(
-                        context,
-                        title: "Total Projects",
-                        count: projectsState.projects.length.toString(),
-                        subtitleLeft: "Planning: 0",
-                        subtitleRight: "Completed: 0",
-                        icon: IconsAssets.totalProjectIcon,
-                        color:  AppColors.primaryColor,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _statsCard(
-                        context,
-                        title: "Active Projects",
-                        count: projectsState.activeProjects.length.toString(),
-                        icon: IconsAssets.activeProjectIcon,
-                        color: Colors.green,
-                      ),
-                    ),
-                  ],
-                ),
-
-          const SizedBox(height: 20),
-
-          // Projects Table/List Container
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-            ),
+        padding: EdgeInsets.symmetric(
+          horizontal: isTablet ? 20.0 : isDesktop ? 40.0 : 24.0,
+          vertical: isTablet ? 16.0 : 24.0,
+        ),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: maxContentWidth),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Search Bar - Responsive width
-                Padding(
-                  padding: const EdgeInsets.all(15.0),
-                  child: SizedBox(
-                    height: 40,
-                    width: isTablet
-                        ? double.infinity
-                        : MediaQuery.of(context).size.width / 3,
-                    child: TextField(
-                      controller: _searchController,
-                      cursorColor: AppColors.primaryTextColor,
-                      style: const TextStyle(fontSize: 14, color: AppColors.primaryTextColor),
-                      decoration: InputDecoration(
-                        hintText: "Search projects...",
-                        prefixIcon: const Icon(Icons.search, size: 20, color: AppColors.primaryTextColor,),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(
-                            color: AppColors.secondaryTextColor, // Normal border color
-                            width: 1.5,
-                          ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: BorderSide(
-                            color: AppColors.secondaryTextColor, // Border color when focused
-                            width: 1,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Show loading indicator
-                if (projectsState.isLoading)
-                  const Padding(
-                    padding: EdgeInsets.all(16.0),
-                    child: Center(
-                      child: Column(
-                        children: [
-                          CircularProgressIndicator(),
-                          SizedBox(height: 8),
-                          Text('Loading projects...'),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                // Show error message if any
-                if (projectsState.error != null)
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
+                // Header Section with Title and Actions
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Error loading projects:',
-                          style: const TextStyle(
-                            color: Colors.red,
-                            fontWeight: FontWeight.bold,
+                          "Projects",
+                          style: TextStyle(
+                            color: AppColors.primaryTextColor,
+                            fontSize: isTablet ? 28 : 32,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -0.5,
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 4),
                         Text(
-                          projectsState.error!,
-                          style: const TextStyle(color: Colors.red),
-                        ),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: () {
-                            ref.read(projectsControllerProvider.notifier).loadProjects();
-                            ref.read(projectsControllerProvider.notifier).loadActiveProjects();
-                          },
-                          child: const Text('Retry'),
+                          "Manage and view all your projects",
+                          style: TextStyle(
+                            color: AppColors.secondaryTextColor,
+                            fontSize: isTablet ? 14 : 16,
+                            fontWeight: FontWeight.w400,
+                          ),
                         ),
                       ],
                     ),
-                  ),
-
-                // Show empty state if no projects and no errors
-                if (!projectsState.isLoading && 
-                    projectsState.error == null && 
-                    filteredProjects.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.all(16.0),
-                    child: Center(
-                      child: Column(
-                        children: [
-                          Icon(
-                            Icons.search_off,
-                            size: 48,
-                            color: Colors.grey,
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 2),
                           ),
-                          SizedBox(height: 16),
-                          Text(
-                            'No projects found',
-                            style: TextStyle(
-                              color: Colors.grey,
-                              fontSize: 16,
-                            ),
-                          ),
-                          // SizedBox(height: 8),
-                          // Text(
-                          //   'Try a different search term',
-                          //   style: TextStyle(
-                          //     color: Colors.grey,
-                          //     fontSize: 14,
-                          //   ),
-                          // ),
                         ],
                       ),
+                      child: IconButton(
+                        icon: const Icon(Icons.refresh, color: AppColors.primaryColor),
+                        tooltip: "Refresh projects",
+                        onPressed: () {
+                          ref.read(projectsControllerProvider.notifier).loadProjects();
+                          ref.read(projectsControllerProvider.notifier).loadActiveProjects();
+                        },
+                      ),
                     ),
-                  ),
+                  ],
+                ),
 
-                // Projects Data - Responsive table (show FILTERED projects)
-                if (!projectsState.isLoading && 
-                    projectsState.error == null && 
-                    filteredProjects.isNotEmpty)
-                  isTablet
-                      ? _buildTabletProjectsList(filteredProjects)
-                      : _buildDesktopProjectsTable(filteredProjects),
+                const SizedBox(height: 32),
+
+                // Stats Cards - Enhanced design
+                isTablet
+                    ? Column(
+                        children: [
+                          _statsCard(
+                            context,
+                            title: "Total Projects",
+                            count: projectsState.projects.length.toString(),
+                            subtitleLeft: "Planning: 0",
+                            subtitleRight: "Completed: 0",
+                            icon: IconsAssets.totalProjectIcon,
+                            color: AppColors.primaryColor,
+                            isDesktop: isDesktop,
+                          ),
+                          const SizedBox(height: 16),
+                          _statsCard(
+                            context,
+                            title: "Active Projects",
+                            count: projectsState.activeProjects.length.toString(),
+                            icon: IconsAssets.activeProjectIcon,
+                            color: Colors.green,
+                            isDesktop: isDesktop,
+                          ),
+                        ],
+                      )
+                    : Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: _statsCard(
+                              context,
+                              title: "Total Projects",
+                              count: projectsState.projects.length.toString(),
+                              subtitleLeft: null,
+                              subtitleRight: null,
+                              icon: IconsAssets.totalProjectIcon,
+                              color: AppColors.primaryColor,
+                              isDesktop: isDesktop,
+                            ),
+                          ),
+                          const SizedBox(width: 20),
+                          Expanded(
+                            child: _statsCard(
+                              context,
+                              title: "Active Projects",
+                              count: projectsState.activeProjects.length.toString(),
+                              icon: IconsAssets.activeProjectIcon,
+                              color: Colors.green,
+                              isDesktop: isDesktop,
+                            ),
+                          ),
+                        ],
+                      ),
+
+                const SizedBox(height: 32),
+
+                // Projects Table Container - Enhanced
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.06),
+                        blurRadius: 20,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Search Bar Section - Enhanced
+                      Container(
+                        padding: const EdgeInsets.all(20.0),
+                        decoration: BoxDecoration(
+                          border: Border(
+                            bottom: BorderSide(
+                              color: Colors.grey.withOpacity(0.1),
+                              width: 1,
+                            ),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Container(
+                                height: 48,
+                                decoration: BoxDecoration(
+                                  color: AppColors.textFieldBGColor,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: Colors.grey.withOpacity(0.2),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: TextField(
+                                  controller: _searchController,
+                                  cursorColor: AppColors.primaryColor,
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    color: AppColors.primaryTextColor,
+                                  ),
+                                  decoration: InputDecoration(
+                                    hintText: "Search projects by name, location, or description...",
+                                    hintStyle: TextStyle(
+                                      color: AppColors.secondaryTextColor.withOpacity(0.6),
+                                      fontSize: 15,
+                                    ),
+                                    prefixIcon: const Icon(
+                                      Icons.search,
+                                      size: 22,
+                                      color: AppColors.secondaryTextColor,
+                                    ),
+                                    border: InputBorder.none,
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 14,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            // Status Filter Dropdown
+                            Container(
+                              width: isDesktop ? 200 : 180,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                color: AppColors.textFieldBGColor,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: Colors.grey.withOpacity(0.2),
+                                  width: 1,
+                                ),
+                              ),
+                              child: DropdownButtonFormField<String>(
+                                value: _selectedStatusFilter,
+                                dropdownColor: Colors.white,
+                                decoration: InputDecoration(
+                                  hintText: "Filter by Status",
+                                  hintStyle: TextStyle(
+                                    color: AppColors.secondaryTextColor.withOpacity(0.6),
+                                    fontSize: 15,
+                                  ),
+                                  prefixIcon: const Icon(
+                                    Icons.filter_list,
+                                    size: 22,
+                                    color: AppColors.secondaryTextColor,
+                                  ),
+                                  border: InputBorder.none,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 14,
+                                  ),
+                                ),
+                                items: [
+                                  const DropdownMenuItem<String>(
+                                    value: null,
+                                    child: Text('All Status', style: TextStyle(fontSize: 15, color: AppColors.primaryTextColor)),
+                                  ),
+                                  const DropdownMenuItem<String>(
+                                    value: 'active',
+                                    child: Text('Active', style: TextStyle(fontSize: 15, color: AppColors.primaryTextColor)),
+                                  ),
+                                  const DropdownMenuItem<String>(
+                                    value: 'inactive',
+                                    child: Text('Inactive', style: TextStyle(fontSize: 15, color: AppColors.primaryTextColor)),
+                                  ),
+                                ],
+                                onChanged: (value) {
+                                  setState(() {
+                                    _selectedStatusFilter = value;
+                                  });
+                                },
+                                isExpanded: true,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // Show loading indicator
+                      if (projectsState.isLoading)
+                        Padding(
+                          padding: const EdgeInsets.all(40.0),
+                          child: Center(
+                            child: Column(
+                              children: [
+                                const CircularProgressIndicator(
+                                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryColor),
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'Loading projects...',
+                                  style: TextStyle(
+                                    color: AppColors.secondaryTextColor,
+                                    fontSize: 15,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                      // Show error message if any
+                      if (projectsState.error != null)
+                        Padding(
+                          padding: const EdgeInsets.all(40.0),
+                          child: Center(
+                            child: Column(
+                              children: [
+                                Icon(
+                                  Icons.error_outline,
+                                  size: 64,
+                                  color: Colors.red[300],
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'Error loading projects',
+                                  style: TextStyle(
+                                    color: Colors.red[700],
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 18,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  projectsState.error!,
+                                  style: TextStyle(
+                                    color: AppColors.secondaryTextColor,
+                                    fontSize: 14,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 24),
+                                ElevatedButton.icon(
+                                  onPressed: () {
+                                    ref.read(projectsControllerProvider.notifier).loadProjects();
+                                    ref.read(projectsControllerProvider.notifier).loadActiveProjects();
+                                  },
+                                  icon: const Icon(Icons.refresh, size: 18),
+                                  label: const Text('Retry'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.primaryColor,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 24,
+                                      vertical: 12,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                      // Show empty state if no projects and no errors
+                      if (!projectsState.isLoading && 
+                          projectsState.error == null && 
+                          filteredProjects.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.all(60.0),
+                          child: Center(
+                            child: Column(
+                              children: [
+                                Icon(
+                                  Icons.search_off,
+                                  size: 72,
+                                  color: Colors.grey[400],
+                                ),
+                                const SizedBox(height: 20),
+                                Text(
+                                  'No projects found',
+                                  style: TextStyle(
+                                    color: AppColors.primaryTextColor,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  _searchQuery.isEmpty
+                                      ? 'Get started by adding your first project'
+                                      : 'Try adjusting your search terms',
+                                  style: TextStyle(
+                                    color: AppColors.secondaryTextColor,
+                                    fontSize: 15,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                      // Projects Data - Responsive table (show FILTERED projects)
+                      if (!projectsState.isLoading && 
+                          projectsState.error == null && 
+                          filteredProjects.isNotEmpty)
+                        isTablet
+                            ? _buildTabletProjectsList(filteredProjects)
+                            : _buildDesktopProjectsTable(filteredProjects),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
-        ],
+        ),
       ),
-      ),
-    );
-  }
-
-  Widget _iconButton(IconData icon, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Icon(icon, color: color),
     );
   }
 
@@ -870,87 +1034,95 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         String? subtitleLeft,
         String? subtitleRight,
         required String icon,
-        required Color color}) {
-    final isTablet = Responsive.isTablet(context);
+        required Color color,
+        bool isDesktop = false}) {
     final isMobile = Responsive.isMobile(context);
     
     return Expanded(
-      child: Card(
-        color: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 15,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
         child: Padding(
-          padding: EdgeInsets.all(isMobile ? 12 : 16),
+          padding: EdgeInsets.all(isMobile ? 16 : isDesktop ? 24 : 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           title,
                           style: TextStyle(
-                            color: AppColors.primaryTextColor,
-                            fontSize: isMobile ? 13 : 16,
+                            color: AppColors.secondaryTextColor,
+                            fontSize: isMobile ? 13 : isDesktop ? 15 : 14,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 12),
                         Text(
                           count,
                           style: TextStyle(
                             color: AppColors.primaryTextColor,
-                            fontSize: isMobile ? 20 : 24,
-                            fontWeight: FontWeight.bold,
+                            fontSize: isMobile ? 28 : isDesktop ? 36 : 32,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -1,
                           ),
                         ),
                       ],
                     ),
                   ),
                   Container(
-                    padding: EdgeInsets.all(isMobile ? 8 : 12),
+                    padding: EdgeInsets.all(isMobile ? 10 : isDesktop ? 14 : 12),
                     decoration: BoxDecoration(
-                      color: color.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
+                      color: color.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Image.asset(icon, width: 20, height: 20, color: color,),
-                  )
+                    child: Image.asset(
+                      icon,
+                      width: isDesktop ? 28 : 24,
+                      height: isDesktop ? 28 : 24,
+                      color: color,
+                    ),
+                  ),
                 ],
               ),
-              //const SizedBox(height: 10),
               if (subtitleLeft != null && subtitleRight != null)
-                isMobile
-                    ? Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            subtitleLeft,
-                            style: const TextStyle(color: Colors.grey, fontSize: 12),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            subtitleRight,
-                            style: const TextStyle(color: Colors.grey, fontSize: 12),
-                          ),
-                        ],
-                      )
-                    : Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            subtitleLeft,
-                            style: const TextStyle(color: Colors.grey),
-                          ),
-                          Text(
-                            subtitleRight,
-                            style: const TextStyle(color: Colors.grey),
-                          ),
-                        ],
+                Padding(
+                  padding: const EdgeInsets.only(top: 16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        subtitleLeft,
+                        style: TextStyle(
+                          color: AppColors.secondaryTextColor,
+                          fontSize: isDesktop ? 13 : 12,
+                        ),
                       ),
+                      Text(
+                        subtitleRight,
+                        style: TextStyle(
+                          color: AppColors.secondaryTextColor,
+                          fontSize: isDesktop ? 13 : 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
             ],
           ),
         ),
@@ -958,38 +1130,25 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     );
   }
 
-  Widget _dropdownField(String hint) {
-    return DropdownButtonFormField<String>(
-      decoration: InputDecoration(
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-      ),
-      hint: Text(hint),
-      items: const [],
-      onChanged: (_) {},
-    );
-  }
-
   Widget _statusChip(String text) {
-    return /*Icon(Icons.circle, size: 15, color: text == 'active' ? Colors.green : Colors.red);*/
-      Container(
-        // height: 25,
-        decoration: BoxDecoration(
-          color: text == 'active' ? AppColors.successColor : text == 'inactive' ? Colors.red : AppColors.buttonBorderColor,
-          borderRadius: BorderRadius.all(Radius.circular(25)),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 13.0, vertical: 5),
-          child: Text(
-            text.toUpperCase(),
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: FontWeight.w500
-            ),
-            textAlign: TextAlign.center,
+    return Container(
+      decoration: BoxDecoration(
+        color: text == 'active' ? AppColors.successColor : text == 'inactive' ? Colors.red : AppColors.buttonBorderColor,
+        borderRadius: BorderRadius.all(Radius.circular(25)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 13.0, vertical: 5),
+        child: Text(
+          text.toUpperCase(),
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 12,
+            fontWeight: FontWeight.w500
           ),
+          textAlign: TextAlign.center,
         ),
-      );
+      ),
+    );
   }
 
   // Mobile Project Card Widget
@@ -1082,7 +1241,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                   const SizedBox(width: 4),
                   Expanded(
                     child: Text(
-                      project.subAddress,
+                      project.subAddress != "" ? project.subAddress : project.location != "" ? project.location : "No location available",
                       style: const TextStyle(
                         color: AppColors.darkGreyColor,
                         fontWeight: FontWeight.normal,
@@ -1142,53 +1301,132 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   Widget _buildTabletProjectsList(List<Project> projects) {
     return Column(
       children: [
-        const SizedBox(height: 15),
+        const SizedBox(height: 8),
         ...projects.map((project) => Container(
-          margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 4),
-          child: Card(
-            elevation: 0,
-            color: Colors.grey[50],
-            child: ListTile(
-              title: Text(
-                project.name,
-                style: const TextStyle(
-                  color: AppColors.primaryTextColor,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 4),
-                  Text(
-                    project.location,
-                    style: const TextStyle(color: AppColors.primaryTextColor),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    project.description,
-                    style: const TextStyle(color: AppColors.primaryTextColor),
-                  ),
-                ],
-              ),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _statusChip(project.status),
-                  const SizedBox(width: 8),
-                  IconButton(
-                    icon: const Icon(Icons.add, color:  AppColors.primaryColor),
-                    onPressed: () => context.go(Routes.addVisitScreen, extra: project),
-                  ),
-                ],
-              ),
+          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: Colors.grey.withOpacity(0.1),
+              width: 1,
+            ),
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
               onTap: () {
                 debugPrint("Project tapped: ${project.name}");
               },
+              borderRadius: BorderRadius.circular(12),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            project.name,
+                            style: const TextStyle(
+                              color: AppColors.primaryTextColor,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.location_on_outlined,
+                                size: 16,
+                                color: AppColors.secondaryTextColor,
+                              ),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  project.location,
+                                  style: const TextStyle(
+                                    color: AppColors.secondaryTextColor,
+                                    fontSize: 14,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (project.description.isNotEmpty) ...[
+                            const SizedBox(height: 6),
+                            Text(
+                              project.description,
+                              style: const TextStyle(
+                                color: AppColors.secondaryTextColor,
+                                fontSize: 13,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        _statusChip(project.status),
+                        const SizedBox(height: 8),
+                        if (project.status == 'active')
+                          Container(
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryColor.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: () => context.go(Routes.addVisitScreen, extra: project),
+                                borderRadius: BorderRadius.circular(8),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 8,
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.add,
+                                        size: 18,
+                                        color: AppColors.primaryColor,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      const Text(
+                                        'Visit',
+                                        style: TextStyle(
+                                          color: AppColors.primaryColor,
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
         )),
-        const SizedBox(height: 15),
+        const SizedBox(height: 20),
       ],
     );
   }
@@ -1197,94 +1435,226 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   Widget _buildDesktopProjectsTable(List<Project> projects) {
     return Column(
       children: [
-        const SizedBox(height: 15),
-        SizedBox(
-          width: double.infinity,
-          child: DataTable(
-            columnSpacing: 20,
-            showCheckboxColumn: false,
-            columns: const [
-              DataColumn(
-                label: Text(
-                  "Project\nName",
+        // Table Header
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          decoration: BoxDecoration(
+            color: AppColors.textFieldBGColor,
+            border: Border(
+              bottom: BorderSide(
+                color: Colors.grey.withOpacity(0.2),
+                width: 1,
+              ),
+            ),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                flex: 2,
+                child: Text(
+                  "Project Name",
                   style: TextStyle(
                     color: AppColors.primaryTextColor,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                    letterSpacing: 0.2,
                   ),
                 ),
               ),
-              DataColumn(
-                label: Text(
+              Expanded(
+                flex: 2,
+                child: Text(
                   "Location",
-                  style: TextStyle(color: AppColors.primaryTextColor),
+                  style: TextStyle(
+                    color: AppColors.primaryTextColor,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                    letterSpacing: 0.2,
+                  ),
                 ),
               ),
-              DataColumn(
-                label: Text(
+              Expanded(
+                flex: 3,
+                child: Text(
                   "Description",
-                  style: TextStyle(color: AppColors.primaryTextColor),
+                  style: TextStyle(
+                    color: AppColors.primaryTextColor,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                    letterSpacing: 0.2,
+                  ),
                 ),
               ),
-              DataColumn(
-                label: Text(
+              Expanded(
+                flex: 1,
+                child: Text(
                   "Status",
-                  style: TextStyle(color: AppColors.primaryTextColor),
+                  style: TextStyle(
+                    color: AppColors.primaryTextColor,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                    letterSpacing: 0.2,
+                  ),
                 ),
               ),
-              DataColumn(
-                label: Text(
+              Expanded(
+                flex: 1,
+                child: Text(
                   "Actions",
-                  style: TextStyle(color: AppColors.primaryTextColor),
+                  style: TextStyle(
+                    color: AppColors.primaryTextColor,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                    letterSpacing: 0.2,
+                  ),
                 ),
               ),
             ],
-            rows: projects.asMap().entries.map((entry) {
-              final index = entry.key;
-              final project = entry.value;
-
-              return DataRow(
-                onSelectChanged: (selected) {
-                  if (selected ?? false) {
-                    debugPrint("Row tapped at index: $index, Project: ${project.name}");
-                  }
-                },
-                cells: [
-                  DataCell(
-                    Text(
-                      project.name,
-                      maxLines: 2,
-                      style: const TextStyle(
-                        color: AppColors.primaryTextColor,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ),
-                  DataCell(
-                    Text(
-                      project.location,
-                      style: const TextStyle(color: AppColors.primaryTextColor, fontSize: 15,),
-                    ),
-                  ),
-                  DataCell(
-                    Text(
-                      project.description,
-                      style: const TextStyle(color: AppColors.primaryTextColor, fontSize: 15,),
-                    ),
-                  ),
-                  DataCell(_statusChip(project.status)),
-                  DataCell(
-                    IconButton(
-                      icon: const Icon(Icons.add, color:  AppColors.primaryColor),
-                      onPressed: () => context.go(Routes.addVisitScreen, extra: project),
-                    ),
-                  ),
-                ],
-              );
-            }).toList(),
           ),
         ),
+        // Table Rows
+        ...projects.asMap().entries.map((entry) {
+          final index = entry.key;
+          final project = entry.value;
+
+          return Container(
+            margin: const EdgeInsets.symmetric(horizontal: 0),
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(
+                  color: Colors.grey.withOpacity(0.1),
+                  width: 1,
+                ),
+              ),
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
+                  debugPrint("Row tapped at index: $index, Project: ${project.name}");
+                },
+                hoverColor: AppColors.textFieldBGColor.withOpacity(0.5),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: Text(
+                          project.name,
+                          maxLines: 2,
+                          style: const TextStyle(
+                            color: AppColors.primaryTextColor,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            overflow: TextOverflow.ellipsis,
+                            height: 1.4,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        flex: 2,
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.location_on_outlined,
+                              size: 18,
+                              color: AppColors.secondaryTextColor,
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                               project.subAddress != "" ? project.subAddress : project.location != "" ? project.location : "No location available",
+                                style: const TextStyle(
+                                  color: AppColors.primaryTextColor,
+                                  fontSize: 14,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        flex: 3,
+                        child: Text(
+                          project.description,
+                          style: TextStyle(
+                            color: AppColors.secondaryTextColor,
+                            fontSize: 14,
+                            height: 1.5,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        flex: 1,
+                        child: _statusChip(project.status),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        flex: 1,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: project.status == 'active'
+                                ? AppColors.primaryColor.withOpacity(0.1)
+                                : Colors.grey.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: project.status == 'active'
+                                  ? () => context.go(Routes.addVisitScreen, extra: project)
+                                  : null,
+                              borderRadius: BorderRadius.circular(8),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.add,
+                                      size: 18,
+                                      color: project.status == 'active'
+                                          ? AppColors.primaryColor
+                                          : Colors.grey,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      'Visit',
+                                      style: TextStyle(
+                                        color: project.status == 'active'
+                                            ? AppColors.primaryColor
+                                            : Colors.grey,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+        const SizedBox(height: 8),
       ],
     );
   }

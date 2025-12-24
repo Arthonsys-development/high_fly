@@ -708,6 +708,15 @@ class _AddVisitDialogState extends ConsumerState<AddVisitDialog>
   /// Show image source selection dialog
   Future<void> _showImageSourceDialog() async {
     debugPrint('Showing image source dialog');
+    
+    // On web, directly open gallery without showing dialog
+    if (kIsWeb) {
+      debugPrint('Web platform detected, directly opening gallery');
+      Routes.isPickingImage = true;
+      await _pickImageFromGallery();
+      return;
+    }
+    
     return showDialog(
       context: context,
       builder: (BuildContext context) {

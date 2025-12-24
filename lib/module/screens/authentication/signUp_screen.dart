@@ -293,38 +293,10 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
   /// Show image source selection dialog
   Future<void> _showImageSourceDialog() async {
+    // On web, directly open gallery without showing dialog
     if (kIsWeb) {
-      // On web, show both camera and gallery options
-      // Modern browsers on mobile devices support camera access
-      return showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Text('Select Image'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ListTile(
-                  leading: Icon(Icons.camera_alt, color: AppColors.primaryColor),
-                  title: const Text('Take Photo'),
-                  onTap: () {
-                    Navigator.of(context).pop();
-                    _pickImageFromCamera();
-                  },
-                ),
-                ListTile(
-                  leading: Icon(Icons.photo_library, color: AppColors.primaryColor),
-                  title: const Text('Choose from Gallery'),
-                  onTap: () {
-                    Navigator.of(context).pop();
-                    _pickImageFromGallery();
-                  },
-                ),
-              ],
-            ),
-          );
-        },
-      );
+      await _pickImageFromGallery();
+      return;
     }
     
     return showDialog(

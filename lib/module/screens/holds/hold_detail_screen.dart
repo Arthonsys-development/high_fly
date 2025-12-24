@@ -135,9 +135,13 @@ class _HoldDetailScreenState extends ConsumerState<HoldDetailScreen> {
                       IconData statusIcon;
                       
                       final status = hold.status.toLowerCase();
+                      final statusDisplay = hold.statusDisplay.toLowerCase();
                       
-                      // Check status first, then isExpired flag
-                      if (status == 'active') {
+                      // Check for "Converted to Booking" status first
+                      if (statusDisplay == 'converted to booking') {
+                        statusColor = Colors.blue;
+                        statusIcon = Icons.check_circle;
+                      } else if (status == 'active') {
                         statusColor = Colors.green;
                         statusIcon = Icons.check_circle_outline;
                       } else if (status == 'expired' || status == 'inactive' || hold.isExpired) {

@@ -106,18 +106,17 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
 
   @override
   Widget build(BuildContext context) {
-    final spacing = kIsWeb ? 28.0 : 24.0;
-    final largeSpacing = kIsWeb ? 48.0 : 40.0;
+    final spacing = kIsWeb ? 24.0 : 24.0;
+    final largeSpacing = kIsWeb ? 40.0 : 40.0;
     
     return SingleChildScrollView(
       padding: EdgeInsets.only(
-        top: kIsWeb ? 24 : 20,
-        bottom: kIsWeb ? 36 : 32,
+        top: kIsWeb ? 20 : 20,
+        bottom: kIsWeb ? 20 : 20,
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          SizedBox(height: kIsWeb ? 24 : 20),
-          
           // Header with icon
           HeaderIconWidget(
             icon: IconsAssets.cardIcon,
@@ -127,237 +126,494 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
           
           SizedBox(height: largeSpacing),
           
-          // Payment Amount field
-          CustomTextField(
-            titleText: 'Payment Amount',
-            controller: _paymentAmountController,
-            isMandatory: false,
-            keyboardType: TextInputType.number,
-            hintText: 'Enter Payment Amount',
-            borderRadius: 6,
-            onChanged: (value) {
-              setState(() {
-                _paymentDetails = _paymentDetails.copyWith(paymentAmount: value);
-              });
-            },
-          ),
-          
-          SizedBox(height: spacing),
-          
-          // Payment Method field
-          GestureDetector(
-            onTap: _showPaymentMethodDialog,
-            child: CustomTextField(
-              titleText: 'Payment Method',
-              controller: _paymentMethodController,
-              hintText: 'Select Payment Method',
-              isMandatory: false,
-              borderRadius: 6,
-              enabled: false,
-              suffixIcon: const Icon(
-                Icons.keyboard_arrow_down,
-                color: AppColors.lightGreyColor,
-                size: 20,
-              ),
-            ),
-          ),
-          
-          SizedBox(height: spacing),
-          
-         
-          
-          // Cheque Number and Date fields (only visible if Payment Method is cheque)
-          if (_paymentDetails.paymentMethodKey == PaymentMethod.cheque) ...[
-            CustomTextField(
-              titleText: 'Cheque Number',
-              controller: _chequeNumberController,
-              hintText: 'Enter cheque number',
-              isMandatory: false,
-              borderRadius: 6,
-              maxLength: 6,
-              keyboardType: TextInputType.number,
-              onChanged: (value) {
-                setState(() {
-                  _paymentDetails = _paymentDetails.copyWith(chequeNumber: value);
-                });
-              },
-            ),
-            
-            SizedBox(height: spacing),
-            
-            GestureDetector(
-              onTap: _showDatePicker,
-              child: CustomTextField(
-                titleText: 'Cheque Date',
-                controller: _chequeDateController,
-                hintText: 'Select cheque date',
-                isMandatory: false,
-                borderRadius: 6,
-                enabled: false,
-                suffixIcon: const Icon(
-                  Icons.calendar_today,
-                  color: AppColors.lightGreyColor,
-                  size: 20,
+          // Web: Clean form layout with max width, Mobile: Stacked layout
+          if (kIsWeb)
+            Center(
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 800),
+                width: double.infinity,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Payment Amount field (full width)
+                    CustomTextField(
+                      titleText: 'Payment Amount',
+                      controller: _paymentAmountController,
+                      isMandatory: false,
+                      keyboardType: TextInputType.number,
+                      hintText: 'Enter Payment Amount',
+                      borderRadius: 8,
+                      onChanged: (value) {
+                        setState(() {
+                          _paymentDetails = _paymentDetails.copyWith(paymentAmount: value);
+                        });
+                      },
+                    ),
+                    
+                    SizedBox(height: spacing),
+                    
+                    // Payment Method field (full width)
+                    GestureDetector(
+                      onTap: _showPaymentMethodDialog,
+                      child: CustomTextField(
+                        titleText: 'Payment Method',
+                        controller: _paymentMethodController,
+                        hintText: 'Select Payment Method',
+                        isMandatory: false,
+                        borderRadius: 8,
+                        enabled: false,
+                        suffixIcon: const Icon(
+                          Icons.keyboard_arrow_down,
+                          color: AppColors.lightGreyColor,
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                    
+                    SizedBox(height: spacing),
+                    
+                    // Cheque Number and Date fields (two columns on web, only visible if Payment Method is cheque)
+                    if (_paymentDetails.paymentMethodKey == PaymentMethod.cheque) ...[
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: CustomTextField(
+                              titleText: 'Cheque Number',
+                              controller: _chequeNumberController,
+                              hintText: 'Enter cheque number',
+                              isMandatory: false,
+                              borderRadius: 8,
+                              maxLength: 6,
+                              keyboardType: TextInputType.number,
+                              onChanged: (value) {
+                                setState(() {
+                                  _paymentDetails = _paymentDetails.copyWith(chequeNumber: value);
+                                });
+                              },
+                            ),
+                          ),
+                          SizedBox(width: 20),
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: _showDatePicker,
+                              child: CustomTextField(
+                                titleText: 'Cheque Date',
+                                controller: _chequeDateController,
+                                hintText: 'Select cheque date',
+                                isMandatory: false,
+                                borderRadius: 8,
+                                enabled: false,
+                                suffixIcon: const Icon(
+                                  Icons.calendar_today,
+                                  color: AppColors.lightGreyColor,
+                                  size: 20,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: spacing),
+                    ],
+                    
+                    // Payment Type field (full width)
+                    GestureDetector(
+                      onTap: _showPaymentTypeDialog,
+                      child: CustomTextField(
+                        titleText: 'Payment Type',
+                        controller: _paymentTypeController,
+                        hintText: 'Select Payment Type',
+                        isMandatory: false,
+                        borderRadius: 8,
+                        enabled: false,
+                        suffixIcon: const Icon(
+                          Icons.keyboard_arrow_down,
+                          color: AppColors.lightGreyColor,
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                    
+                    SizedBox(height: spacing),
+                    
+                    // Two-column layout for PAN Number and Aadhar Number
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: CustomTextField(
+                            titleText: 'PAN Number',
+                            controller: _panNumberController,
+                            hintText: 'Enter PAN number',
+                            isMandatory: false,
+                            borderRadius: 8,
+                            maxLength: 10,
+                            onChanged: (value) {
+                              setState(() {
+                                _paymentDetails = _paymentDetails.copyWith(panNumber: value);
+                              });
+                            },
+                          ),
+                        ),
+                        SizedBox(width: 20),
+                        Expanded(
+                          child: CustomTextField(
+                            titleText: 'Aadhar Number',
+                            controller: _aadharNumberController,
+                            hintText: 'Enter Aadhar number',
+                            isMandatory: false,
+                            borderRadius: 8,
+                            maxLength: 12,
+                            keyboardType: TextInputType.number,
+                            onChanged: (value) {
+                              setState(() {
+                                _paymentDetails = _paymentDetails.copyWith(aadharNumber: value);
+                              });
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                    
+                    SizedBox(height: spacing),
+                    
+                    // Salaried Individual checkbox (only visible if Payment Type is Finance)
+                    if (_selectedPaymentTypeKey == PaymentType.finance) ...[
+                      Row(
+                        mainAxisSize: MainAxisSize.max,
+                        children: [
+                          Checkbox(
+                            value: _paymentDetails.isSalariedIndividual,
+                            onChanged: (value) {
+                              setState(() {
+                                _paymentDetails = _paymentDetails.copyWith(
+                                  isSalariedIndividual: value ?? false,
+                                );
+                              });
+                            },
+                            activeColor: AppColors.textFieldBGColor,
+                            checkColor: AppColors.primaryColor,
+                            fillColor: WidgetStateProperty.resolveWith<Color>(
+                                  (Set<WidgetState> states) {
+                              if (states.contains(WidgetState.selected)) {
+                                return AppColors.textFieldBGColor;
+                              }
+                              return Colors.white;
+                            },
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            side: WidgetStateBorderSide.resolveWith(
+                                  (Set<WidgetState> states) {
+                              if (states.contains(WidgetState.selected)) {
+                                return const BorderSide(color: AppColors.dropDownBorderColor, width: 1.5);
+                              }
+                              return const BorderSide(color: AppColors.dropDownBorderColor, width: 1);
+                            },
+                            ),
+                            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            visualDensity: VisualDensity.compact,
+                          ),
+                          const SizedBox(width: 4),
+                          const Text(
+                            'Salaried Individual',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: AppColors.headingTextColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                    ],
+                    
+                    // Salary Slip field (only visible if Salaried Individual is checked)
+                    if (_paymentDetails.isSalariedIndividual) ...[
+                      PdfUploadWidget(
+                        label: 'Salary Slip',
+                        fileName: _paymentDetails.salarySlipPath,
+                        isRequired: false,
+                        uploadUrl: '/api/documents/upload/',
+                        placeholderText: 'Upload salary slip (PDF only)',
+                        onFileSelected: (filePath) {
+                          setState(() {
+                            _paymentDetails = _paymentDetails.copyWith(salarySlipPath: filePath);
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 24),
+                      
+                      // Form 16A field
+                      PdfUploadWidget(
+                        label: 'Form 16A',
+                        fileName: _paymentDetails.form16APath?.split('/').last,
+                        isRequired: false,
+                        uploadUrl: '/api/documents/upload/',
+                        placeholderText: 'Upload form 16A for reference',
+                        onFileSelected: (filePath) {
+                          setState(() {
+                            _paymentDetails = _paymentDetails.copyWith(form16APath: filePath);
+                          });
+                        },
+                      ),
+                      SizedBox(height: spacing),
+                    ],
+                    
+                    // Additional Notes field (full width)
+                    CustomTextField(
+                      titleText: 'Additional Notes',
+                      controller: _additionalNotesController,
+                      hintText: 'Enter any additional notes or special instructions',
+                      isMandatory: false,
+                      maxLines: 3,
+                      borderRadius: 8,
+                      maxLength: 150,
+                      onChanged: (value) {
+                        setState(() {
+                          _paymentDetails = _paymentDetails.copyWith(additionalNotes: value);
+                        });
+                      },
+                    ),
+                  ],
                 ),
               ),
-            ),
-            
-            SizedBox(height: spacing),
-          ],
-          
-           // Payment Type field
-          GestureDetector(
-            onTap: _showPaymentTypeDialog,
-            child: CustomTextField(
-              titleText: 'Payment Type',
-              controller: _paymentTypeController,
-              hintText: 'Select Payment Type',
-              isMandatory: false,
-              borderRadius: 6,
-              enabled: false,
-              suffixIcon: const Icon(
-                Icons.keyboard_arrow_down,
-                color: AppColors.lightGreyColor,
-                size: 20,
-              ),
-            ),
-          ),
-          
-          SizedBox(height: spacing),
-          // PAN Number field
-          CustomTextField(
-            titleText: 'PAN Number',
-            controller: _panNumberController,
-            hintText: 'Enter PAN number',
-            isMandatory: false,
-            borderRadius: 6,
-            maxLength: 10,
-            onChanged: (value) {
-              setState(() {
-                _paymentDetails = _paymentDetails.copyWith(panNumber: value);
-              });
-            },
-          ),
-          
-          SizedBox(height: spacing),
-          
-          // Aadhar Number field
-          CustomTextField(
-            titleText: 'Aadhar Number',
-            controller: _aadharNumberController,
-            hintText: 'Enter Aadhar number',
-            isMandatory: false,
-            borderRadius: 6,
-            maxLength: 12,
-            keyboardType: TextInputType.number,
-            onChanged: (value) {
-              setState(() {
-                _paymentDetails = _paymentDetails.copyWith(aadharNumber: value);
-              });
-            },
-          ),
-          
-          SizedBox(height: kIsWeb ? 24 : 20),
-          
-          // Salaried Individual checkbox (only visible if Payment Type is Finance)
-          if (_selectedPaymentTypeKey == PaymentType.finance) ...[
-            Row(
-              mainAxisSize: MainAxisSize.max,
+            )
+          else
+            Column(
               children: [
-                Checkbox(
-                  value: _paymentDetails.isSalariedIndividual,
+                // Payment Amount field
+                CustomTextField(
+                  titleText: 'Payment Amount',
+                  controller: _paymentAmountController,
+                  isMandatory: false,
+                  keyboardType: TextInputType.number,
+                  hintText: 'Enter Payment Amount',
+                  borderRadius: 6,
                   onChanged: (value) {
                     setState(() {
-                      _paymentDetails = _paymentDetails.copyWith(
-                        isSalariedIndividual: value ?? false,
-                      );
+                      _paymentDetails = _paymentDetails.copyWith(paymentAmount: value);
                     });
                   },
-                  activeColor: AppColors.textFieldBGColor,
-                  checkColor: AppColors.primaryColor,
-                  fillColor: WidgetStateProperty.resolveWith<Color>(
-                        (Set<WidgetState> states) {
-                      if (states.contains(WidgetState.selected)) {
-                        return AppColors.textFieldBGColor;
-                      }
-                      return Colors.white;
-                    },
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  side: WidgetStateBorderSide.resolveWith(
-                        (Set<WidgetState> states) {
-                      if (states.contains(WidgetState.selected)) {
-                        return const BorderSide(color: AppColors.dropDownBorderColor, width: 1.5);
-                      }
-                      return const BorderSide(color: AppColors.dropDownBorderColor, width: 1);
-                    },
-                  ),
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap, // 👈 removes default padding
-                  visualDensity: VisualDensity.compact, // 👈 tightens layout
                 ),
-                const SizedBox(width: 4), // optional spacing
-                const Text(
-                  'Salaried Individual',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: AppColors.headingTextColor,
+                
+                SizedBox(height: spacing),
+                
+                // Payment Method field
+                GestureDetector(
+                  onTap: _showPaymentMethodDialog,
+                  child: CustomTextField(
+                    titleText: 'Payment Method',
+                    controller: _paymentMethodController,
+                    hintText: 'Select Payment Method',
+                    isMandatory: false,
+                    borderRadius: 6,
+                    enabled: false,
+                    suffixIcon: const Icon(
+                      Icons.keyboard_arrow_down,
+                      color: AppColors.lightGreyColor,
+                      size: 20,
+                    ),
                   ),
+                ),
+                
+                SizedBox(height: spacing),
+                
+                // Cheque Number and Date fields (only visible if Payment Method is cheque)
+                if (_paymentDetails.paymentMethodKey == PaymentMethod.cheque) ...[
+                  CustomTextField(
+                    titleText: 'Cheque Number',
+                    controller: _chequeNumberController,
+                    hintText: 'Enter cheque number',
+                    isMandatory: false,
+                    borderRadius: 6,
+                    maxLength: 6,
+                    keyboardType: TextInputType.number,
+                    onChanged: (value) {
+                      setState(() {
+                        _paymentDetails = _paymentDetails.copyWith(chequeNumber: value);
+                      });
+                    },
+                  ),
+                  
+                  SizedBox(height: spacing),
+                  
+                  GestureDetector(
+                    onTap: _showDatePicker,
+                    child: CustomTextField(
+                      titleText: 'Cheque Date',
+                      controller: _chequeDateController,
+                      hintText: 'Select cheque date',
+                      isMandatory: false,
+                      borderRadius: 6,
+                      enabled: false,
+                      suffixIcon: const Icon(
+                        Icons.calendar_today,
+                        color: AppColors.lightGreyColor,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                  
+                  SizedBox(height: spacing),
+                ],
+                
+                // Payment Type field
+                GestureDetector(
+                  onTap: _showPaymentTypeDialog,
+                  child: CustomTextField(
+                    titleText: 'Payment Type',
+                    controller: _paymentTypeController,
+                    hintText: 'Select Payment Type',
+                    isMandatory: false,
+                    borderRadius: 6,
+                    enabled: false,
+                    suffixIcon: const Icon(
+                      Icons.keyboard_arrow_down,
+                      color: AppColors.lightGreyColor,
+                      size: 20,
+                    ),
+                  ),
+                ),
+                
+                SizedBox(height: spacing),
+                
+                // PAN Number field
+                CustomTextField(
+                  titleText: 'PAN Number',
+                  controller: _panNumberController,
+                  hintText: 'Enter PAN number',
+                  isMandatory: false,
+                  borderRadius: 6,
+                  maxLength: 10,
+                  onChanged: (value) {
+                    setState(() {
+                      _paymentDetails = _paymentDetails.copyWith(panNumber: value);
+                    });
+                  },
+                ),
+                
+                SizedBox(height: spacing),
+                
+                // Aadhar Number field
+                CustomTextField(
+                  titleText: 'Aadhar Number',
+                  controller: _aadharNumberController,
+                  hintText: 'Enter Aadhar number',
+                  isMandatory: false,
+                  borderRadius: 6,
+                  maxLength: 12,
+                  keyboardType: TextInputType.number,
+                  onChanged: (value) {
+                    setState(() {
+                      _paymentDetails = _paymentDetails.copyWith(aadharNumber: value);
+                    });
+                  },
+                ),
+                
+                SizedBox(height: spacing),
+                
+                // Salaried Individual checkbox (only visible if Payment Type is Finance)
+                if (_selectedPaymentTypeKey == PaymentType.finance) ...[
+                  Row(
+                    mainAxisSize: MainAxisSize.max,
+                    children: [
+                      Checkbox(
+                        value: _paymentDetails.isSalariedIndividual,
+                        onChanged: (value) {
+                          setState(() {
+                            _paymentDetails = _paymentDetails.copyWith(
+                              isSalariedIndividual: value ?? false,
+                            );
+                          });
+                        },
+                        activeColor: AppColors.textFieldBGColor,
+                        checkColor: AppColors.primaryColor,
+                        fillColor: WidgetStateProperty.resolveWith<Color>(
+                              (Set<WidgetState> states) {
+                          if (states.contains(WidgetState.selected)) {
+                            return AppColors.textFieldBGColor;
+                          }
+                          return Colors.white;
+                        },
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        side: WidgetStateBorderSide.resolveWith(
+                              (Set<WidgetState> states) {
+                          if (states.contains(WidgetState.selected)) {
+                            return const BorderSide(color: AppColors.dropDownBorderColor, width: 1.5);
+                          }
+                          return const BorderSide(color: AppColors.dropDownBorderColor, width: 1);
+                        },
+                        ),
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        visualDensity: VisualDensity.compact,
+                      ),
+                      const SizedBox(width: 4),
+                      const Text(
+                        'Salaried Individual',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: AppColors.headingTextColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                ],
+                
+                // Salary Slip field (only visible if Salaried Individual is checked)
+                if (_paymentDetails.isSalariedIndividual) ...[
+                  PdfUploadWidget(
+                    label: 'Salary Slip',
+                    fileName: _paymentDetails.salarySlipPath,
+                    isRequired: false,
+                    uploadUrl: '/api/documents/upload/',
+                    placeholderText: 'Upload salary slip (PDF only)',
+                    onFileSelected: (filePath) {
+                      setState(() {
+                        _paymentDetails = _paymentDetails.copyWith(salarySlipPath: filePath);
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 24),
+                  
+                  // Form 16A field
+                  PdfUploadWidget(
+                    label: 'Form 16A',
+                    fileName: _paymentDetails.form16APath?.split('/').last,
+                    isRequired: false,
+                    uploadUrl: '/api/documents/upload/',
+                    placeholderText: 'Upload form 16A for reference',
+                    onFileSelected: (filePath) {
+                      setState(() {
+                        _paymentDetails = _paymentDetails.copyWith(form16APath: filePath);
+                      });
+                    },
+                  ),
+                  SizedBox(height: spacing),
+                ],
+                
+                // Additional Notes field
+                CustomTextField(
+                  titleText: 'Additional Notes',
+                  controller: _additionalNotesController,
+                  hintText: 'Enter any additional notes or special instructions',
+                  isMandatory: false,
+                  maxLines: 3,
+                  borderRadius: 6,
+                  maxLength: 150,
+                  onChanged: (value) {
+                    setState(() {
+                      _paymentDetails = _paymentDetails.copyWith(additionalNotes: value);
+                    });
+                  },
                 ),
               ],
             ),
-            const SizedBox(height: 20),
-          ],
-          
-          // Salary Slip field (only visible if Salaried Individual is checked)
-          if (_paymentDetails.isSalariedIndividual) ...[
-            PdfUploadWidget(
-              label: 'Salary Slip',
-              fileName: _paymentDetails.salarySlipPath,
-              isRequired: false,
-              uploadUrl: '/api/documents/upload/', // Replace with actual API endpoint
-              placeholderText: 'Upload salary slip (PDF only)',
-              onFileSelected: (filePath) {
-                setState(() {
-                  _paymentDetails = _paymentDetails.copyWith(salarySlipPath: filePath);
-                });
-              },
-            ),
-            const SizedBox(height: 24),
-            
-            // Form 16A field
-            PdfUploadWidget(
-              label: 'Form 16A',
-              fileName: _paymentDetails.form16APath?.split('/').last,
-              isRequired: false,
-             // acceptedFileTypes: ['pdf', 'jpg', 'jpeg', 'png'],
-             uploadUrl: '/api/documents/upload/',
-              placeholderText: 'Upload form 16A for reference',
-              onFileSelected: (filePath) {
-                setState(() {
-                  _paymentDetails = _paymentDetails.copyWith(form16APath: filePath);
-                });
-              },
-            ),
-            SizedBox(height: spacing),
-          ],
-          
-          // Additional Notes field
-          CustomTextField(
-            titleText: 'Additional Notes',
-            controller: _additionalNotesController,
-            hintText: 'Enter any additional notes or special instructions',
-            isMandatory: false,
-            maxLines: 3,
-            borderRadius: 6,
-            maxLength: 150,
-            onChanged: (value) {
-              setState(() {
-                _paymentDetails = _paymentDetails.copyWith(additionalNotes: value);
-              });
-            },
-          ),
           
           SizedBox(height: largeSpacing),
           
@@ -370,7 +626,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
             nextButtonText: widget.nextButtonText,
           ),
           
-          SizedBox(height: kIsWeb ? 36 : 32),
+          SizedBox(height: kIsWeb ? 20 : 20),
         ],
       ),
     );

@@ -93,160 +93,301 @@ class _BankDetailsSectionState extends State<BankDetailsSection> {
 
   @override
   Widget build(BuildContext context) {
-    final spacing = kIsWeb ? 28.0 : 24.0;
-    final largeSpacing = kIsWeb ? 48.0 : 40.0;
+    final spacing = kIsWeb ? 24.0 : 24.0;
+    final largeSpacing = kIsWeb ? 40.0 : 40.0;
     
     return SingleChildScrollView(
       padding: EdgeInsets.only(
-        top: kIsWeb ? 24 : 20,
-        bottom: kIsWeb ? 36 : 32,
+        top: kIsWeb ? 20 : 20,
+        bottom: kIsWeb ? 20 : 20,
       ),
       child: Form(
         key: _formKey,
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-          // Header
-          HeaderIconWidget(
-            icon:IconsAssets.bankIcon,
-            title: widget.title,
-            subtitle: 'Enter bank information',
-          ),
-          
-          SizedBox(height: largeSpacing),
-          
-          // Account Holder Name field
-          CustomTextField(
-            titleText: 'Account Holder Name',
-            controller: _accountHolderNameController,
-            hintText: 'Enter account holder name',
-            isMandatory: false,
-            borderRadius: 6,
-            maxLength: 30,
-            onChanged: (value) {
-              setState(() {
-                _bankDetails = _bankDetails.copyWith(accountHolderName: value);
-              });
-            },
-          ),
-          
-          SizedBox(height: spacing),
-          
-          // Branch Name field
-          CustomTextField(
-            titleText: 'Branch Name',
-            controller: _branchNameController,
-            hintText: 'Enter branch name',
-            isMandatory: false,
-            borderRadius: 6,
-            maxLength: 30,
-            onChanged: (value) {
-              setState(() {
-                _bankDetails = _bankDetails.copyWith(branchName: value);
-              });
-            },
-          ),
-          
-          SizedBox(height: spacing),
-          
-          // Account Number field
-          CustomTextField(
-            titleText: 'Account Number',
-            controller: _accountNumberController,
-            hintText: 'Enter account number',
-            isMandatory: false,
-            maxLength: 18,
-            keyboardType: TextInputType.number,
-            borderRadius: 6,
-            inputFormatters: [
-              FilteringTextInputFormatter.digitsOnly,
-            ],
-            onChanged: (value) {
-              setState(() {
-                _bankDetails = _bankDetails.copyWith(accountNumber: value);
-              });
-            },
-          ),
-          
-          SizedBox(height: spacing),
-          
-          // IFSC Code field
-         CustomTextField(
-            titleText: 'IFSC Code',
-            controller: _ifscCodeController,
-            hintText: 'Enter IFSC Code',
-            isMandatory: false,
-            maxLength: 11,
-            borderRadius: 6,
-            inputFormatters: [
-              FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9]')),
-              UpperCaseTextFormatter(),
-              LengthLimitingTextInputFormatter(11),
-            ],
-            onChanged: (value) {
-              setState(() {
-                _bankDetails = _bankDetails.copyWith(ifscCode: value.toUpperCase());
-              });
-            },
-          ),
-          
-          SizedBox(height: spacing),
-          
-          // Account Type field
-          GestureDetector(
-            onTap: _showAccountTypeDialog,
-            child: CustomTextField(
-              titleText: 'Account Type',
-              controller: _accountTypeController,
-              hintText: 'Select account type',
-              isMandatory: false,
-              borderRadius: 6,
-              enabled: false,
-              suffixIcon: const Icon(
-                Icons.keyboard_arrow_down,
-                color: AppColors.lightGreyColor,
-                size: 20,
-              ),
+            // Header
+            HeaderIconWidget(
+              icon: IconsAssets.bankIcon,
+              title: widget.title,
+              subtitle: 'Enter bank information',
             ),
-          ),
-          
-          SizedBox(height: spacing),
-          
-          // Contact Number field
-          CustomTextField(
-            titleText: 'Contact Number (linked with bank)',
-            controller: _contactNumberController,
-            hintText: 'Enter contact number',
-            isMandatory: false,
-            keyboardType: TextInputType.phone,
-            borderRadius: 6,
-            inputFormatters: [
-              FilteringTextInputFormatter.digitsOnly,
-              LengthLimitingTextInputFormatter(10),
-            ],
-            validator: _validateContactNumber,
-            onChanged: (value) {
-              setState(() {
-                _bankDetails = _bankDetails.copyWith(contactNumber: value);
-              });
-            },
-          ),
-          
-          SizedBox(height: largeSpacing),
-          
-          // Action buttons
-          ActionButtons(
-            onPrevious: widget.onPrevious,
-            onNext: () {
-              // Validate form before proceeding
-              if (_formKey.currentState?.validate() ?? true) {
-                widget.onNext?.call(_bankDetails);
-              }
-            },
-            nextButtonText: widget.nextButtonText,
-            isPreviousEnabled: widget.onPrevious != null,
-          ),
-          
-          SizedBox(height: kIsWeb ? 36 : 32),
+            
+            SizedBox(height: largeSpacing),
+            
+            // Web: Clean form layout with max width, Mobile: Stacked layout
+            if (kIsWeb)
+              Center(
+                child: Container(
+                  constraints: const BoxConstraints(maxWidth: 800),
+                  width: double.infinity,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Account Holder Name field (full width)
+                      CustomTextField(
+                        titleText: 'Account Holder Name',
+                        controller: _accountHolderNameController,
+                        hintText: 'Enter account holder name',
+                        isMandatory: false,
+                        borderRadius: 8,
+                        maxLength: 30,
+                        onChanged: (value) {
+                          setState(() {
+                            _bankDetails = _bankDetails.copyWith(accountHolderName: value);
+                          });
+                        },
+                      ),
+                      
+                      SizedBox(height: spacing),
+                      
+                      // Branch Name field (full width)
+                      CustomTextField(
+                        titleText: 'Branch Name',
+                        controller: _branchNameController,
+                        hintText: 'Enter branch name',
+                        isMandatory: false,
+                        borderRadius: 8,
+                        maxLength: 30,
+                        onChanged: (value) {
+                          setState(() {
+                            _bankDetails = _bankDetails.copyWith(branchName: value);
+                          });
+                        },
+                      ),
+                      
+                      SizedBox(height: spacing),
+                      
+                      // Two-column layout for Account Number and IFSC Code
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: CustomTextField(
+                              titleText: 'Account Number',
+                              controller: _accountNumberController,
+                              hintText: 'Enter account number',
+                              isMandatory: false,
+                              maxLength: 18,
+                              keyboardType: TextInputType.number,
+                              borderRadius: 8,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                              ],
+                              onChanged: (value) {
+                                setState(() {
+                                  _bankDetails = _bankDetails.copyWith(accountNumber: value);
+                                });
+                              },
+                            ),
+                          ),
+                          SizedBox(width: 20),
+                          Expanded(
+                            child: CustomTextField(
+                              titleText: 'IFSC Code',
+                              controller: _ifscCodeController,
+                              hintText: 'Enter IFSC Code',
+                              isMandatory: false,
+                              maxLength: 11,
+                              borderRadius: 8,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9]')),
+                                UpperCaseTextFormatter(),
+                                LengthLimitingTextInputFormatter(11),
+                              ],
+                              onChanged: (value) {
+                                setState(() {
+                                  _bankDetails = _bankDetails.copyWith(ifscCode: value.toUpperCase());
+                                });
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                      
+                      SizedBox(height: spacing),
+                      
+                      // Account Type field (full width)
+                      GestureDetector(
+                        onTap: _showAccountTypeDialog,
+                        child: CustomTextField(
+                          titleText: 'Account Type',
+                          controller: _accountTypeController,
+                          hintText: 'Select account type',
+                          isMandatory: false,
+                          borderRadius: 8,
+                          enabled: false,
+                          suffixIcon: const Icon(
+                            Icons.keyboard_arrow_down,
+                            color: AppColors.lightGreyColor,
+                            size: 20,
+                          ),
+                        ),
+                      ),
+                      
+                      SizedBox(height: spacing),
+                      
+                      // Contact Number field (full width)
+                      CustomTextField(
+                        titleText: 'Contact Number (linked with bank)',
+                        controller: _contactNumberController,
+                        hintText: 'Enter contact number',
+                        isMandatory: false,
+                        keyboardType: TextInputType.phone,
+                        borderRadius: 8,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(10),
+                        ],
+                        validator: _validateContactNumber,
+                        onChanged: (value) {
+                          setState(() {
+                            _bankDetails = _bankDetails.copyWith(contactNumber: value);
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else
+              Column(
+                children: [
+                  // Account Holder Name field
+                  CustomTextField(
+                    titleText: 'Account Holder Name',
+                    controller: _accountHolderNameController,
+                    hintText: 'Enter account holder name',
+                    isMandatory: false,
+                    borderRadius: 6,
+                    maxLength: 30,
+                    onChanged: (value) {
+                      setState(() {
+                        _bankDetails = _bankDetails.copyWith(accountHolderName: value);
+                      });
+                    },
+                  ),
+                  
+                  SizedBox(height: spacing),
+                  
+                  // Branch Name field
+                  CustomTextField(
+                    titleText: 'Branch Name',
+                    controller: _branchNameController,
+                    hintText: 'Enter branch name',
+                    isMandatory: false,
+                    borderRadius: 6,
+                    maxLength: 30,
+                    onChanged: (value) {
+                      setState(() {
+                        _bankDetails = _bankDetails.copyWith(branchName: value);
+                      });
+                    },
+                  ),
+                  
+                  SizedBox(height: spacing),
+                  
+                  // Account Number field
+                  CustomTextField(
+                    titleText: 'Account Number',
+                    controller: _accountNumberController,
+                    hintText: 'Enter account number',
+                    isMandatory: false,
+                    maxLength: 18,
+                    keyboardType: TextInputType.number,
+                    borderRadius: 6,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                    ],
+                    onChanged: (value) {
+                      setState(() {
+                        _bankDetails = _bankDetails.copyWith(accountNumber: value);
+                      });
+                    },
+                  ),
+                  
+                  SizedBox(height: spacing),
+                  
+                  // IFSC Code field
+                  CustomTextField(
+                    titleText: 'IFSC Code',
+                    controller: _ifscCodeController,
+                    hintText: 'Enter IFSC Code',
+                    isMandatory: false,
+                    maxLength: 11,
+                    borderRadius: 6,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9]')),
+                      UpperCaseTextFormatter(),
+                      LengthLimitingTextInputFormatter(11),
+                    ],
+                    onChanged: (value) {
+                      setState(() {
+                        _bankDetails = _bankDetails.copyWith(ifscCode: value.toUpperCase());
+                      });
+                    },
+                  ),
+                  
+                  SizedBox(height: spacing),
+                  
+                  // Account Type field
+                  GestureDetector(
+                    onTap: _showAccountTypeDialog,
+                    child: CustomTextField(
+                      titleText: 'Account Type',
+                      controller: _accountTypeController,
+                      hintText: 'Select account type',
+                      isMandatory: false,
+                      borderRadius: 6,
+                      enabled: false,
+                      suffixIcon: const Icon(
+                        Icons.keyboard_arrow_down,
+                        color: AppColors.lightGreyColor,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                  
+                  SizedBox(height: spacing),
+                  
+                  // Contact Number field
+                  CustomTextField(
+                    titleText: 'Contact Number (linked with bank)',
+                    controller: _contactNumberController,
+                    hintText: 'Enter contact number',
+                    isMandatory: false,
+                    keyboardType: TextInputType.phone,
+                    borderRadius: 6,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(10),
+                    ],
+                    validator: _validateContactNumber,
+                    onChanged: (value) {
+                      setState(() {
+                        _bankDetails = _bankDetails.copyWith(contactNumber: value);
+                      });
+                    },
+                  ),
+                ],
+              ),
+            
+            SizedBox(height: largeSpacing),
+            
+            // Action buttons
+            ActionButtons(
+              onPrevious: widget.onPrevious,
+              onNext: () {
+                // Validate form before proceeding
+                if (_formKey.currentState?.validate() ?? true) {
+                  widget.onNext?.call(_bankDetails);
+                }
+              },
+              nextButtonText: widget.nextButtonText,
+              isPreviousEnabled: widget.onPrevious != null,
+            ),
+            
+            SizedBox(height: kIsWeb ? 20 : 20),
           ],
         ),
       ),

@@ -206,20 +206,20 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 OrganizationLogo(
-                  width: Responsive.isDesktop(context) ? 140 : 110,
-                  height: Responsive.isDesktop(context) ? 140 : 110,
+                  width: Responsive.isDesktop(context) ? 240 : 110,
+                  height: Responsive.isDesktop(context) ? 240 : 110,
                 ),
-                const SizedBox(height: 32),
-                Text(
-                  heading,
-                  style: TextStyle(
-                    fontSize: Responsive.isDesktop(context) ? 36 : 32,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.black,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 5),
+                // Text(
+                //   heading,
+                //   style: TextStyle(
+                //     fontSize: Responsive.isDesktop(context) ? 36 : 32,
+                //     fontWeight: FontWeight.w500,
+                //     color: Colors.black,
+                //   ),
+                //   textAlign: TextAlign.center,
+                // ),
+                // const SizedBox(height: 16),
                 Text(
                   subheading,
                   style: const TextStyle(

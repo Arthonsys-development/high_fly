@@ -177,67 +177,99 @@ class _DashboardSideMenuState extends State<DashboardSideMenu> {
                   ),
                 ),
 
-
-                Row(
-                  children: [
-                    FutureBuilder<Map<String, String?>>(
-                      future: _getUserData(),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
-                          return const CircleAvatar(
-                            radius: 16,
-                            backgroundColor:  AppColors.primaryColor,
-                            child: SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                // Footer with user profile
+                Container(
+                  padding: EdgeInsets.all(isTablet ? 12 : 16),
+                  child: Row(
+                    children: [
+                      FutureBuilder<Map<String, String?>>(
+                        future: _getUserData(),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState == ConnectionState.waiting) {
+                            return const CircleAvatar(
+                              radius: 16,
+                              backgroundColor:  AppColors.primaryColor,
+                              child: SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                ),
                               ),
-                            ),
-                          );
-                        }
+                            );
+                          }
 
-                        if (snapshot.hasError || !snapshot.hasData) {
-                          return const CircleAvatar(
+                          if (snapshot.hasError || !snapshot.hasData) {
+                            return const CircleAvatar(
+                              radius: 16,
+                              backgroundColor:  AppColors.primaryColor,
+                              child: Icon(
+                                Icons.person,
+                                color: Colors.white,
+                                size: 18,
+                              ),
+                            );
+                          }
+
+                          final userData = snapshot.data!;
+                          final profilePhoto = userData['photo'];
+
+                          return CircleAvatar(
                             radius: 16,
-                            backgroundColor:  AppColors.primaryColor,
-                            child: Icon(
-                              Icons.person,
-                              color: Colors.white,
-                              size: 18,
-                            ),
+                            backgroundColor:  AppColors.primaryColor.withOpacity(0.2),
+                            backgroundImage: profilePhoto != null && profilePhoto.isNotEmpty
+                                ? NetworkImage(profilePhoto)
+                                : null,
+                            child: (profilePhoto == null || profilePhoto.isEmpty)
+                                ? const Icon(
+                                    Icons.person,
+                                    color:  AppColors.primaryColor,
+                                    size: 18,
+                                  )
+                                : null,
                           );
-                        }
+                        },
+                      ),
+                      const SizedBox(width: 12),
+                      FutureBuilder<Map<String, String?>>(
+                        future: _getUserData(),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState == ConnectionState.waiting) {
+                            return const Expanded(
+                              child: Text(
+                                'Loading...',
+                                style: TextStyle(
+                                  color: AppColors.primaryTextColor,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            );
+                          }
 
-                        final userData = snapshot.data!;
-                        final profilePhoto = userData['photo'];
+                          if (snapshot.hasError || !snapshot.hasData) {
+                            return const Expanded(
+                              child: Text(
+                                'Guest User',
+                                style: TextStyle(
+                                  color: AppColors.primaryTextColor,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            );
+                          }
 
-                        return CircleAvatar(
-                          radius: 16,
-                          backgroundColor:  AppColors.primaryColor.withOpacity(0.2),
-                          backgroundImage: profilePhoto != null && profilePhoto.isNotEmpty
-                              ? NetworkImage(profilePhoto)
-                              : null,
-                          child: (profilePhoto == null || profilePhoto.isEmpty)
-                              ? const Icon(
-                                  Icons.person,
-                                  color:  AppColors.primaryColor,
-                                  size: 18,
-                                )
-                              : null,
-                        );
-                      },
-                    ),
-                    const SizedBox(width: 12),
-                    FutureBuilder<Map<String, String?>>(
-                      future: _getUserData(),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
-                          return const Expanded(
+                          final userData = snapshot.data!;
+                          final userName = userData['name'] ?? 'Guest User';
+
+                          return Expanded(
                             child: Text(
-                              'Loading...',
-                              style: TextStyle(
+                              userName,
+                              style: const TextStyle(
                                 color: AppColors.primaryTextColor,
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
@@ -245,39 +277,10 @@ class _DashboardSideMenuState extends State<DashboardSideMenu> {
                               overflow: TextOverflow.ellipsis,
                             ),
                           );
-                        }
-
-                        if (snapshot.hasError || !snapshot.hasData) {
-                          return const Expanded(
-                            child: Text(
-                              'Guest User',
-                              style: TextStyle(
-                                color: AppColors.primaryTextColor,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          );
-                        }
-
-                        final userData = snapshot.data!;
-                        final userName = userData['name'] ?? 'Guest User';
-
-                        return Expanded(
-                          child: Text(
-                            userName,
-                            style: const TextStyle(
-                              color: AppColors.primaryTextColor,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        );
-                      },
-                    ),
-                  ],
+                        },
+                      ),
+                    ],
+                  ),
                 )
 
                 // Footer with user profile

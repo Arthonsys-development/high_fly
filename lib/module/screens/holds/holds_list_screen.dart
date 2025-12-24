@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../../../config/constant/app_colors.dart';
+import '../../../config/utils.dart';
 import '../../../data/models/hold_list_model.dart';
 import '../../providers/holds_provider.dart';
 import '../../utils/responsive.dart';
@@ -19,6 +21,8 @@ class _HoldsListScreenState extends ConsumerState<HoldsListScreen>
   bool _isDisposed = false;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  String? _selectedStatusFilter; // null means "All"
+  DateTime? _selectedDateFilter; // null means "All dates"
 
   void _refreshHoldsInBackground() {
     if (_isDisposed || !mounted) return;
@@ -65,15 +69,102 @@ class _HoldsListScreenState extends ConsumerState<HoldsListScreen>
   List<HoldListModel> _getFilteredHolds(List<HoldListModel> holds) {
     if (_isDisposed || !mounted) return [];
     
-    if (_searchQuery.isEmpty) return holds;
-    
     return holds.where((hold) {
-      final projectName = hold.project?.name ?? '';
-      return hold.plotCode.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-             hold.customerName.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-             hold.customerPhone.contains(_searchQuery) ||
-             hold.statusDisplay.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-             projectName.toLowerCase().contains(_searchQuery.toLowerCase());
+      // Apply search filter
+      if (_searchQuery.isNotEmpty) {
+        final projectName = hold.project?.name ?? '';
+        final matchesSearch = hold.plotCode.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+                             hold.customerName.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+                             hold.customerPhone.contains(_searchQuery) ||
+                             hold.statusDisplay.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+                             projectName.toLowerCase().contains(_searchQuery.toLowerCase());
+        if (!matchesSearch) return false;
+      }
+      
+      // Apply status filter - using statusDisplay
+      if (_selectedStatusFilter != null) {
+        final statusDisplay = hold.statusDisplay.toLowerCase();
+        
+        if (_selectedStatusFilter == 'Active') {
+          if (statusDisplay != 'active') return false;
+        } else if (_selectedStatusFilter == 'Expired') {
+          if (statusDisplay != 'expired') return false;
+        } else if (_selectedStatusFilter == 'Converted to Booking') {
+          if (statusDisplay != 'converted to booking') return false;
+        }
+      }
+      
+      // Apply date filter
+      if (_selectedDateFilter != null) {
+        try {
+          String raw = hold.holdUntil.trim();
+          if (raw.contains('+')) {
+            raw = raw.split('+')[0];
+          }
+          
+          DateTime? holdDate;
+          
+          // Try parsing with the API format first: "dd/MM/yy hh:mm a"
+          try {
+            holdDate = DateFormat('dd/MM/yy hh:mm a').parse(raw);
+          } catch (_) {
+            // Try alternative format: "dd/MM/yy HH:mm" (24-hour format)
+            try {
+              holdDate = DateFormat('dd/MM/yy HH:mm').parse(raw);
+            } catch (_) {
+              // Try ISO format
+              try {
+                holdDate = DateTime.parse(raw);
+              } catch (_) {
+                // Try extracting date part from formats like "dd/MM/yy"
+                final dateMatch = RegExp(r'(\d{2}/\d{2}/\d{2})').firstMatch(raw);
+                if (dateMatch != null) {
+                  try {
+                    holdDate = DateFormat('dd/MM/yy').parse(dateMatch.group(1)!);
+                  } catch (_) {
+                    // Try with 4-digit year
+                    final dateMatch4 = RegExp(r'(\d{2}/\d{2}/\d{4})').firstMatch(raw);
+                    if (dateMatch4 != null) {
+                      try {
+                        holdDate = DateFormat('dd/MM/yyyy').parse(dateMatch4.group(1)!);
+                      } catch (_) {
+                        holdDate = null;
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          
+          if (holdDate != null) {
+            // Compare only the date part (ignore time)
+            final selectedDateOnly = DateTime(
+              _selectedDateFilter!.year,
+              _selectedDateFilter!.month,
+              _selectedDateFilter!.day,
+            );
+            final holdDateOnly = DateTime(
+              holdDate.year,
+              holdDate.month,
+              holdDate.day,
+            );
+            
+            if (holdDateOnly != selectedDateOnly) {
+              return false;
+            }
+          } else {
+            // If date parsing fails, exclude the hold
+            return false;
+          }
+        } catch (e) {
+          // If date parsing fails, exclude the hold
+          debugPrint('Date filter parsing error: $e for date: ${hold.holdUntil}');
+          return false;
+        }
+      }
+      
+      return true;
     }).toList();
   }
 
@@ -134,7 +225,7 @@ class _HoldsListScreenState extends ConsumerState<HoldsListScreen>
             ),
             const SizedBox(height: 20),
 
-            // Search field
+            // Search field on first line
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 15.0),
               decoration: BoxDecoration(
@@ -144,13 +235,143 @@ class _HoldsListScreenState extends ConsumerState<HoldsListScreen>
               child: TextField(
                 controller: _searchController,
                 cursorColor: AppColors.primaryColor,
-                style: TextStyle(color: AppColors.primaryColor, fontSize: 18),
+                style: TextStyle(color: AppColors.primaryColor, fontSize: 15),
                 decoration: InputDecoration(
                   hintText: "Search...",
                   border: InputBorder.none,
                   prefixIcon: const Icon(Icons.search, color: AppColors.primaryColor),
                 ),
               ),
+            ),
+            const SizedBox(height: 12),
+            // Filters on next line
+            Row(
+              children: [
+                // Status Filter
+                Expanded(
+                  child: Container(
+                    height: 48,
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: AppColors.secondaryTextColor,
+                        width: 1.5,
+                      ),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: DropdownButtonFormField<String>(
+                      value: _selectedStatusFilter,
+                      dropdownColor: Colors.white,
+                      decoration: InputDecoration(
+                        hintText: "Status",
+                        hintStyle: const TextStyle(fontSize: 14, color: AppColors.secondaryTextColor),
+                        prefixIcon: const Icon(Icons.filter_list, size: 20, color: AppColors.primaryTextColor),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      ),
+                      items: [
+                        const DropdownMenuItem<String>(
+                          value: null,
+                          child: Text('All', style: TextStyle(fontSize: 14, color: AppColors.primaryTextColor)),
+                        ),
+                        const DropdownMenuItem<String>(
+                          value: 'Active',
+                          child: Text('Active', style: TextStyle(fontSize: 14, color: AppColors.primaryTextColor)),
+                        ),
+                        const DropdownMenuItem<String>(
+                          value: 'Expired',
+                          child: Text('Expired', style: TextStyle(fontSize: 14, color: AppColors.primaryTextColor)),
+                        ),
+                        const DropdownMenuItem<String>(
+                          value: 'Converted to Booking',
+                          child: Text('Converted to Booking', style: TextStyle(fontSize: 14, color: AppColors.primaryTextColor)),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedStatusFilter = value;
+                        });
+                      },
+                      isExpanded: true,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                // Date Filter
+                Expanded(
+                  child: Container(
+                    height: 48,
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: AppColors.secondaryTextColor,
+                        width: 1.5,
+                      ),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: InkWell(
+                      onTap: () async {
+                        final DateTime? picked = await showDatePicker(
+                          context: context,
+                          initialDate: _selectedDateFilter ?? DateTime.now(),
+                          firstDate: DateTime(2000),
+                          lastDate: DateTime(2100),
+                          builder: (context, child) {
+                            return Theme(
+                              data: Theme.of(context).copyWith(
+                                colorScheme: ColorScheme.light(
+                                  primary: AppColors.primaryColor,
+                                  onPrimary: Colors.white,
+                                  surface: Colors.white,
+                                  onSurface: AppColors.primaryTextColor,
+                                ),
+                              ),
+                              child: child!,
+                            );
+                          },
+                        );
+                        if (picked != null) {
+                          setState(() {
+                            _selectedDateFilter = picked;
+                          });
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.calendar_today, size: 20, color: AppColors.primaryTextColor),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                _selectedDateFilter == null
+                                    ? 'Date'
+                                    : Utils.formatDate(_selectedDateFilter!),
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: _selectedDateFilter == null
+                                      ? AppColors.secondaryTextColor
+                                      : AppColors.primaryTextColor,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (_selectedDateFilter != null)
+                              IconButton(
+                                icon: const Icon(Icons.clear, size: 18, color: AppColors.secondaryTextColor),
+                                onPressed: () {
+                                  setState(() {
+                                    _selectedDateFilter = null;
+                                  });
+                                },
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 20),
 
@@ -186,31 +407,105 @@ class _HoldsListScreenState extends ConsumerState<HoldsListScreen>
 
   Widget _buildDesktopLayout() {
     final holdsState = ref.watch(holdsControllerProvider);
+    final screenWidth = MediaQuery.of(context).size.width;
+    final maxContentWidth = 1400.0;
     
     if (holdsState.isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-    
-    if (holdsState.error != null) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text('Error: ${holdsState.error}', style: const TextStyle(color: Colors.black)),
-            ElevatedButton(
-              onPressed: () {
-                if (!_isDisposed && mounted) {
-                  ref.read(holdsControllerProvider.notifier).loadHolds();
-                }
-              },
-              child: const Text('Retry'),
+            const CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryColor),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Loading holds...',
+              style: TextStyle(
+                color: AppColors.secondaryTextColor,
+                fontSize: 15,
+              ),
             ),
           ],
         ),
       );
     }
     
+    if (holdsState.error != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(40.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.error_outline,
+                size: 64,
+                color: Colors.red[300],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Error loading holds',
+                style: TextStyle(
+                  color: Colors.red[700],
+                  fontWeight: FontWeight.w600,
+                  fontSize: 18,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                holdsState.error!,
+                style: TextStyle(
+                  color: AppColors.secondaryTextColor,
+                  fontSize: 14,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: () {
+                  if (!_isDisposed && mounted) {
+                    ref.read(holdsControllerProvider.notifier).loadHolds();
+                  }
+                },
+                icon: const Icon(Icons.refresh, size: 18),
+                label: const Text('Retry'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryColor,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    
     final filteredHolds = _getFilteredHolds(holdsState.holds);
+    final totalHolds = holdsState.holds.length;
+    
+    // Count holds by status
+    final activeCount = holdsState.holds.where((h) {
+      final status = h.status.toLowerCase();
+      return status == 'active' && !h.isExpired;
+    }).length;
+    
+    final expiredCount = holdsState.holds.where((h) {
+      final status = h.status.toLowerCase();
+      return status == 'expired' || status == 'inactive' || h.isExpired;
+    }).length;
+    
+    final convertedToBookingCount = holdsState.holds.where((h) {
+      final statusDisplay = h.statusDisplay.toLowerCase();
+      return statusDisplay == 'converted to booking';
+    }).length;
 
     return RefreshIndicator(
       onRefresh: () async {
@@ -218,70 +513,488 @@ class _HoldsListScreenState extends ConsumerState<HoldsListScreen>
       },
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(24.0),
+        padding: EdgeInsets.symmetric(
+          horizontal: screenWidth > maxContentWidth ? 40.0 : 24.0,
+          vertical: 24.0,
+        ),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: maxContentWidth),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header Section with Title and Stats
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "Holds",
+                          style: TextStyle(
+                            color: AppColors.primaryTextColor,
+                            fontSize: 32,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          "View and manage all holds",
+                          style: TextStyle(
+                            color: AppColors.secondaryTextColor,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: AppColors.primaryColor.withOpacity(0.2),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.lock_clock,
+                            size: 20,
+                            color: AppColors.primaryColor,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            "${filteredHolds.length} ${filteredHolds.length == 1 ? 'Hold' : 'Holds'}",
+                            style: TextStyle(
+                              color: AppColors.primaryColor,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 32),
+
+                // Stats Cards Row - Status Counts
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildStatsCard(
+                        title: "Total",
+                        count: totalHolds.toString(),
+                        icon: Icons.lock_clock,
+                        color: AppColors.primaryColor,
+                      ),
+                    ),
+                    if (activeCount > 0) ...[
+                      const SizedBox(width: 20),
+                      Expanded(
+                        child: _buildStatsCard(
+                          title: "Active",
+                          count: activeCount.toString(),
+                          icon: Icons.lock_open,
+                          color: Colors.green,
+                        ),
+                      ),
+                    ],
+                    if (expiredCount > 0) ...[
+                      const SizedBox(width: 20),
+                      Expanded(
+                        child: _buildStatsCard(
+                          title: "Expired",
+                          count: expiredCount.toString(),
+                          icon: Icons.lock_clock,
+                          color: Colors.red,
+                        ),
+                      ),
+                    ],
+                    if (convertedToBookingCount > 0) ...[
+                      const SizedBox(width: 20),
+                      Expanded(
+                        child: _buildStatsCard(
+                          title: "Converted to Booking",
+                          count: convertedToBookingCount.toString(),
+                          icon: Icons.check_circle,
+                          color: Colors.blue,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+
+                const SizedBox(height: 32),
+
+                // Holds Container - Enhanced
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.06),
+                        blurRadius: 20,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Search Bar Section - Enhanced
+                      Container(
+                        padding: const EdgeInsets.all(20.0),
+                        decoration: BoxDecoration(
+                          border: Border(
+                            bottom: BorderSide(
+                              color: Colors.grey.withOpacity(0.1),
+                              width: 1,
+                            ),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            // Search field
+                            Expanded(
+                              flex: 3,
+                              child: Container(
+                                height: 48,
+                                decoration: BoxDecoration(
+                                  color: AppColors.textFieldBGColor,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: Colors.grey.withOpacity(0.2),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: TextField(
+                                  controller: _searchController,
+                                  cursorColor: AppColors.primaryColor,
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    color: AppColors.primaryTextColor,
+                                  ),
+                                  decoration: InputDecoration(
+                                    hintText: "Search by plot code, customer name, phone...",
+                                    hintStyle: TextStyle(
+                                      color: AppColors.secondaryTextColor.withOpacity(0.6),
+                                      fontSize: 15,
+                                    ),
+                                    prefixIcon: const Icon(
+                                      Icons.search,
+                                      size: 22,
+                                      color: AppColors.secondaryTextColor,
+                                    ),
+                                    suffixIcon: _searchQuery.isNotEmpty
+                                        ? IconButton(
+                                            icon: const Icon(
+                                              Icons.clear,
+                                              size: 20,
+                                              color: AppColors.secondaryTextColor,
+                                            ),
+                                            onPressed: () {
+                                              _searchController.clear();
+                                              setState(() {
+                                                _searchQuery = '';
+                                              });
+                                            },
+                                          )
+                                        : null,
+                                    border: InputBorder.none,
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 14,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            // Status Filter
+                            Container(
+                              width: 180,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                color: AppColors.textFieldBGColor,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: Colors.grey.withOpacity(0.2),
+                                  width: 1,
+                                ),
+                              ),
+                              child: DropdownButtonFormField<String>(
+                                value: _selectedStatusFilter,
+                                dropdownColor: Colors.white,
+                                decoration: InputDecoration(
+                                  hintText: "Status",
+                                  hintStyle: TextStyle(
+                                    color: AppColors.secondaryTextColor.withOpacity(0.6),
+                                    fontSize: 15,
+                                  ),
+                                  prefixIcon: const Icon(
+                                    Icons.filter_list,
+                                    size: 22,
+                                    color: AppColors.secondaryTextColor,
+                                  ),
+                                  border: InputBorder.none,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 14,
+                                  ),
+                                ),
+                                items: [
+                                  const DropdownMenuItem<String>(
+                                    value: null,
+                                    child: Text('All Status', style: TextStyle(fontSize: 15, color: AppColors.primaryTextColor)),
+                                  ),
+                                  const DropdownMenuItem<String>(
+                                    value: 'Active',
+                                    child: Text('Active', style: TextStyle(fontSize: 15, color: AppColors.primaryTextColor)),
+                                  ),
+                                  const DropdownMenuItem<String>(
+                                    value: 'Expired',
+                                    child: Text('Expired', style: TextStyle(fontSize: 15, color: AppColors.primaryTextColor)),
+                                  ),
+                                  const DropdownMenuItem<String>(
+                                    value: 'Converted to Booking',
+                                    child: Text('Converted to Booking', style: TextStyle(fontSize: 15, color: AppColors.primaryTextColor)),
+                                  ),
+                                ],
+                                onChanged: (value) {
+                                  setState(() {
+                                    _selectedStatusFilter = value;
+                                  });
+                                },
+                                isExpanded: true,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            // Date Filter
+                            Container(
+                              width: 180,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                color: AppColors.textFieldBGColor,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: Colors.grey.withOpacity(0.2),
+                                  width: 1,
+                                ),
+                              ),
+                              child: InkWell(
+                                onTap: () async {
+                                  final DateTime? picked = await showDatePicker(
+                                    context: context,
+                                    initialDate: _selectedDateFilter ?? DateTime.now(),
+                                    firstDate: DateTime(2000),
+                                    lastDate: DateTime(2100),
+                                    builder: (context, child) {
+                                      return Theme(
+                                        data: Theme.of(context).copyWith(
+                                          colorScheme: ColorScheme.light(
+                                            primary: AppColors.primaryColor,
+                                            onPrimary: Colors.white,
+                                            surface: Colors.white,
+                                            onSurface: AppColors.primaryTextColor,
+                                          ),
+                                        ),
+                                        child: child!,
+                                      );
+                                    },
+                                  );
+                                  if (picked != null) {
+                                    setState(() {
+                                      _selectedDateFilter = picked;
+                                    });
+                                  }
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                  child: Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.calendar_today,
+                                        size: 22,
+                                        color: AppColors.secondaryTextColor,
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Text(
+                                          _selectedDateFilter == null
+                                              ? 'Select Date'
+                                              : Utils.formatDate(_selectedDateFilter!),
+                                          style: TextStyle(
+                                            fontSize: 15,
+                                            color: _selectedDateFilter == null
+                                                ? AppColors.secondaryTextColor.withOpacity(0.6)
+                                                : AppColors.primaryTextColor,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      if (_selectedDateFilter != null)
+                                        IconButton(
+                                          icon: const Icon(
+                                            Icons.clear,
+                                            size: 18,
+                                            color: AppColors.secondaryTextColor,
+                                          ),
+                                          onPressed: () {
+                                            setState(() {
+                                              _selectedDateFilter = null;
+                                            });
+                                          },
+                                          padding: EdgeInsets.zero,
+                                          constraints: const BoxConstraints(),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // Holds Grid
+                      if (filteredHolds.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.all(60.0),
+                          child: Center(
+                            child: Column(
+                              children: [
+                                Icon(
+                                  Icons.search_off,
+                                  size: 72,
+                                  color: Colors.grey[400],
+                                ),
+                                const SizedBox(height: 20),
+                                Text(
+                                  'No holds found',
+                                  style: TextStyle(
+                                    color: AppColors.primaryTextColor,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Try adjusting your search or filters',
+                                  style: TextStyle(
+                                    color: AppColors.secondaryTextColor,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                      else
+                        Padding(
+                          padding: const EdgeInsets.all(20.0),
+                          child: GridView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 3,
+                              crossAxisSpacing: 16,
+                              mainAxisSpacing: 16,
+                              childAspectRatio: 1.2,
+                            ),
+                            itemCount: filteredHolds.length,
+                            itemBuilder: (context, index) {
+                              final hold = filteredHolds[index];
+                              return _buildHoldCard(hold);
+                            },
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatsCard({
+    required String title,
+    required String count,
+    required IconData icon,
+    required Color color,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 15,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              "Holds",
-              style: TextStyle(
-                color: AppColors.primaryTextColor,
-                fontSize: 28,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Search field
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 15.0),
-              decoration: BoxDecoration(
-                color: Colors.grey[100],
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: TextField(
-                controller: _searchController,
-                cursorColor: AppColors.primaryColor,
-                style: TextStyle(color: AppColors.primaryColor),
-                decoration: InputDecoration(
-                  hintText: "Search...",
-                  border: InputBorder.none,
-                  prefixIcon: const Icon(Icons.search, color: AppColors.primaryColor),
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Holds Grid
-            if (filteredHolds.isEmpty)
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(40.0),
-                  child: Text(
-                    'No holds found',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: AppColors.lightGreyColor,
-                    ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          color: AppColors.secondaryTextColor,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        count,
+                        style: const TextStyle(
+                          color: AppColors.primaryTextColor,
+                          fontSize: 36,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -1,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              )
-            else
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                  childAspectRatio: 1.2,
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    icon,
+                    size: 28,
+                    color: color,
+                  ),
                 ),
-                itemCount: filteredHolds.length,
-                itemBuilder: (context, index) {
-                  final hold = filteredHolds[index];
-                  return _buildHoldCard(hold);
-                },
-              ),
+              ],
+            ),
           ],
         ),
       ),
@@ -290,6 +1003,12 @@ class _HoldsListScreenState extends ConsumerState<HoldsListScreen>
 
   Color _getHoldStatusColor(HoldListModel hold) {
     final status = hold.status.toLowerCase();
+    final statusDisplay = hold.statusDisplay.toLowerCase();
+    
+    // Check for "Converted to Booking" status first
+    if (statusDisplay == 'converted to booking') {
+      return Colors.blue;
+    }
     
     // Check status first, then isExpired flag
     if (status == 'active') {

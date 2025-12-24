@@ -47,6 +47,7 @@ class WebImageWidgetState extends State<WebImageWidget> {
             ..style.width = '${widget.width}px'
             ..style.height = '${widget.height}px'
             ..style.objectFit = 'cover'
+            ..style.objectPosition = 'center'
             ..style.borderRadius = '50%'
             ..crossOrigin = 'anonymous' // Try to handle CORS
             ..onError.listen((_) {

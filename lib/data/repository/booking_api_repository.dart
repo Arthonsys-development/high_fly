@@ -1,5 +1,5 @@
-import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../config/network/api_client.dart';
 import '../../config/network/api_constants.dart';
 import '../models/request_models/booking_request_model.dart';
@@ -8,6 +8,9 @@ import '../models/response_models/booking_response_model.dart';
 import '../models/response_models/hold_response_model.dart';
 import '../models/hold_list_model.dart';
 import '../models/booking_list_model.dart';
+
+// Conditional import for File - only available on mobile platforms
+import 'dart:io' if (dart.library.html) 'file_stub.dart' show File;
 
 class BookingApiRepository {
   final ApiClient _apiClient = ApiClient();
@@ -75,22 +78,52 @@ class BookingApiRepository {
       
       // Add files if they exist and are valid
       if (request.salarySlipPath != null && request.salarySlipPath!.isNotEmpty) {
-        final salarySlipFile = File(request.salarySlipPath!);
-        if (await salarySlipFile.exists()) {
-          formDataMap['salary_slip'] = await MultipartFile.fromFile(
-            request.salarySlipPath!,
-            filename: 'salary_slip.pdf',
-          );
+        // On web, file paths are just filenames, not real paths
+        if (kIsWeb) {
+          // On web, if it's a URL, just pass it as a string
+          if (request.salarySlipPath!.startsWith('http')) {
+            formDataMap['salary_slip_path'] = request.salarySlipPath;
+          }
+          // Otherwise, skip - web files need to be handled with file bytes
+          // For now, we'll skip file upload on web if it's not a URL
+        } else {
+          // On mobile, use File API
+          try {
+            final salarySlipFile = File(request.salarySlipPath!);
+            if (await salarySlipFile.exists()) {
+              formDataMap['salary_slip'] = await MultipartFile.fromFile(
+                request.salarySlipPath!,
+                filename: 'salary_slip.pdf',
+              );
+            }
+          } catch (e) {
+            // File doesn't exist or can't be accessed, skip
+          }
         }
       }
       
       if (request.form16APath != null && request.form16APath!.isNotEmpty) {
-        final form16AFile = File(request.form16APath!);
-        if (await form16AFile.exists()) {
-          formDataMap['form_16a'] = await MultipartFile.fromFile(
-            request.form16APath!,
-            filename: 'form_16a.pdf',
-          );
+        // On web, file paths are just filenames, not real paths
+        if (kIsWeb) {
+          // On web, if it's a URL, just pass it as a string
+          if (request.form16APath!.startsWith('http')) {
+            formDataMap['form_16a_path'] = request.form16APath;
+          }
+          // Otherwise, skip - web files need to be handled with file bytes
+          // For now, we'll skip file upload on web if it's not a URL
+        } else {
+          // On mobile, use File API
+          try {
+            final form16AFile = File(request.form16APath!);
+            if (await form16AFile.exists()) {
+              formDataMap['form_16a'] = await MultipartFile.fromFile(
+                request.form16APath!,
+                filename: 'form_16a.pdf',
+              );
+            }
+          } catch (e) {
+            // File doesn't exist or can't be accessed, skip
+          }
         }
       }
       
@@ -226,14 +259,27 @@ class BookingApiRepository {
         // Remove the path from formDataMap since we'll add it as MultipartFile
         formDataMap.remove('salary_slip_path');
         
-        // Check if it's a file path (not a URL)
-        if (!salarySlipPath.startsWith('http')) {
-          final salarySlipFile = File(salarySlipPath);
-          if (await salarySlipFile.exists()) {
-            formDataMap['salary_slip'] = await MultipartFile.fromFile(
-              salarySlipPath,
-              filename: 'salary_slip.pdf',
-            );
+        // On web, file paths are just filenames, not real paths
+        if (kIsWeb) {
+          // On web, if it's a URL, just pass it as a string
+          if (salarySlipPath.startsWith('http')) {
+            formDataMap['salary_slip_path'] = salarySlipPath;
+          }
+          // Otherwise, skip - web files need to be handled with file bytes
+        } else {
+          // On mobile, check if it's a file path (not a URL)
+          if (!salarySlipPath.startsWith('http')) {
+            try {
+              final salarySlipFile = File(salarySlipPath);
+              if (await salarySlipFile.exists()) {
+                formDataMap['salary_slip'] = await MultipartFile.fromFile(
+                  salarySlipPath,
+                  filename: 'salary_slip.pdf',
+                );
+              }
+            } catch (e) {
+              // File doesn't exist or can't be accessed, skip
+            }
           }
         }
       }
@@ -243,14 +289,27 @@ class BookingApiRepository {
         // Remove the path from formDataMap since we'll add it as MultipartFile
         formDataMap.remove('form_16a_path');
         
-        // Check if it's a file path (not a URL)
-        if (!form16APath.startsWith('http')) {
-          final form16AFile = File(form16APath);
-          if (await form16AFile.exists()) {
-            formDataMap['form_16a'] = await MultipartFile.fromFile(
-              form16APath,
-              filename: 'form_16a.pdf',
-            );
+        // On web, file paths are just filenames, not real paths
+        if (kIsWeb) {
+          // On web, if it's a URL, just pass it as a string
+          if (form16APath.startsWith('http')) {
+            formDataMap['form_16a_path'] = form16APath;
+          }
+          // Otherwise, skip - web files need to be handled with file bytes
+        } else {
+          // On mobile, check if it's a file path (not a URL)
+          if (!form16APath.startsWith('http')) {
+            try {
+              final form16AFile = File(form16APath);
+              if (await form16AFile.exists()) {
+                formDataMap['form_16a'] = await MultipartFile.fromFile(
+                  form16APath,
+                  filename: 'form_16a.pdf',
+                );
+              }
+            } catch (e) {
+              // File doesn't exist or can't be accessed, skip
+            }
           }
         }
       }

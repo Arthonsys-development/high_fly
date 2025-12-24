@@ -526,6 +526,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Future<void> _showImageSourceDialog() async {
+    // On web, directly open gallery without showing dialog
+    if (kIsWeb) {
+      ref.read(profileProvider.notifier)
+          .updateProfilePhotoFromSource(ImageSource.gallery);
+      return;
+    }
+    
     showDialog(
       context: context,
       builder: (BuildContext context) {

@@ -47,6 +47,7 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
   int _currentStep = 0; // 0: Project & Plot, 1: Customer, 2: Payment, 3: Bank Details, 4: Review & Confirm
   int _currentHoldStep = 0; // 0: Project & Plot, 1: Customer, 2: Hold Details, 4: Bank Details, 5: Review & Confirm
   String _selectedPlotPrice = '85000'; // Default price, will be updated from plot selection
+  final ScrollController _scrollController = ScrollController();
   
   // Booking data to pass to review section
   local_model.Project? _selectedProject;
@@ -85,7 +86,17 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
   @override
   void dispose() {
     _tabController.dispose();
+    _scrollController.dispose();
     super.dispose();
+  }
+  
+  // Helper method to reset scroll position
+  void _resetScrollPosition() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.jumpTo(0);
+      }
+    });
   }
 
 
@@ -302,6 +313,7 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
                 .toList();
             
             return BookingFormSection(
+              key: Key('booking_step_$_currentStep'),
               title: actionType,
               projects: localProjects,
               nextButtonText: "Next",
@@ -317,6 +329,7 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
                   _selectedPlotPrice = selectedPlot?.price.toString() ?? '85000';
                   _currentStep = 1; // Move to customer selection
                 });
+                _resetScrollPosition();
               },
             );
           },
@@ -324,6 +337,7 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
       } else if (_currentStep == 1) {
         // Customer Selection Step
         return CustomerSelectionSection(
+          key: Key('booking_step_$_currentStep'),
           title: actionType,
           customers: customers,
           nextButtonText: "Next",
@@ -338,11 +352,13 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
               _selectedCustomer = selectedCustomer;
               _currentStep = 2; // Move to payment details
             });
+            _resetScrollPosition();
           },
         );
       } else if (_currentStep == 2) {
         // Payment Details Step
         return PaymentDetailsSection(
+          key: Key('booking_step_$_currentStep'),
           title: actionType,
           paymentAmount: _selectedPlotPrice,
           nextButtonText: "Next",
@@ -357,11 +373,13 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
               _paymentDetails = paymentDetails;
               _currentStep = 3; // Move to bank details
             });
+            _resetScrollPosition();
           },
         );
       } else if (_currentStep == 3) {
         // Bank Details Step
         return BankDetailsSection(
+          key: Key('booking_step_$_currentStep'),
           title: actionType,
           nextButtonText: "Next",
           initialBankDetails: _bankDetails,
@@ -375,6 +393,7 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
               _bankDetails = bankDetails;
               _currentStep = 4; // Move to review & confirm
             });
+            _resetScrollPosition();
           },
         );
       } else {
@@ -386,6 +405,7 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
            // String agentId = await _secureStorage.read(key: SharedPreferenceStrings.id) ?? '';
 
             return ReviewConfirmSection(
+              key: Key('booking_step_$_currentStep'),
               title: "Review & Confirm",
               nextButtonText: actionType,
               onPrevious: () {
@@ -415,6 +435,8 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
     // Wrap content for web with better styling
     if (kIsWeb) {
       return SingleChildScrollView(
+        controller: _scrollController,
+        key: PageStorageKey('booking_step_$_currentStep'),
         child: Center(
           child: Container(
             constraints: const BoxConstraints(maxWidth: 800),
@@ -426,6 +448,7 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
       );
     }
 
+    // For mobile, use a key to force recreation when step changes
     return buildStepContent();
   }
 
@@ -463,6 +486,7 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
                 .toList();
             
             return BookingFormSection(
+              key: Key('hold_step_$_currentHoldStep'),
               title: actionType,
               projects: localProjects,
               nextButtonText: "Next",
@@ -478,6 +502,7 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
                   _selectedPlotPrice = selectedPlot?.price.toString() ?? '85000';
                   _currentHoldStep = 1; // Move to customer selection
                 });
+                _resetScrollPosition();
               },
             );
           },
@@ -485,6 +510,7 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
       } else if (_currentHoldStep == 1) {
         // Customer Selection Step
         return CustomerSelectionSection(
+          key: Key('hold_step_$_currentHoldStep'),
           title: actionType,
           customers: customers,
           nextButtonText: "Next",
@@ -499,11 +525,13 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
               _selectedCustomer = selectedCustomer;
               _currentHoldStep = 2; // Move to hold details
             });
+            _resetScrollPosition();
           },
         );
       } else if (_currentHoldStep == 2) {
         // Hold Details Step
         return HoldDetailsSection(
+          key: Key('hold_step_$_currentHoldStep'),
           title: actionType,
           nextButtonText: "Next",
           initialHoldDetails: _holdDetails,
@@ -517,11 +545,13 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
               _holdDetails = holdDetails;
               _currentHoldStep = 3; // Move to payment details
             });
+            _resetScrollPosition();
           },
         );
       }  else if (_currentHoldStep == 3) {
         // Bank Details Step
         return BankDetailsSection(
+          key: Key('hold_step_$_currentHoldStep'),
           title: "Bank Details",
           nextButtonText: "Next",
           initialBankDetails: _bankDetails,
@@ -535,6 +565,7 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
               _bankDetails = bankDetails;
               _currentHoldStep = 4; // Move to review & confirm
             });
+            _resetScrollPosition();
           },
         );
       } else {
@@ -545,6 +576,7 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
            // final agentId = userState.user?.id ?? '1'; // Default to '1' if no user data
             
             return ReviewConfirmSection(
+              key: Key('hold_step_$_currentHoldStep'),
               title: "Review & Confirm",
               nextButtonText: "Hold",
               onPrevious: () {
@@ -575,6 +607,8 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
     // Wrap content for web with better styling
     if (kIsWeb) {
       return SingleChildScrollView(
+        controller: _scrollController,
+        key: PageStorageKey('hold_step_$_currentHoldStep'),
         child: Center(
           child: Container(
             constraints: const BoxConstraints(maxWidth: 800),
@@ -586,6 +620,7 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
       );
     }
 
+    // For mobile, use a key to force recreation when step changes
     return buildStepContent();
   }
 

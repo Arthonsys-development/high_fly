@@ -1,5 +1,5 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:file_picker/file_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../../config/constant/app_colors.dart';
@@ -40,16 +40,21 @@ class _PdfUploadWidgetState extends State<PdfUploadWidget> {
   }
 
   Future<void> _requestPermission() async {
+    // Web doesn't require file picker permissions
+    if (kIsWeb) {
+      return;
+    }
+    
     // For Android 13+ (API 33+), we don't need storage permission for file picker
     // File picker uses scoped storage which doesn't require permissions
-    if (Platform.isAndroid) {
+    if (defaultTargetPlatform == TargetPlatform.android) {
       // For Android, file_picker doesn't require storage permissions
       // as it uses scoped storage (SAF - Storage Access Framework)
       return;
     }
     
     // For iOS, we need to check photos permission
-    if (Platform.isIOS) {
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
       var status = await Permission.photos.status;
       if (status.isGranted) {
         return;
@@ -117,14 +122,17 @@ class _PdfUploadWidgetState extends State<PdfUploadWidget> {
       }
 
       // Set selected file path and notify parent widget
+      // On web, file.path might be null, so use file.name instead
+      final filePath = kIsWeb ? file.name : (file.path ?? file.name);
+      
       setState(() {
-        _selectedFilePath = file.path;
+        _selectedFilePath = filePath;
         _uploadStatus = 'File selected: ${file.name}';
         _isFileTooLarge = false;
       });
 
       // Notify parent widget of file selection (without uploading)
-      widget.onFileSelected(file.path);
+      widget.onFileSelected(filePath);
     } catch (e) {
       setState(() {
         _uploadStatus = 'Error: ${e.toString()}';
