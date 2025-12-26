@@ -751,14 +751,14 @@ class VisitDetailScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
-                    Icons.contact_phone,
+                    Icons.info,
                     color: AppColors.primaryColor,
                     size: 24,
                   ),
                 ),
                 const SizedBox(width: 16),
                 const Text(
-                  "Contact Details",
+                  "Other Details",
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,

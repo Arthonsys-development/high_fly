@@ -34,6 +34,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   String _searchQuery = '';
   String? _selectedStatusFilter; // null means "All"
   bool _isDisposed = false;
+  final ScrollController _mobileScrollController = ScrollController();
+  final ScrollController _tabletDesktopScrollController = ScrollController();
 
   void onMenuItemSelected(int index) {
     if (_isDisposed) return;
@@ -91,6 +93,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     WidgetsBinding.instance.removeObserver(this);
     _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
+    _mobileScrollController.dispose();
+    _tabletDesktopScrollController.dispose();
     super.dispose();
   }
 
@@ -395,6 +399,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         ]);
       },
       child: SingleChildScrollView(
+        controller: _mobileScrollController,
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -647,6 +652,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         ]);
       },
       child: SingleChildScrollView(
+        controller: _tabletDesktopScrollController,
         physics: const AlwaysScrollableScrollPhysics(),
         padding: EdgeInsets.symmetric(
           horizontal: isTablet ? 20.0 : isDesktop ? 40.0 : 24.0,
@@ -1153,15 +1159,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
 
   // Mobile Project Card Widget
   Widget _buildMobileProjectCard(Project project) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.grey[50],
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey[200]!),
-      ),
-      child: Column(
+    return InkWell(
+      onTap: () => context.push(Routes.projectDetailScreen, extra: project),
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.grey[50],
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.grey[200]!),
+        ),
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Stack(
@@ -1229,7 +1238,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           ),
           const SizedBox(height: 8),
           InkWell(
-            onTap: () => _openGoogleMaps(project),
+            onTap: () {
+              // Stop event propagation to prevent card navigation
+              _openGoogleMaps(project);
+            },
             borderRadius: BorderRadius.circular(4),
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 4.0),
@@ -1293,6 +1305,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           ]
 
         ],
+        ),
       ),
     );
   }
@@ -1312,13 +1325,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               width: 1,
             ),
           ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () {
-                debugPrint("Project tapped: ${project.name}");
-              },
-              borderRadius: BorderRadius.circular(12),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () => context.push(Routes.projectDetailScreen, extra: project),
+                borderRadius: BorderRadius.circular(12),
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Row(
@@ -1513,9 +1524,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           ),
         ),
         // Table Rows
-        ...projects.asMap().entries.map((entry) {
-          final index = entry.key;
-          final project = entry.value;
+        ...projects.map((project) {
 
           return Container(
             margin: const EdgeInsets.symmetric(horizontal: 0),
@@ -1530,9 +1539,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             child: Material(
               color: Colors.transparent,
               child: InkWell(
-                onTap: () {
-                  debugPrint("Row tapped at index: $index, Project: ${project.name}");
-                },
+                onTap: () => context.push(Routes.projectDetailScreen, extra: project),
                 hoverColor: AppColors.textFieldBGColor.withOpacity(0.5),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),

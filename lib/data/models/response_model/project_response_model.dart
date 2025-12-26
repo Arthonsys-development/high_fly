@@ -1,3 +1,106 @@
+class MapChartFile {
+  final int id;
+  final String file;
+  final String fileUrl;
+  final String thumbnail;
+  final String thumbnailUrl;
+  final String fileType;
+  final String fileName;
+  final int fileSize;
+  final String fileSizeDisplay;
+  final DateTime? createdAt;
+
+  MapChartFile({
+    required this.id,
+    required this.file,
+    required this.fileUrl,
+    required this.thumbnail,
+    required this.thumbnailUrl,
+    required this.fileType,
+    required this.fileName,
+    required this.fileSize,
+    required this.fileSizeDisplay,
+    this.createdAt,
+  });
+
+  factory MapChartFile.fromJson(Map<String, dynamic> json) {
+    DateTime? createdAt;
+    if (json['created_at'] != null) {
+      try {
+        if (json['created_at'] is String) {
+          createdAt = DateTime.parse(json['created_at']);
+        }
+      } catch (e) {
+        createdAt = null;
+      }
+    }
+
+    return MapChartFile(
+      id: json['id'] ?? 0,
+      file: json['file']?.toString() ?? '',
+      fileUrl: json['file_url']?.toString() ?? json['file']?.toString() ?? '',
+      thumbnail: json['thumbnail']?.toString() ?? '',
+      thumbnailUrl: json['thumbnail_url']?.toString() ?? json['thumbnail']?.toString() ?? '',
+      fileType: json['file_type']?.toString() ?? '',
+      fileName: json['file_name']?.toString() ?? '',
+      fileSize: json['file_size'] is int 
+          ? json['file_size'] as int 
+          : (json['file_size'] is String 
+              ? int.tryParse(json['file_size']) ?? 0 
+              : 0),
+      fileSizeDisplay: json['file_size_display']?.toString() ?? '',
+      createdAt: createdAt,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'file': file,
+      'file_url': fileUrl,
+      'thumbnail': thumbnail,
+      'thumbnail_url': thumbnailUrl,
+      'file_type': fileType,
+      'file_name': fileName,
+      'file_size': fileSize,
+      'file_size_display': fileSizeDisplay,
+      'created_at': createdAt?.toIso8601String(),
+    };
+  }
+}
+
+class MapChart {
+  final int id;
+  final List<MapChartFile> files;
+
+  MapChart({
+    required this.id,
+    required this.files,
+  });
+
+  factory MapChart.fromJson(Map<String, dynamic> json) {
+    List<MapChartFile> filesList = [];
+    if (json['files'] != null && json['files'] is List) {
+      filesList = (json['files'] as List)
+          .whereType<Map<String, dynamic>>()
+          .map((item) => MapChartFile.fromJson(item))
+          .toList();
+    }
+
+    return MapChart(
+      id: json['id'] ?? 0,
+      files: filesList,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'files': files.map((file) => file.toJson()).toList(),
+    };
+  }
+}
+
 class Project {
   final int id;
   final String name;
@@ -16,6 +119,7 @@ class Project {
   final double? latitude;
   final double? longitude;
   final String? budget;
+  final MapChart? mapCharts;
 
   Project({
     required this.id,
@@ -35,6 +139,7 @@ class Project {
     this.latitude,
     this.longitude,
     this.budget,
+    this.mapCharts,
   });
 
   factory Project.fromJson(Map<String, dynamic> json) {
@@ -135,6 +240,16 @@ class Project {
       }
     }
 
+    // Handle map_charts field (can be null or an object)
+    MapChart? mapCharts;
+    if (json['map_charts'] != null && json['map_charts'] is Map<String, dynamic>) {
+      try {
+        mapCharts = MapChart.fromJson(json['map_charts'] as Map<String, dynamic>);
+      } catch (e) {
+        mapCharts = null;
+      }
+    }
+
     return Project(
       id: id,
       name: name,
@@ -153,6 +268,7 @@ class Project {
       latitude: latitude,
       longitude: longitude,
       budget: budget,
+      mapCharts: mapCharts,
     );
   }
 
@@ -175,12 +291,13 @@ class Project {
       'start_date': startDate?.toIso8601String(),
       'end_date': endDate?.toIso8601String(),
       'created_at': createdAt?.toIso8601String(),
-      'total_plots': totalPlotCount,
-      'available_plots': availablePlotCount,
+      'total_plot_count': totalPlotCount,
+      'available_plot_count': availablePlotCount,
       'sub_address': subAddress,
       'latitude': latitude,
       'longitude': longitude,
       'budget': budget,
+      'map_charts': mapCharts?.toJson(),
     };
   }
 }

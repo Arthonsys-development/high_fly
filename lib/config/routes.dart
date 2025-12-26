@@ -14,6 +14,7 @@ import '../module/screens/onboarding/splash_screen.dart';
 import '../module/screens/visitors/visit_detail_screen.dart';
 import '../module/screens/profile/profile_screen.dart';
 import '../module/widgets/add_visit_dialog.dart';
+import '../module/screens/projects/project_detail_screen.dart';
 
 class Routes {
   static String splash = '/';
@@ -25,6 +26,7 @@ class Routes {
   static String addVisitScreen = '/addVisitScreen';
   static String visitDetailScreen = '/visitDetailScreen';
   static String profileScreen = '/profileScreen';
+  static String projectDetailScreen = '/projectDetailScreen';
   static bool isPickingImage = false;
 }
 
@@ -51,6 +53,11 @@ final GoRouter router = GoRouter(
 
     if (location == Routes.visitDetailScreen) {
       debugPrint('Already on visit detail screen, no redirect needed');
+      return null;
+    }
+
+    if (location == Routes.projectDetailScreen) {
+      debugPrint('Already on project detail screen, no redirect needed');
       return null;
     }
 
@@ -158,6 +165,15 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: Routes.profileScreen,
       builder: (context, state) => const ProfileScreen(),
+    ),
+    
+    GoRoute(
+      path: Routes.projectDetailScreen,
+      builder: (context, state) {
+        final project = state.extra as Project;
+        debugPrint('Building ProjectDetailScreen with project: ${project.name}');
+        return ProjectDetailScreen(project: project);
+      },
     ),
   ],
 );
