@@ -88,7 +88,6 @@ class VisitsController extends Notifier<VisitsState> {
     }
   }
 
-  @override
   void dispose() {
     _isDisposed = true;
     // super.dispose();

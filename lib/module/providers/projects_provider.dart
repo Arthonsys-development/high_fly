@@ -123,7 +123,6 @@ class ProjectsController extends Notifier<ProjectsState> {
     }
   }
 
-  @override
   void dispose() {
     _isDisposed = true;
     // super.dispose();

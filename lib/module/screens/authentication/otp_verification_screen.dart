@@ -704,7 +704,7 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.1),
                 blurRadius: 20,
                 offset: Offset(0, 10),
               ),
