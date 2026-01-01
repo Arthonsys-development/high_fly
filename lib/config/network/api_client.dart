@@ -57,7 +57,7 @@ class ApiClient {
   void _init() {
     String baseUrl;
     try {
-      baseUrl = dotenv.env['BASE_URL'] ?? 'https://api.example.com';
+      baseUrl = dotenv.env['BASE_URL'] ?? 'https://2bb922f2af1d.ngrok-free.app/api/v1/';
       debugPrint('API Client: Using base URL: $baseUrl');
     } catch (e) {
       debugPrint('API Client: Error getting BASE_URL from environment: $e');
