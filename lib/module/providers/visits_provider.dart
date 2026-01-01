@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:highfly/data/repository/auth_api_repository.dart';
 import 'package:highfly/data/models/response_model/visit_response_model.dart';
@@ -36,7 +37,7 @@ class VisitsController extends Notifier<VisitsState> {
   VisitsState build() {
     _authApiRepository = AuthApiRepository();
     // Load visits when the provider is initialized
-    print('VisitsController: Initializing and loading visits...');
+    debugPrint('VisitsController: Initializing and loading visits...');
     loadVisits();
     return VisitsState();
   }
@@ -44,18 +45,18 @@ class VisitsController extends Notifier<VisitsState> {
   // Load visits from API
   Future<void> loadVisits() async {
     if (_isDisposed) return;
-    print('VisitsController: Loading visits...');
+    debugPrint('VisitsController: Loading visits...');
     state = state.copyWith(isLoading: true, error: null);
 
     try {
       final result = await _authApiRepository.getVisits();
       if (_isDisposed) return;
-      print('VisitsController: Visits API result success: ${result['success']}');
-      print('VisitsController: Visits API result data length: ${result['data']?.length ?? 0}');
+      debugPrint('VisitsController: Visits API result success: ${result['success']}');
+      debugPrint('VisitsController: Visits API result data length: ${result['data']?.length ?? 0}');
       
       if (result['success']) {
         final visits = result['data'] as List<Visit>;
-        print('VisitsController: Successfully loaded ${visits.length} visits');
+        debugPrint('VisitsController: Successfully loaded ${visits.length} visits');
         if (!_isDisposed) {
           state = state.copyWith(
             isLoading: false,
@@ -63,11 +64,11 @@ class VisitsController extends Notifier<VisitsState> {
             error: null,
           );
         }
-        print('VisitsController: State updated with ${visits.length} visits');
+        debugPrint('VisitsController: State updated with ${visits.length} visits');
       } else {
         if (_isDisposed) return;
         final errorMessage = result['message'] as String? ?? 'Failed to load visits';
-        print('VisitsController: Failed to load visits: $errorMessage');
+        debugPrint('VisitsController: Failed to load visits: $errorMessage');
         if (!_isDisposed) {
           state = state.copyWith(
             isLoading: false,
@@ -77,8 +78,8 @@ class VisitsController extends Notifier<VisitsState> {
       }
     } catch (e, stackTrace) {
       if (_isDisposed) return;
-      print('VisitsController: Exception while loading visits: $e');
-      print('VisitsController: Stack trace: $stackTrace');
+      debugPrint('VisitsController: Exception while loading visits: $e');
+      debugPrint('VisitsController: Stack trace: $stackTrace');
       if (!_isDisposed) {
         state = state.copyWith(
           isLoading: false,

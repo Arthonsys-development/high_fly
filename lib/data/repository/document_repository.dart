@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
 import 'package:highfly/config/network/api_client.dart';
 import 'package:highfly/config/network/api_constants.dart';
 import 'package:http_parser/http_parser.dart';
@@ -14,7 +15,7 @@ class DocumentRepository {
     Map<String, String>? additionalFields,
   }) async {
     try {
-      print('📄 DocumentRepository: Uploading document...');
+      debugPrint('📄 DocumentRepository: Uploading document...');
       
       // Determine content type based on file extension
       String contentType = 'application/octet-stream';
@@ -46,8 +47,8 @@ class DocumentRepository {
         data: formData,
       );
 
-      print('✅ DocumentRepository: Document uploaded successfully');
-      print('📊 DocumentRepository: Response data: ${response.data}');
+      debugPrint('✅ DocumentRepository: Document uploaded successfully');
+      debugPrint('📊 DocumentRepository: Response data: ${response.data}');
 
       // Return response data
       return {
@@ -56,8 +57,8 @@ class DocumentRepository {
         'message': 'Document uploaded successfully',
       };
     } on DioException catch (e) {
-      print('❌ DocumentRepository: Error uploading document - ${e.message}');
-      print('📊 DocumentRepository: Error response: ${e.response?.data}');
+      debugPrint('❌ DocumentRepository: Error uploading document - ${e.message}');
+      debugPrint('📊 DocumentRepository: Error response: ${e.response?.data}');
       
       return {
         'success': false,
@@ -65,7 +66,7 @@ class DocumentRepository {
         'message': 'Failed to upload document: ${e.message}',
       };
     } catch (e) {
-      print('❌ DocumentRepository: Unexpected error - $e');
+      debugPrint('❌ DocumentRepository: Unexpected error - $e');
       return {
         'success': false,
         'error': e.toString(),

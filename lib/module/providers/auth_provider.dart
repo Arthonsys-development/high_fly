@@ -234,12 +234,12 @@ class AuthController extends Notifier<AuthState> {
 
         // Load user profile after successful login
         try {
-          print('🔄 AuthProvider: Loading user profile after login...');
+          debugPrint('🔄 AuthProvider: Loading user profile after login...');
           final profileNotifier = ref.read(profileProvider.notifier);
           await profileNotifier.loadProfile();
-          print('✅ AuthProvider: Profile loaded successfully');
+          debugPrint('✅ AuthProvider: Profile loaded successfully');
         } catch (e) {
-          print('⚠️ AuthProvider: Failed to load profile after login - $e');
+          debugPrint('⚠️ AuthProvider: Failed to load profile after login - $e');
           // Don't fail the login if profile loading fails
         }
 

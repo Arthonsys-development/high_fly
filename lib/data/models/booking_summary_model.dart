@@ -35,7 +35,7 @@ class BookingSummary {
       selectedProject: selectedProject ?? this.selectedProject,
       selectedPlot: selectedPlot ?? this.selectedPlot,
       selectedCustomer: selectedCustomer ?? this.selectedCustomer,
-      holdDetails: holdDetails ?? this.holdDetails,
+      holdDetails: holdDetails,
       bankDetails: bankDetails ?? this.bankDetails,
     ) : BookingSummary(
       selectedProject: selectedProject ?? this.selectedProject,

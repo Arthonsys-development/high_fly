@@ -11,7 +11,7 @@ import 'package:highfly/module/utils/location_service.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io' show File;
 import 'dart:typed_data' show Uint8List;
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode;
 import 'package:permission_handler/permission_handler.dart';
 import 'dart:io' show Platform;
 import 'package:geolocator/geolocator.dart';
@@ -148,18 +148,20 @@ class _AddVisitDialogState extends ConsumerState<AddVisitDialog>
   @override
   Widget build(BuildContext context) {
     debugPrint('AddVisitDialog build called, isPickingImage: $_isPickingImage, isInBackground: $_isInBackground');
-    return WillPopScope(
-      onWillPop: () async {
-        // If we're picking an image, prevent back navigation
+    return PopScope(
+      onPopInvokedWithResult: (bool didPop, Object? result) async {
+        // If the route was already popped (e.g., by system), do nothing
+        if (didPop) return;
+
+        // Prevent back navigation during image picking
         if (_isPickingImage) {
-          debugPrint('Preventing back navigation during image picking');
-          return false;
+          if (kDebugMode) debugPrint('Preventing back during image picking');
+          return; // Implicitly cancels pop by not calling Navigator.pop
         }
-        // Use context.go to navigate back to dashboard instead of pop
-        if (mounted) {
-          context.go(Routes.dashboardScreen);
-        }
-        return false; // Prevent default pop behavior
+
+        // Navigate to dashboard instead of popping
+        if (!context.mounted) return;
+        context.go(Routes.dashboardScreen);
       },
       child: Scaffold(
         appBar: PreferredSize(
@@ -198,7 +200,7 @@ class _AddVisitDialogState extends ConsumerState<AddVisitDialog>
           constraints: const BoxConstraints(maxWidth: 900),
           child: Card(
             elevation: 4,
-            shadowColor: Colors.black.withOpacity(0.1),
+            shadowColor: Colors.black.withValues(alpha: 0.1),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
@@ -504,7 +506,7 @@ class _AddVisitDialogState extends ConsumerState<AddVisitDialog>
         ),
         const SizedBox(height: 4),
         DropdownButtonFormField<String>(
-          value: selectedVisitType,
+          initialValue: selectedVisitType,
           hint: Text(
             "Select type",
             style: TextStyle(
@@ -654,7 +656,7 @@ class _AddVisitDialogState extends ConsumerState<AddVisitDialog>
               color: Colors.grey[100],
               boxShadow: kIsWeb ? [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 4,
                   offset: const Offset(0, 2),
                 ),

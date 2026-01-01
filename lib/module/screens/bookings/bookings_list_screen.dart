@@ -257,7 +257,7 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: DropdownButtonFormField<String>(
-                      value: _selectedStatusFilter,
+                      initialValue: _selectedStatusFilter,
                       dropdownColor: Colors.white,
                       decoration: InputDecoration(
                         hintText: "Status",
@@ -554,10 +554,10 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                       decoration: BoxDecoration(
-                        color: AppColors.primaryColor.withOpacity(0.1),
+                        color: AppColors.primaryColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: AppColors.primaryColor.withOpacity(0.2),
+                          color: AppColors.primaryColor.withValues(alpha: 0.2),
                           width: 1,
                         ),
                       ),
@@ -653,7 +653,7 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.06),
+                        color: Colors.black.withValues(alpha: 0.06),
                         blurRadius: 20,
                         offset: const Offset(0, 4),
                       ),
@@ -668,7 +668,7 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
                         decoration: BoxDecoration(
                           border: Border(
                             bottom: BorderSide(
-                              color: Colors.grey.withOpacity(0.1),
+                              color: Colors.grey.withValues(alpha: 0.1),
                               width: 1,
                             ),
                           ),
@@ -684,7 +684,7 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
                                   color: AppColors.textFieldBGColor,
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
-                                    color: Colors.grey.withOpacity(0.2),
+                                    color: Colors.grey.withValues(alpha: 0.2),
                                     width: 1,
                                   ),
                                 ),
@@ -698,7 +698,7 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
                                   decoration: InputDecoration(
                                     hintText: "Search by plot code, customer name, phone...",
                                     hintStyle: TextStyle(
-                                      color: AppColors.secondaryTextColor.withOpacity(0.6),
+                                      color: AppColors.secondaryTextColor.withValues(alpha: 0.6),
                                       fontSize: 15,
                                     ),
                                     prefixIcon: const Icon(
@@ -739,17 +739,17 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
                                 color: AppColors.textFieldBGColor,
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
-                                  color: Colors.grey.withOpacity(0.2),
+                                  color: Colors.grey.withValues(alpha: 0.2),
                                   width: 1,
                                 ),
                               ),
                               child: DropdownButtonFormField<String>(
-                                value: _selectedStatusFilter,
+                                initialValue: _selectedStatusFilter,
                                 dropdownColor: Colors.white,
                                 decoration: InputDecoration(
                                   hintText: "Status",
                                   hintStyle: TextStyle(
-                                    color: AppColors.secondaryTextColor.withOpacity(0.6),
+                                    color: AppColors.secondaryTextColor.withValues(alpha: 0.6),
                                     fontSize: 15,
                                   ),
                                   prefixIcon: const Icon(
@@ -798,7 +798,7 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
                                 color: AppColors.textFieldBGColor,
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
-                                  color: Colors.grey.withOpacity(0.2),
+                                  color: Colors.grey.withValues(alpha: 0.2),
                                   width: 1,
                                 ),
                               ),
@@ -847,7 +847,7 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
                                           style: TextStyle(
                                             fontSize: 15,
                                             color: _selectedDateFilter == null
-                                                ? AppColors.secondaryTextColor.withOpacity(0.6)
+                                                ? AppColors.secondaryTextColor.withValues(alpha: 0.6)
                                                 : AppColors.primaryTextColor,
                                           ),
                                           overflow: TextOverflow.ellipsis,
@@ -952,7 +952,7 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 15,
             offset: const Offset(0, 4),
           ),
@@ -995,7 +995,7 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.12),
+                    color: color.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
@@ -1086,7 +1086,7 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: statusColor.withOpacity(0.1),
+                      color: statusColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(

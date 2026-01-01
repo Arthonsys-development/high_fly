@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/material.dart';
 
 // Conditional import for web-specific helpers
 import 'web_firebase_helper.dart' if (dart.library.io) 'web_firebase_helper_stub.dart';
@@ -14,10 +15,10 @@ class FirebaseAuthRepository {
   Future<bool> _ensureFirebaseInitialized() async {
     try {
       await Firebase.initializeApp();
-      print('🔥 Firebase: Initialized successfully');
+      debugPrint('🔥 Firebase: Initialized successfully');
       return true;
     } catch (e) {
-      print('🔥 Firebase: Initialization error: $e');
+      debugPrint('🔥 Firebase: Initialization error: $e');
       return false;
     }
   }
@@ -43,9 +44,9 @@ class FirebaseAuthRepository {
         return;
       }
       
-      print('🔥 Firebase Auth: Starting phone verification for $phoneNumber');
-      print('🔥 Firebase Auth: Platform: ${kIsWeb ? "Web" : "Mobile"}');
-      print('🔥 Firebase Auth: Current user: ${_firebaseAuth.currentUser}');
+      debugPrint('🔥 Firebase Auth: Starting phone verification for $phoneNumber');
+      debugPrint('🔥 Firebase Auth: Platform: ${kIsWeb ? "Web" : "Mobile"}');
+      debugPrint('🔥 Firebase Auth: Current user: ${_firebaseAuth.currentUser}');
       
       if (kIsWeb) {
         // Web platform - use signInWithPhoneNumber with reCAPTCHA
@@ -65,7 +66,7 @@ class FirebaseAuthRepository {
         );
       }
     } catch (e) {
-      print('🔥 Firebase Auth: Exception during sendOTP: $e');
+      debugPrint('🔥 Firebase Auth: Exception during sendOTP: $e');
       onError('Failed to send OTP: ${e.toString()}');
     }
   }
@@ -78,8 +79,8 @@ class FirebaseAuthRepository {
     required Function() onAutoVerificationCompleted,
   }) async {
     try {
-      print('🔥 Firebase Auth Web: Starting phone sign-in for web platform');
-      print('🔥 Firebase Auth Web: Phone number: $phoneNumber');
+      debugPrint('🔥 Firebase Auth Web: Starting phone sign-in for web platform');
+      debugPrint('🔥 Firebase Auth Web: Phone number: $phoneNumber');
       
       // Initialize web Firebase helper
       await WebFirebaseAuth.initializeRecaptcha();
@@ -89,16 +90,16 @@ class FirebaseAuthRepository {
       
       try {
         // For web, we'll use the ConfirmationResult approach
-        print('🔥 Firebase Auth Web: Creating reCAPTCHA verifier');
+        debugPrint('🔥 Firebase Auth Web: Creating reCAPTCHA verifier');
         
         // Show loading state
-        print('🔥 Firebase Auth Web: Preparing reCAPTCHA...');
+        debugPrint('🔥 Firebase Auth Web: Preparing reCAPTCHA...');
         
         // Use Firebase Auth's signInWithPhoneNumber for web
         // This method automatically handles reCAPTCHA on web
         final confirmationResult = await _firebaseAuth.signInWithPhoneNumber(phoneNumber);
         
-        print('🔥 Firebase Auth Web: SMS sent successfully');
+        debugPrint('🔥 Firebase Auth Web: SMS sent successfully');
         _webConfirmationResult = confirmationResult;
         _verificationId = 'web_verification_${DateTime.now().millisecondsSinceEpoch}';
         
@@ -109,7 +110,7 @@ class FirebaseAuthRepository {
               
       } catch (e) {
         WebFirebaseAuth.hideRecaptcha();
-        print('🔥 Firebase Auth Web: Phone verification error: $e');
+        debugPrint('🔥 Firebase Auth Web: Phone verification error: $e');
         
         // Handle specific web authentication errors
         if (e.toString().contains('auth/invalid-phone-number')) {
@@ -131,7 +132,7 @@ class FirebaseAuthRepository {
       
     } catch (e) {
       WebFirebaseAuth.hideRecaptcha();
-      print('🔥 Firebase Auth Web: Setup error: $e');
+      debugPrint('🔥 Firebase Auth Web: Setup error: $e');
       onError('Web phone authentication setup error: ${e.toString()}');
     }
   }
@@ -147,32 +148,32 @@ class FirebaseAuthRepository {
       await _firebaseAuth.verifyPhoneNumber(
         phoneNumber: phoneNumber,
         verificationCompleted: (PhoneAuthCredential credential) async {
-          print('🔥 Firebase Auth: Auto-verification completed');
+          debugPrint('🔥 Firebase Auth: Auto-verification completed');
           // Auto-verification completed
           try {
             await _firebaseAuth.signInWithCredential(credential);
             onAutoVerificationCompleted();
           } catch (e) {
-            print('🔥 Firebase Auth: Auto verification failed: $e');
+            debugPrint('🔥 Firebase Auth: Auto verification failed: $e');
             onError('Auto verification failed: ${e.toString()}');
           }
         },
         verificationFailed: (FirebaseAuthException e) {
-          print('🔥 Firebase Auth: Verification failed with code: ${e.code}');
-          print('🔥 Firebase Auth: Error message: ${e.message}');
-          print('🔥 Firebase Auth: Error details: ${e.toString()}');
+          debugPrint('🔥 Firebase Auth: Verification failed with code: ${e.code}');
+          debugPrint('🔥 Firebase Auth: Error message: ${e.message}');
+          debugPrint('🔥 Firebase Auth: Error details: ${e.toString()}');
           _handleMobileAuthError(e, onError);
         },
         codeSent: (String verificationId, int? resendToken) {
-          print('🔥 Firebase Auth: Code sent successfully');
-          print('🔥 Firebase Auth: Verification ID: $verificationId');
-          print('🔥 Firebase Auth: Resend token: $resendToken');
+          debugPrint('🔥 Firebase Auth: Code sent successfully');
+          debugPrint('🔥 Firebase Auth: Verification ID: $verificationId');
+          debugPrint('🔥 Firebase Auth: Resend token: $resendToken');
           _verificationId = verificationId;
           onCodeSent(verificationId);
         },
         codeAutoRetrievalTimeout: (String verificationId) {
-          print('🔥 Firebase Auth: Code auto-retrieval timeout');
-          print('🔥 Firebase Auth: Verification ID: $verificationId');
+          debugPrint('🔥 Firebase Auth: Code auto-retrieval timeout');
+          debugPrint('🔥 Firebase Auth: Verification ID: $verificationId');
           // Even though auto-retrieval timed out, the OTP was still sent
           // So we should call onCodeSent to notify that the code was sent
           _verificationId = verificationId;
@@ -181,8 +182,8 @@ class FirebaseAuthRepository {
         timeout: const Duration(seconds: 60),
       );
     } catch (e, stackTrace) {
-      print('🔥 Firebase Auth: Unexpected error in verifyPhoneNumber: $e');
-      print('🔥 Firebase Auth: Stack trace: $stackTrace');
+      debugPrint('🔥 Firebase Auth: Unexpected error in verifyPhoneNumber: $e');
+      debugPrint('🔥 Firebase Auth: Stack trace: $stackTrace');
       
       // Handle the specific iOS crash scenario
       if (e.toString().contains('nil') && e.toString().contains('implicitly unwrapping')) {
@@ -247,7 +248,7 @@ class FirebaseAuthRepository {
         return await _verifyOTPMobile(otpCode, verificationId);
       }
     } catch (e) {
-      print('🔥 Firebase Auth: Exception during verifyOTP: $e');
+      debugPrint('🔥 Firebase Auth: Exception during verifyOTP: $e');
       rethrow;
     }
   }
@@ -260,7 +261,7 @@ class FirebaseAuthRepository {
       }
       
       final UserCredential result = await _webConfirmationResult!.confirm(otpCode);
-      print('🔥 Firebase Auth Web: OTP verification successful');
+      debugPrint('🔥 Firebase Auth Web: OTP verification successful');
       return result;
     } on FirebaseAuthException catch (e) {
       String errorMessage;
@@ -294,7 +295,7 @@ class FirebaseAuthRepository {
       );
 
       final UserCredential result = await _firebaseAuth.signInWithCredential(credential);
-      print('🔥 Firebase Auth Mobile: OTP verification successful');
+      debugPrint('🔥 Firebase Auth Mobile: OTP verification successful');
       return result;
     } on FirebaseAuthException catch (e) {
       String errorMessage;
@@ -351,7 +352,7 @@ class FirebaseAuthRepository {
     try {
       return await _firebaseAuth.currentUser?.getIdToken();
     } catch (e) {
-      print('🔥 Firebase Auth: Failed to get ID token: $e');
+      debugPrint('🔥 Firebase Auth: Failed to get ID token: $e');
       return null;
     }
   }
@@ -361,7 +362,7 @@ class FirebaseAuthRepository {
     try {
       return await _firebaseAuth.currentUser?.getIdToken(true);
     } catch (e) {
-      print('🔥 Firebase Auth: Failed to get ID token with refresh: $e');
+      debugPrint('🔥 Firebase Auth: Failed to get ID token with refresh: $e');
       return null;
     }
   }

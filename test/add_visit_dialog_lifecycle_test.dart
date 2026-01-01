@@ -19,6 +19,7 @@ void main() {
         createdAt: DateTime.now(),
         totalPlotCount: 1,
         availablePlotCount: 1,
+        subAddress: '',
       );
       
       // Verify that the widget can be created

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
@@ -39,15 +41,24 @@ class LocationService {
       }
 
       // Get current position
-      Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-        timeLimit: const Duration(seconds: 15),
-      );
-
-      return {
-        'latitude': position.latitude,
-        'longitude': position.longitude,
-      };
+      Position? position;
+      try {
+        position = await Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.high,
+          ),
+        ).timeout(const Duration(seconds: 15));
+        return {
+          'latitude': position.latitude,
+          'longitude': position.longitude,
+        };
+      } on TimeoutException {
+        // Handle timeout
+        debugPrint('Location request timed out');
+      } catch (e) {
+        // Handle other errors (e.g., permission denied, location disabled)
+        debugPrint('Error getting location: $e');
+      }
     } on MissingPluginException catch (e) {
       debugPrint('Geolocator plugin not properly registered: $e');
       debugPrint('Please restart the app after adding the geolocator dependency');
@@ -56,36 +67,43 @@ class LocationService {
       debugPrint('Error getting location: $e');
       return null;
     }
+    return null;
   }
 
   /// Get location specifically for web platform
   Future<Map<String, double>?> _getWebLocation() async {
     try {
-      debugPrint('Getting location for web platform...');
-      
-      // For web, directly request location permission and get position
-      LocationPermission permission = await Geolocator.requestPermission();
-      
-      if (permission == LocationPermission.denied || 
+      if (!kDebugMode) debugPrint('Getting location for web platform...');
+
+      final permission = await Geolocator.requestPermission();
+
+      if (permission == LocationPermission.denied ||
           permission == LocationPermission.deniedForever) {
-        debugPrint('Location permission denied on web');
+        if (!kDebugMode) debugPrint('Location permission denied on web');
         return null;
       }
 
-      // Get current position with web-optimized settings
-      Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.medium, // Use medium accuracy for web
-        timeLimit: const Duration(seconds: 20), // Longer timeout for web
-      );
+      // Use LocationSettings (no platform-specific params needed in v10+)
+      // Wrap in timeout manually since `timeLimit` is removed
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.medium,
+        ),
+      ).timeout(const Duration(seconds: 20));
 
-      debugPrint('Web location obtained: ${position.latitude}, ${position.longitude}');
-      
+      if (!kDebugMode) {
+        debugPrint('Web location obtained: ${position.latitude}, ${position.longitude}');
+      }
+
       return {
         'latitude': position.latitude,
         'longitude': position.longitude,
       };
+    } on TimeoutException {
+      if (!kDebugMode) debugPrint('Location request timed out on web');
+      return null;
     } catch (e) {
-      debugPrint('Error getting web location: $e');
+      if (!kDebugMode) debugPrint('Error getting web location: $e');
       return null;
     }
   }

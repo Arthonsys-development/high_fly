@@ -42,7 +42,7 @@ class PlotDetailsCard extends StatelessWidget {
         ) : null,
         boxShadow: kIsWeb ? [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -127,7 +127,7 @@ class PlotDetailsCard extends StatelessWidget {
       width: double.infinity,
       padding: EdgeInsets.all(kIsWeb ? 20 : 16),
       decoration: BoxDecoration(
-        color: AppColors.primaryColor.withOpacity(0.02),
+        color: AppColors.primaryColor.withValues(alpha: 0.02),
         borderRadius: BorderRadius.circular(kIsWeb ? 12 : 12),
         border: Border.all(
           color: AppColors.lightGreyBorderColor,
@@ -154,7 +154,7 @@ class PlotDetailsCard extends StatelessWidget {
                   vertical: kIsWeb ? 6 : 4,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.successColor.withOpacity(0.12),
+                  color: AppColors.successColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(

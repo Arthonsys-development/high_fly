@@ -269,7 +269,7 @@ class _VisitorsScreenState extends ConsumerState<VisitorsScreen>
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: DropdownButtonFormField<String>(
-                    value: _selectedVisitTypeFilter,
+                    initialValue: _selectedVisitTypeFilter,
                     dropdownColor: Colors.white,
                     decoration: InputDecoration(
                       hintText: "Type",
@@ -557,10 +557,10 @@ class _VisitorsScreenState extends ConsumerState<VisitorsScreen>
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                       decoration: BoxDecoration(
-                        color: AppColors.primaryColor.withOpacity(0.1),
+                        color: AppColors.primaryColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: AppColors.primaryColor.withOpacity(0.2),
+                          color: AppColors.primaryColor.withValues(alpha: 0.2),
                           width: 1,
                         ),
                       ),
@@ -616,7 +616,7 @@ class _VisitorsScreenState extends ConsumerState<VisitorsScreen>
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.06),
+                        color: Colors.black.withValues(alpha: 0.06),
                         blurRadius: 20,
                         offset: const Offset(0, 4),
                       ),
@@ -631,7 +631,7 @@ class _VisitorsScreenState extends ConsumerState<VisitorsScreen>
                         decoration: BoxDecoration(
                           border: Border(
                             bottom: BorderSide(
-                              color: Colors.grey.withOpacity(0.1),
+                              color: Colors.grey.withValues(alpha: 0.1),
                               width: 1,
                             ),
                           ),
@@ -647,7 +647,7 @@ class _VisitorsScreenState extends ConsumerState<VisitorsScreen>
                                   color: AppColors.textFieldBGColor,
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
-                                    color: Colors.grey.withOpacity(0.2),
+                                    color: Colors.grey.withValues(alpha: 0.2),
                                     width: 1,
                                   ),
                                 ),
@@ -661,7 +661,7 @@ class _VisitorsScreenState extends ConsumerState<VisitorsScreen>
                                   decoration: InputDecoration(
                                     hintText: "Search by project name, visitor name, or phone...",
                                     hintStyle: TextStyle(
-                                      color: AppColors.secondaryTextColor.withOpacity(0.6),
+                                      color: AppColors.secondaryTextColor.withValues(alpha: 0.6),
                                       fontSize: 15,
                                     ),
                                     prefixIcon: const Icon(
@@ -702,17 +702,17 @@ class _VisitorsScreenState extends ConsumerState<VisitorsScreen>
                                 color: AppColors.textFieldBGColor,
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
-                                  color: Colors.grey.withOpacity(0.2),
+                                  color: Colors.grey.withValues(alpha: 0.2),
                                   width: 1,
                                 ),
                               ),
                               child: DropdownButtonFormField<String>(
-                                value: _selectedVisitTypeFilter,
+                                initialValue: _selectedVisitTypeFilter,
                                 dropdownColor: Colors.white,
                                 decoration: InputDecoration(
                                   hintText: "Visit Type",
                                   hintStyle: TextStyle(
-                                    color: AppColors.secondaryTextColor.withOpacity(0.6),
+                                    color: AppColors.secondaryTextColor.withValues(alpha: 0.6),
                                     fontSize: 15,
                                   ),
                                   prefixIcon: const Icon(
@@ -761,7 +761,7 @@ class _VisitorsScreenState extends ConsumerState<VisitorsScreen>
                                 color: AppColors.textFieldBGColor,
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
-                                  color: Colors.grey.withOpacity(0.2),
+                                  color: Colors.grey.withValues(alpha: 0.2),
                                   width: 1,
                                 ),
                               ),
@@ -810,7 +810,7 @@ class _VisitorsScreenState extends ConsumerState<VisitorsScreen>
                                           style: TextStyle(
                                             fontSize: 15,
                                             color: _selectedDateFilter == null
-                                                ? AppColors.secondaryTextColor.withOpacity(0.6)
+                                                ? AppColors.secondaryTextColor.withValues(alpha: 0.6)
                                                 : AppColors.primaryTextColor,
                                           ),
                                           overflow: TextOverflow.ellipsis,
@@ -1027,7 +1027,7 @@ class _VisitorsScreenState extends ConsumerState<VisitorsScreen>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 15,
             offset: const Offset(0, 4),
           ),
@@ -1070,7 +1070,7 @@ class _VisitorsScreenState extends ConsumerState<VisitorsScreen>
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.12),
+                    color: color.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
@@ -1124,7 +1124,7 @@ class _VisitorsScreenState extends ConsumerState<VisitorsScreen>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 15,
             offset: const Offset(0, 4),
           ),
@@ -1189,10 +1189,10 @@ class _VisitorsScreenState extends ConsumerState<VisitorsScreen>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
+        color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: color.withOpacity(0.2),
+          color: color.withValues(alpha: 0.2),
           width: 1,
         ),
       ),
@@ -1205,7 +1205,7 @@ class _VisitorsScreenState extends ConsumerState<VisitorsScreen>
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.15),
+                  color: color.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
@@ -1260,7 +1260,7 @@ class _VisitorsScreenState extends ConsumerState<VisitorsScreen>
             color: AppColors.textFieldBGColor,
             border: Border(
               bottom: BorderSide(
-                color: Colors.grey.withOpacity(0.2),
+                color: Colors.grey.withValues(alpha: 0.2),
                 width: 1,
               ),
             ),
@@ -1323,7 +1323,7 @@ class _VisitorsScreenState extends ConsumerState<VisitorsScreen>
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withValues(alpha: 0.1),
             width: 1,
           ),
         ),
@@ -1336,7 +1336,7 @@ class _VisitorsScreenState extends ConsumerState<VisitorsScreen>
               context.push(Routes.visitDetailScreen, extra: visit);
             }
           },
-          hoverColor: AppColors.textFieldBGColor.withOpacity(0.5),
+          hoverColor: AppColors.textFieldBGColor.withValues(alpha: 0.5),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
             child: Row(
@@ -1420,7 +1420,7 @@ class _VisitorsScreenState extends ConsumerState<VisitorsScreen>
                   width: 80,
                   child: Container(
                     decoration: BoxDecoration(
-                      color: AppColors.primaryColor.withOpacity(0.1),
+                      color: AppColors.primaryColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Material(
@@ -1514,10 +1514,10 @@ class _VisitorsScreenState extends ConsumerState<VisitorsScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: chipColor.withOpacity(0.15),
+        color: chipColor.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: chipColor.withOpacity(0.3),
+          color: chipColor.withValues(alpha: 0.3),
           width: 1,
         ),
       ),
@@ -1542,13 +1542,13 @@ class _VisitorsScreenState extends ConsumerState<VisitorsScreen>
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         border: Border.all(
-          color: Colors.grey.withOpacity(0.2),
+          color: Colors.grey.withValues(alpha: 0.2),
           width: 2,
         ),
         color: Colors.grey[50],
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),

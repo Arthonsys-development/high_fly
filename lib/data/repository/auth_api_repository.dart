@@ -283,19 +283,19 @@ class AuthApiRepository {
 
   // Get all projects
   Future<Map<String, dynamic>> getProjects() async {
-    print('Fetching all projects from API...');
+    debugPrint('Fetching all projects from API...');
     try {
       final response = await _apiClient.get(ApiConstants.projects);
     //  log('Projects API response status: ${response.statusCode}');
-      print('Projects API response data type: ${response.data.runtimeType}');
-      print('Projects API response data: $response.data');
+      debugPrint('Projects API response data type: ${response.data.runtimeType}');
+      debugPrint('Projects API response data: $response.data');
       
       // Parse projects from response
       List<Project> projects = [];
       
       // Handle different response formats
       if (response.data is List) {
-        print('Parsing projects from list format, count: ${response.data.length}');
+        debugPrint('Parsing projects from list format, count: ${response.data.length}');
         projects = (response.data as List)
             .whereType<Map<String, dynamic>>()
             .map((item) => Project.fromJson(item))
@@ -303,46 +303,46 @@ class AuthApiRepository {
       } else if (response.data is Map) {
         // Check if it's a paginated response
         if (response.data['results'] is List) {
-          print('Parsing projects from paginated format');
+          debugPrint('Parsing projects from paginated format');
           projects = (response.data['results'] as List)
               .whereType<Map<String, dynamic>>()
               .map((item) => Project.fromJson(item))
               .toList();
         } else if (response.data['data'] is List) {
-          print('Parsing projects from data field format');
+          debugPrint('Parsing projects from data field format');
           projects = (response.data['data'] as List)
               .whereType<Map<String, dynamic>>()
               .map((item) => Project.fromJson(item))
               .toList();
         } else if (response.data['projects'] is List) {
-          print('Parsing projects from projects field format');
+          debugPrint('Parsing projects from projects field format');
           projects = (response.data['projects'] as List)
               .whereType<Map<String, dynamic>>()
               .map((item) => Project.fromJson(item))
               .toList();
         } else {
           // Try to parse the entire map as a single project
-          print('Attempting to parse response as single project object');
+          debugPrint('Attempting to parse response as single project object');
           try {
             final project = Project.fromJson(response.data);
             projects = [project];
           } catch (e) {
-            print('Failed to parse response as single project: $e');
+            debugPrint('Failed to parse response as single project: $e');
           }
         }
       } else {
-        print('Unexpected response format: ${response.data.runtimeType}');
+        debugPrint('Unexpected response format: ${response.data.runtimeType}');
       }
       
-      print('Successfully parsed ${projects.length} projects');
+      debugPrint('Successfully parsed ${projects.length} projects');
       return {
         'success': true,
         'data': projects,
         'message': 'Projects fetched successfully',
       };
     } catch (e, stackTrace) {
-      print('Error fetching projects: $e');
-      print('Stack trace: $stackTrace');
+      debugPrint('Error fetching projects: $e');
+      debugPrint('Stack trace: $stackTrace');
       return {
         'success': false,
         'error': e.toString(),
@@ -353,19 +353,19 @@ class AuthApiRepository {
 
   // Get active projects
   Future<Map<String, dynamic>> getActiveProjects() async {
-    print('Fetching active projects from API...');
+    debugPrint('Fetching active projects from API...');
     try {
       final response = await _apiClient.get('${ApiConstants.projects}?status=active');
-      print('Active projects API response status: ${response.statusCode}');
-      print('Active projects API response data type: ${response.data.runtimeType}');
-      print('Active projects API response data: $response.data');
+      debugPrint('Active projects API response status: ${response.statusCode}');
+      debugPrint('Active projects API response data type: ${response.data.runtimeType}');
+      debugPrint('Active projects API response data: $response.data');
       
       // Parse projects from response
       List<Project> projects = [];
       
       // Handle different response formats
       if (response.data is List) {
-        print('Parsing active projects from list format, count: ${response.data.length}');
+        debugPrint('Parsing active projects from list format, count: ${response.data.length}');
         projects = (response.data as List)
             .whereType<Map<String, dynamic>>()
             .map((item) => Project.fromJson(item))
@@ -373,46 +373,46 @@ class AuthApiRepository {
       } else if (response.data is Map) {
         // Check if it's a paginated response
         if (response.data['results'] is List) {
-          print('Parsing active projects from paginated format');
+          debugPrint('Parsing active projects from paginated format');
           projects = (response.data['results'] as List)
               .whereType<Map<String, dynamic>>()
               .map((item) => Project.fromJson(item))
               .toList();
         } else if (response.data['data'] is List) {
-          print('Parsing active projects from data field format');
+          debugPrint('Parsing active projects from data field format');
           projects = (response.data['data'] as List)
               .whereType<Map<String, dynamic>>()
               .map((item) => Project.fromJson(item))
               .toList();
         } else if (response.data['projects'] is List) {
-          print('Parsing active projects from projects field format');
+          debugPrint('Parsing active projects from projects field format');
           projects = (response.data['projects'] as List)
               .whereType<Map<String, dynamic>>()
               .map((item) => Project.fromJson(item))
               .toList();
         } else {
           // Try to parse the entire map as a single project
-          print('Attempting to parse response as single project object');
+          debugPrint('Attempting to parse response as single project object');
           try {
             final project = Project.fromJson(response.data);
             projects = [project];
           } catch (e) {
-            print('Failed to parse response as single project: $e');
+            debugPrint('Failed to parse response as single project: $e');
           }
         }
       } else {
-        print('Unexpected response format for active projects: ${response.data.runtimeType}');
+        debugPrint('Unexpected response format for active projects: ${response.data.runtimeType}');
       }
       
-      print('Successfully parsed ${projects.length} active projects');
+      debugPrint('Successfully parsed ${projects.length} active projects');
       return {
         'success': true,
         'data': projects,
         'message': 'Active projects fetched successfully',
       };
     } catch (e, stackTrace) {
-      print('Error fetching active projects: $e');
-      print('Stack trace: $stackTrace');
+      debugPrint('Error fetching active projects: $e');
+      debugPrint('Stack trace: $stackTrace');
       return {
         'success': false,
         'error': e.toString(),
@@ -423,40 +423,40 @@ class AuthApiRepository {
 
   // Get plots by project ID
   Future<Map<String, dynamic>> getPlotsByProjectId(String projectId) async {
-    print('Fetching plots for project ID: $projectId');
+    debugPrint('Fetching plots for project ID: $projectId');
     try {
       // final response = await _apiClient.get('${ApiConstants.projects}$projectId/plots/');
       final url = '${ApiConstants.availablePlotsData}?project=$projectId&status=available';
-      print('Making API call to URL: $url');
+      debugPrint('Making API call to URL: $url');
       final response = await _apiClient.get(url);
-      print('Plots API response status: ${response.statusCode}');
-      print('Plots API response data type: ${response.data.runtimeType}');
-      print('Plots API response data: $response.data');
+      debugPrint('Plots API response status: ${response.statusCode}');
+      debugPrint('Plots API response data type: ${response.data.runtimeType}');
+      debugPrint('Plots API response data: $response.data');
       
       // Parse plots from response
       List<Plot> plots = [];
       
       // Handle different response formats
       if (response.data is List) {
-        print('Parsing plots from list format, count: ${response.data.length}');
+        debugPrint('Parsing plots from list format, count: ${response.data.length}');
         final responseList = response.data as List;
-        print('Response list items: $responseList');
+        debugPrint('Response list items: $responseList');
         
         for (int i = 0; i < responseList.length; i++) {
-          print('Item $i type: ${responseList[i].runtimeType}');
-          print('Item $i data: ${responseList[i]}');
+          debugPrint('Item $i type: ${responseList[i].runtimeType}');
+          debugPrint('Item $i data: ${responseList[i]}');
         }
         
         plots = responseList
             .whereType<Map<String, dynamic>>()
             .map((item) {
-              print('Converting item to Plot: $item');
+              debugPrint('Converting item to Plot: $item');
               try {
                 final plot = Plot.fromJson(item);
-                print('Successfully created plot: ${plot.id} - ${plot.plotNumber}');
+                debugPrint('Successfully created plot: ${plot.id} - ${plot.plotNumber}');
                 return plot;
               } catch (e) {
-                print('Error converting item to Plot: $e');
+                debugPrint('Error converting item to Plot: $e');
                 rethrow;
               }
             })
@@ -464,42 +464,42 @@ class AuthApiRepository {
       } else if (response.data is Map) {
         // Check if it's a paginated response
         if (response.data['results'] is List) {
-          print('Parsing plots from paginated format');
+          debugPrint('Parsing plots from paginated format');
           plots = (response.data['results'] as List)
               .whereType<Map<String, dynamic>>()
               .map((item) => Plot.fromJson(item))
               .toList();
         } else if (response.data['data'] is List) {
-          print('Parsing plots from data field format');
+          debugPrint('Parsing plots from data field format');
           plots = (response.data['data'] as List)
               .whereType<Map<String, dynamic>>()
               .map((item) => Plot.fromJson(item))
               .toList();
         } else if (response.data['plots'] is List) {
-          print('Parsing plots from plots field format');
+          debugPrint('Parsing plots from plots field format');
           plots = (response.data['plots'] as List)
               .whereType<Map<String, dynamic>>()
               .map((item) => Plot.fromJson(item))
               .toList();
         } else {
           // Try to parse the entire map as a single plot
-          print('Attempting to parse response as single plot object');
+          debugPrint('Attempting to parse response as single plot object');
           try {
             final plot = Plot.fromJson(response.data);
             plots = [plot];
           } catch (e) {
-            print('Failed to parse response as single plot: $e');
+            debugPrint('Failed to parse response as single plot: $e');
           }
         }
       } else {
-        print('Unexpected response format: ${response.data.runtimeType}');
+        debugPrint('Unexpected response format: ${response.data.runtimeType}');
       }
       
-      print('Successfully parsed ${plots.length} plots');
+      debugPrint('Successfully parsed ${plots.length} plots');
       if (plots.isEmpty) {
-        print('WARNING: No plots were parsed from the response!');
-        print('Response data was: ${response.data}');
-        print('Response data type: ${response.data.runtimeType}');
+        debugPrint('WARNING: No plots were parsed from the response!');
+        debugPrint('Response data was: ${response.data}');
+        debugPrint('Response data type: ${response.data.runtimeType}');
       }
       return {
         'success': true,
@@ -507,8 +507,8 @@ class AuthApiRepository {
         'message': 'Plots fetched successfully',
       };
     } catch (e, stackTrace) {
-      print('Error fetching plots: $e');
-      print('Stack trace: $stackTrace');
+      debugPrint('Error fetching plots: $e');
+      debugPrint('Stack trace: $stackTrace');
       return {
         'success': false,
         'error': e.toString(),
@@ -520,14 +520,14 @@ class AuthApiRepository {
   // Create visit
   Future<Map<String, dynamic>> createVisit(CreateVisitRequest request) async {
     try {
-      print('Creating visit for project ID: ${request.projectId}');
+      debugPrint('Creating visit for project ID: ${request.projectId}');
       final formData = request.toFormData();
       final response = await _apiClient.post(
         ApiConstants.createVisits,
         data: formData,
       );
-      print('Visit creation response status: ${response.statusCode}');
-      print('Visit creation response data: $response.data');
+      debugPrint('Visit creation response status: ${response.statusCode}');
+      debugPrint('Visit creation response data: $response.data');
       
       return {
         'success': true,
@@ -535,8 +535,8 @@ class AuthApiRepository {
         'message': 'Visit created successfully',
       };
     } catch (e, stackTrace) {
-      print('Error creating visit: $e');
-      print('Stack trace: $stackTrace');
+      debugPrint('Error creating visit: $e');
+      debugPrint('Stack trace: $stackTrace');
       return {
         'success': false,
         'error': e.toString(),
@@ -548,26 +548,26 @@ class AuthApiRepository {
   // Get visits
   Future<Map<String, dynamic>> getVisits() async {
     try {
-      print('Fetching visits from API...');
+      debugPrint('Fetching visits from API...');
       final response = await _apiClient.get(ApiConstants.visits);
-      print('Visits API response status: ${response.statusCode}');
-      print('Visits API response data type: ${response.data.runtimeType}');
-      print('Visits API response data: $response.data');
+      debugPrint('Visits API response status: ${response.statusCode}');
+      debugPrint('Visits API response data type: ${response.data.runtimeType}');
+      debugPrint('Visits API response data: $response.data');
       
       // Parse visits from response
       List<Visit> visits = [];
       
       // Handle different response formats
       if (response.data is List) {
-        print('Parsing visits from list format, count: ${response.data.length}');
+        debugPrint('Parsing visits from list format, count: ${response.data.length}');
         visits = (response.data as List)
             .whereType<Map<String, dynamic>>()
             .map((item) {
               try {
                 return Visit.fromJson(item);
               } catch (e) {
-                print('Error parsing individual visit item: $e');
-                print('Problematic item: $item');
+                debugPrint('Error parsing individual visit item: $e');
+                debugPrint('Problematic item: $item');
                 return null;
               }
             })
@@ -577,15 +577,15 @@ class AuthApiRepository {
       } else if (response.data is Map) {
         // Check if it's a paginated response
         if (response.data['results'] is List) {
-          print('Parsing visits from paginated format');
+          debugPrint('Parsing visits from paginated format');
           visits = (response.data['results'] as List)
               .whereType<Map<String, dynamic>>()
               .map((item) {
                 try {
                   return Visit.fromJson(item);
                 } catch (e) {
-                  print('Error parsing individual visit item: $e');
-                  print('Problematic item: $item');
+                  debugPrint('Error parsing individual visit item: $e');
+                  debugPrint('Problematic item: $item');
                   return null;
                 }
               })
@@ -593,15 +593,15 @@ class AuthApiRepository {
               .map((visit) => visit!)
               .toList();
         } else if (response.data['data'] is List) {
-          print('Parsing visits from data field format');
+          debugPrint('Parsing visits from data field format');
           visits = (response.data['data'] as List)
               .whereType<Map<String, dynamic>>()
               .map((item) {
                 try {
                   return Visit.fromJson(item);
                 } catch (e) {
-                  print('Error parsing individual visit item: $e');
-                  print('Problematic item: $item');
+                  debugPrint('Error parsing individual visit item: $e');
+                  debugPrint('Problematic item: $item');
                   return null;
                 }
               })
@@ -609,15 +609,15 @@ class AuthApiRepository {
               .map((visit) => visit!)
               .toList();
         } else if (response.data['visits'] is List) {
-          print('Parsing visits from visits field format');
+          debugPrint('Parsing visits from visits field format');
           visits = (response.data['visits'] as List)
               .whereType<Map<String, dynamic>>()
               .map((item) {
                 try {
                   return Visit.fromJson(item);
                 } catch (e) {
-                  print('Error parsing individual visit item: $e');
-                  print('Problematic item: $item');
+                  debugPrint('Error parsing individual visit item: $e');
+                  debugPrint('Problematic item: $item');
                   return null;
                 }
               })
@@ -626,28 +626,28 @@ class AuthApiRepository {
               .toList();
         } else {
           // Try to parse the entire map as a single visit
-          print('Attempting to parse response as single visit object');
+          debugPrint('Attempting to parse response as single visit object');
           try {
             final visit = Visit.fromJson(response.data);
             visits = [visit];
           } catch (e) {
-            print('Failed to parse response as single visit: $e');
-            print('Problematic data: ${response.data}');
+            debugPrint('Failed to parse response as single visit: $e');
+            debugPrint('Problematic data: ${response.data}');
           }
         }
       } else {
-        print('Unexpected response format for visits: ${response.data.runtimeType}');
+        debugPrint('Unexpected response format for visits: ${response.data.runtimeType}');
       }
       
-      print('Successfully parsed ${visits.length} visits');
+      debugPrint('Successfully parsed ${visits.length} visits');
       return {
         'success': true,
         'data': visits,
         'message': 'Visits fetched successfully',
       };
     } catch (e, stackTrace) {
-      print('Error fetching visits: $e');
-      print('Stack trace: $stackTrace');
+      debugPrint('Error fetching visits: $e');
+      debugPrint('Stack trace: $stackTrace');
       return {
         'success': false,
         'error': e.toString(),
@@ -659,13 +659,13 @@ class AuthApiRepository {
   // Register device for notifications
   Future<Map<String, dynamic>> registerDeviceForNotifications(NotificationRegisterRequestModel request) async {
     try {
-      print('Registering device for notifications with token: ${request.registrationToken}');
+      debugPrint('Registering device for notifications with token: ${request.registrationToken}');
       final response = await _apiClient.post(
         ApiConstants.notificationRegisterDevice,
         data: request.toJson(),
       );
-      print('Notification registration response status: ${response.statusCode}');
-      print('Notification registration response data: $response.data');
+      debugPrint('Notification registration response status: ${response.statusCode}');
+      debugPrint('Notification registration response data: $response.data');
       
       return {
         'success': true,
@@ -673,8 +673,8 @@ class AuthApiRepository {
         'message': 'Device registered for notifications successfully',
       };
     } catch (e, stackTrace) {
-      print('Error registering device for notifications: $e');
-      print('Stack trace: $stackTrace');
+      debugPrint('Error registering device for notifications: $e');
+      debugPrint('Stack trace: $stackTrace');
       return {
         'success': false,
         'error': e.toString(),

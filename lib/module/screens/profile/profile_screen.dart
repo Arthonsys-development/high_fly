@@ -8,7 +8,6 @@ import '../../global/widgets/custom_button.dart';
 import '../../providers/profile_provider.dart';
 import '../../../config/constant/app_colors.dart';
 import '../../utils/app_fonts.dart';
-import '../../../main.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../data/models/response_model/profile_model.dart';
 
@@ -106,15 +105,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     if (error.contains('team_leader_name')) {
       _teamLeaderNameError = 'Please enter a valid team leader name';
     }
-  }
-
-  // Clear field errors
-  void _clearFieldErrors() {
-    setState(() {
-      _fullNameError = null;
-      _emailError = null;
-      _teamLeaderNameError = null;
-    });
   }
 
   @override
@@ -330,14 +320,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.08),
+              color: Colors.grey.withValues(alpha: 0.08),
               spreadRadius: 0,
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),
           ],
           border: Border.all(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withValues(alpha: 0.1),
             width: 1,
           ),
         ),
@@ -426,65 +416,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
   }
 
-  void _showLogoutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(
-            'Logout',
-            style: AppFonts.getFont(
-              weight: AppFonts.semiBold,
-              fontSize: 18,
-              color: Colors.black,
-            ),
-          ),
-          content: Text(
-            'Are you sure you want to logout?',
-            style: AppFonts.getFont(
-              weight: AppFonts.regular,
-              fontSize: 14,
-              color: AppColors.secondaryTextColor,
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(
-                'Cancel',
-                style: AppFonts.getFont(
-                  weight: AppFonts.medium,
-                  fontSize: 14,
-                  color: AppColors.secondaryTextColor,
-                ),
-              ),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                // Handle logout logic here
-                // For now, just show a snackbar using global key
-                scaffoldMessengerKey.currentState?.showSnackBar(
-                  const SnackBar(
-                    content: Text('Logout functionality to be implemented'),
-                    backgroundColor: AppColors.primaryColor,
-                  ),
-                );
-              },
-              child: Text(
-                'Logout',
-                style: AppFonts.getFont(
-                  weight: AppFonts.medium,
-                  fontSize: 14,
-                  color: AppColors.primaryColor,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
 
   void _showErrorDialog(BuildContext context, String error) {
     showDialog(

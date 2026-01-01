@@ -4,6 +4,8 @@
 import 'dart:html' as html;
 import 'dart:js' as js;
 
+import 'package:flutter/material.dart';
+
 class WebFirebaseAuth {
   static Future<void> initializeRecaptcha() async {
     try {
@@ -12,8 +14,8 @@ class WebFirebaseAuth {
         throw 'Firebase not initialized. Please check web/index.html configuration.';
       }
       
-      print('🔥 Web Firebase: Firebase JS SDK detected');
-      print('🔥 Web Firebase: Project: high-fly-21a85');
+      debugPrint('🔥 Web Firebase: Firebase JS SDK detected');
+      debugPrint('🔥 Web Firebase: Project: high-fly-21a85');
       
       // Initialize reCAPTCHA container
       final container = html.document.getElementById('recaptcha-container');
@@ -22,16 +24,16 @@ class WebFirebaseAuth {
         if (container is html.HtmlElement) {
           (container).innerHtml = ''; // Clear any existing content
         }
-        print('🔥 Web Firebase: reCAPTCHA container ready');
+        debugPrint('🔥 Web Firebase: reCAPTCHA container ready');
       } else {
-        print('🔥 Web Firebase: Warning - reCAPTCHA container not found');
+        debugPrint('🔥 Web Firebase: Warning - reCAPTCHA container not found');
       }
       
       // Add loading indicator
       _addLoadingIndicator();
       
     } catch (e) {
-      print('🔥 Web Firebase: Error initializing reCAPTCHA: $e');
+      debugPrint('🔥 Web Firebase: Error initializing reCAPTCHA: $e');
       rethrow;
     }
   }
@@ -40,7 +42,7 @@ class WebFirebaseAuth {
     final container = html.document.getElementById('recaptcha-container');
     if (container != null) {
       container.style.display = 'none';
-      print('🔥 Web Firebase: reCAPTCHA hidden');
+      debugPrint('🔥 Web Firebase: reCAPTCHA hidden');
     }
   }
   
@@ -48,7 +50,7 @@ class WebFirebaseAuth {
     final container = html.document.getElementById('recaptcha-container');
     if (container != null) {
       container.style.display = 'flex';
-      print('🔥 Web Firebase: reCAPTCHA shown');
+      debugPrint('🔥 Web Firebase: reCAPTCHA shown');
     }
   }
   

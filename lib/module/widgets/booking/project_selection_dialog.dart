@@ -87,7 +87,7 @@ class _ProjectSelectionDialogState extends State<ProjectSelectionDialog> {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withValues(alpha: 0.1),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -230,7 +230,7 @@ class _ProjectSelectionDialogState extends State<ProjectSelectionDialog> {
                           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                           decoration: BoxDecoration(
                             color: isSelected 
-                                ? AppColors.primaryColor.withOpacity(0.1)
+                                ? AppColors.primaryColor.withValues(alpha: 0.1)
                                 : Colors.white,
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
@@ -241,7 +241,7 @@ class _ProjectSelectionDialogState extends State<ProjectSelectionDialog> {
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
+                                color: Colors.black.withValues(alpha: 0.05),
                                 blurRadius: 4,
                                 offset: const Offset(0, 2),
                               ),

@@ -272,7 +272,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withValues(alpha: 0.1),
             spreadRadius: 1,
             blurRadius: 3,
             offset: const Offset(0, 1),
@@ -510,7 +510,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: DropdownButtonFormField<String>(
-                          value: _selectedStatusFilter,
+                          initialValue: _selectedStatusFilter,
                           dropdownColor: Colors.white,
                           decoration: InputDecoration(
                             hintText: "Filter by Status",
@@ -698,7 +698,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
+                            color: Colors.black.withValues(alpha: 0.05),
                             blurRadius: 10,
                             offset: const Offset(0, 2),
                           ),
@@ -781,7 +781,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.06),
+                        color: Colors.black.withValues(alpha: 0.06),
                         blurRadius: 20,
                         offset: const Offset(0, 4),
                       ),
@@ -796,7 +796,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                         decoration: BoxDecoration(
                           border: Border(
                             bottom: BorderSide(
-                              color: Colors.grey.withOpacity(0.1),
+                              color: Colors.grey.withValues(alpha: 0.1),
                               width: 1,
                             ),
                           ),
@@ -810,7 +810,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                   color: AppColors.textFieldBGColor,
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
-                                    color: Colors.grey.withOpacity(0.2),
+                                    color: Colors.grey.withValues(alpha: 0.2),
                                     width: 1,
                                   ),
                                 ),
@@ -824,7 +824,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                   decoration: InputDecoration(
                                     hintText: "Search projects by name, location, or description...",
                                     hintStyle: TextStyle(
-                                      color: AppColors.secondaryTextColor.withOpacity(0.6),
+                                      color: AppColors.secondaryTextColor.withValues(alpha: 0.6),
                                       fontSize: 15,
                                     ),
                                     prefixIcon: const Icon(
@@ -850,17 +850,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                 color: AppColors.textFieldBGColor,
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
-                                  color: Colors.grey.withOpacity(0.2),
+                                  color: Colors.grey.withValues(alpha: 0.2),
                                   width: 1,
                                 ),
                               ),
                               child: DropdownButtonFormField<String>(
-                                value: _selectedStatusFilter,
+                                initialValue: _selectedStatusFilter,
                                 dropdownColor: Colors.white,
                                 decoration: InputDecoration(
                                   hintText: "Filter by Status",
                                   hintStyle: TextStyle(
-                                    color: AppColors.secondaryTextColor.withOpacity(0.6),
+                                    color: AppColors.secondaryTextColor.withValues(alpha: 0.6),
                                     fontSize: 15,
                                   ),
                                   prefixIcon: const Icon(
@@ -1051,7 +1051,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 15,
               offset: const Offset(0, 4),
             ),
@@ -1094,7 +1094,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                   Container(
                     padding: EdgeInsets.all(isMobile ? 10 : isDesktop ? 14 : 12),
                     decoration: BoxDecoration(
-                      color: color.withOpacity(0.12),
+                      color: color.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Image.asset(
@@ -1321,7 +1321,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             color: Colors.white,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: Colors.grey.withOpacity(0.1),
+              color: Colors.grey.withValues(alpha: 0.1),
               width: 1,
             ),
           ),
@@ -1393,7 +1393,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                         if (project.status == 'active')
                           Container(
                             decoration: BoxDecoration(
-                              color: AppColors.primaryColor.withOpacity(0.1),
+                              color: AppColors.primaryColor.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Material(
@@ -1453,7 +1453,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             color: AppColors.textFieldBGColor,
             border: Border(
               bottom: BorderSide(
-                color: Colors.grey.withOpacity(0.2),
+                color: Colors.grey.withValues(alpha: 0.2),
                 width: 1,
               ),
             ),
@@ -1531,7 +1531,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             decoration: BoxDecoration(
               border: Border(
                 bottom: BorderSide(
-                  color: Colors.grey.withOpacity(0.1),
+                  color: Colors.grey.withValues(alpha: 0.1),
                   width: 1,
                 ),
               ),
@@ -1540,7 +1540,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               color: Colors.transparent,
               child: InkWell(
                 onTap: () => context.push(Routes.projectDetailScreen, extra: project),
-                hoverColor: AppColors.textFieldBGColor.withOpacity(0.5),
+                hoverColor: AppColors.textFieldBGColor.withValues(alpha: 0.5),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
                   child: Row(
@@ -1610,8 +1610,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                         child: Container(
                           decoration: BoxDecoration(
                             color: project.status == 'active'
-                                ? AppColors.primaryColor.withOpacity(0.1)
-                                : Colors.grey.withOpacity(0.1),
+                                ? AppColors.primaryColor.withValues(alpha: 0.1)
+                                : Colors.grey.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Material(
@@ -1660,7 +1660,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               ),
             ),
           );
-        }).toList(),
+        }),
         const SizedBox(height: 8),
       ],
     );

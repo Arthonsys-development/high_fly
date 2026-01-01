@@ -215,17 +215,17 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
   /// Call project API after successful booking/hold creation
   Future<void> _callProjectApi() async {
     try {
-      print('Calling project API after successful ${widget.isHoldFlow ? 'hold' : 'booking'} creation...');
+      debugPrint('Calling project API after successful ${widget.isHoldFlow ? 'hold' : 'booking'} creation...');
       
       // Refresh the projects provider state to update the project list
       // This will automatically update the BookingFormSection since it watches the provider
       if (mounted) {
         final container = ProviderScope.containerOf(context);
         await container.read(projectsControllerProvider.notifier).loadProjects();
-        print('Projects provider refreshed after ${widget.isHoldFlow ? 'hold' : 'booking'} creation');
+        debugPrint('Projects provider refreshed after ${widget.isHoldFlow ? 'hold' : 'booking'} creation');
       }
     } catch (e) {
-      print('Error refreshing projects provider after ${widget.isHoldFlow ? 'hold' : 'booking'} creation: $e');
+      debugPrint('Error refreshing projects provider after ${widget.isHoldFlow ? 'hold' : 'booking'} creation: $e');
       // Don't throw error here as the main booking/hold operation was successful
       // Just log the project API error
     }
@@ -512,7 +512,7 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
         boxShadow: kIsWeb
             ? [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.04),
+                  color: Colors.black.withValues(alpha: 0.04),
                   blurRadius: 10,
                   offset: const Offset(0, 2),
                   spreadRadius: 0,
@@ -520,7 +520,7 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
               ]
             : [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, 2),
                 ),
@@ -534,7 +534,7 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
               Container(
                 padding: EdgeInsets.all(kIsWeb ? 8.0 : 8.0),
                 decoration: BoxDecoration(
-                  color: (iconColor ?? AppColors.primaryColor).withOpacity(0.12),
+                  color: (iconColor ?? AppColors.primaryColor).withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(kIsWeb ? 8 : 8),
                 ),
                 child: SizedBox(

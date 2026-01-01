@@ -70,7 +70,6 @@ class OrganizationLogo extends ConsumerWidget {
       );
     }
     return Icon(Icons.landscape, color: AppColors.primaryColor);
-    return image;
   }
 }
 

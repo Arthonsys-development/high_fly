@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../config/constant/app_colors.dart';
 import '../../../data/models/customer_model.dart';
 
 class CustomerDetailsCard extends StatelessWidget {
@@ -66,45 +65,7 @@ class CustomerDetailsCard extends StatelessWidget {
     // );
   }
 
-  Widget _buildDetailColumn(List<_DetailItem> items) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: items.map((item) => _buildDetailRow(item)).toList(),
-    );
-  }
 
-  Widget _buildDetailRow(_DetailItem item) {
-    if (item.label.isEmpty) {
-      return const SizedBox(height: 48); // Empty space for alignment
-    }
-    
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            item.label,
-            style: const TextStyle(
-              fontSize: 14,
-              color: AppColors.darkGreyColor,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            item.value,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-              color: item.isHighlighted 
-                  ? AppColors.primaryColor 
-                  : AppColors.headingTextColor,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class _DetailItem {

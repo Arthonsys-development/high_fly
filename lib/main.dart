@@ -20,35 +20,35 @@ final navigatorKey = GlobalKey<NavigatorState>();
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   // If you're going to use other Firebase services in the background, such as Firestore,
   // make sure you call `initializeApp` before using other Firebase services.
-  print('Handling a background message: ${message.messageId}');
-  print('Message data: ${message.data}');
-  print('Message notification: ${message.notification?.title}');
+  debugPrint('Handling a background message: ${message.messageId}');
+  debugPrint('Message data: ${message.data}');
+  debugPrint('Message notification: ${message.notification?.title}');
 }
 
 Future<void> main() async {
   // Add comprehensive error handling
   try {
     WidgetsFlutterBinding.ensureInitialized();
-    print('🔥 App: WidgetsFlutterBinding initialized');
+    debugPrint('🔥 App: WidgetsFlutterBinding initialized');
   } catch (e) {
-    print('🔥 App: Error initializing WidgetsFlutterBinding: $e');
+    debugPrint('🔥 App: Error initializing WidgetsFlutterBinding: $e');
   }
   
   // Initialize Flutter web error handler
   try {
     FlutterWebErrorHandler.initialize();
-    print('🔥 App: FlutterWebErrorHandler initialized');
+    debugPrint('🔥 App: FlutterWebErrorHandler initialized');
   } catch (e) {
-    print('🔥 App: Error initializing FlutterWebErrorHandler: $e');
+    debugPrint('🔥 App: Error initializing FlutterWebErrorHandler: $e');
   }
   
   // Initialize plugins
   try {
     // This helps ensure all plugins are properly initialized
     await Permission.camera.status;
-    print('🔥 App: Plugins initialized');
+    debugPrint('🔥 App: Plugins initialized');
   } catch (e) {
-    print('🔥 App: Plugin initialization warning: $e');
+    debugPrint('🔥 App: Plugin initialization warning: $e');
   }
   
   try {
@@ -95,16 +95,16 @@ Future<void> main() async {
       // Get the FCM token
       final String? token = await FirebaseMessaging.instance.getToken();
       if (token != null) {
-        print('FCM Registration Token: $token');
+        debugPrint('FCM Registration Token: $token');
       } else {
-        print('Failed to get FCM token');
+        debugPrint('Failed to get FCM token');
       }
       
       // Listen for token refreshes
       FirebaseMessaging.instance.onTokenRefresh.listen((newToken) {
-        print('FCM Token refreshed: $newToken');
+        debugPrint('FCM Token refreshed: $newToken');
       }).onError((error) {
-        print('Error listening for token refresh: $error');
+        debugPrint('Error listening for token refresh: $error');
       });
     }
   } catch (e) {

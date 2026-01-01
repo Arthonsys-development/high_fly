@@ -63,7 +63,7 @@ class ActionButtons extends StatelessWidget {
           side: BorderSide(
             color: isPreviousEnabled 
                 ? AppColors.lightGreyBorderColor 
-                : AppColors.lightGreyBorderColor.withOpacity(0.5),
+                : AppColors.lightGreyBorderColor.withValues(alpha: 0.5),
             width: borderWidth,
           ),
         ),
@@ -76,7 +76,7 @@ class ActionButtons extends StatelessWidget {
             size: iconSize,
             color: isPreviousEnabled 
                 ? AppColors.lightGreyColor 
-                : AppColors.lightGreyColor.withOpacity(0.5),
+                : AppColors.lightGreyColor.withValues(alpha: 0.5),
           ),
           SizedBox(width: kIsWeb ? 10 : 8),
           Text(
@@ -86,7 +86,7 @@ class ActionButtons extends StatelessWidget {
               fontWeight: FontWeight.w600,
               color: isPreviousEnabled 
                   ? AppColors.lightGreyColor 
-                  : AppColors.lightGreyColor.withOpacity(0.5),
+                  : AppColors.lightGreyColor.withValues(alpha: 0.5),
             ),
           ),
         ],
@@ -104,7 +104,7 @@ class ActionButtons extends StatelessWidget {
       style: ElevatedButton.styleFrom(
         backgroundColor: isNextEnabled 
             ? AppColors.primaryColor 
-            : AppColors.primaryColor.withOpacity(0.5),
+            : AppColors.primaryColor.withValues(alpha: 0.5),
         foregroundColor: Colors.white,
         elevation: kIsWeb ? 2 : 0,
         padding: EdgeInsets.symmetric(

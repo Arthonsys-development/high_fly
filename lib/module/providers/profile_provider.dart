@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:dio/dio.dart';
@@ -58,11 +59,11 @@ class ProfileNotifier extends Notifier<ProfileState> {
     state = state.copyWith(isLoading: true, error: null);
     
     try {
-      print('🔄 ProfileNotifier: Loading profile from API...');
+      debugPrint('🔄 ProfileNotifier: Loading profile from API...');
       
       final profileData = await _profileApiRepository.getProfile();
       
-      print('✅ ProfileNotifier: Profile loaded successfully');
+      debugPrint('✅ ProfileNotifier: Profile loaded successfully');
       state = state.copyWith(
         profile: profileData,
         isLoading: false,
@@ -71,7 +72,7 @@ class ProfileNotifier extends Notifier<ProfileState> {
       // Sync data to secure storage after loading
       await _syncToSecureStorage(profileData);
     } catch (e) {
-      print('❌ ProfileNotifier: Error loading profile - $e');
+      debugPrint('❌ ProfileNotifier: Error loading profile - $e');
       state = state.copyWith(
         error: e.toString(),
         isLoading: false,
@@ -92,7 +93,7 @@ class ProfileNotifier extends Notifier<ProfileState> {
           key: SharedPreferenceStrings.firstName, 
           value: profileData.fullName!
         );
-        print('✅ ProfileNotifier: Full name synced to secure storage');
+        debugPrint('✅ ProfileNotifier: Full name synced to secure storage');
       }
       
       // Update profile photo if available
@@ -107,10 +108,10 @@ class ProfileNotifier extends Notifier<ProfileState> {
           key: SharedPreferenceStrings.profilePhoto,
           value: profileImageUrl
         );
-        print('✅ ProfileNotifier: Profile photo synced to secure storage');
+        debugPrint('✅ ProfileNotifier: Profile photo synced to secure storage');
       }
     } catch (e) {
-      print('⚠️ ProfileNotifier: Error syncing to secure storage - $e');
+      debugPrint('⚠️ ProfileNotifier: Error syncing to secure storage - $e');
     }
   }
 
@@ -218,7 +219,7 @@ class ProfileNotifier extends Notifier<ProfileState> {
     state = state.copyWith(isLoading: true, error: null);
     
     try {
-      print('💾 ProfileNotifier: Saving profile changes...');
+      debugPrint('💾 ProfileNotifier: Saving profile changes...');
       
       final updateData = <String, dynamic>{};
       
@@ -236,7 +237,7 @@ class ProfileNotifier extends Notifier<ProfileState> {
       
       await _profileApiRepository.updateProfile(state.profile!, updateData);
       
-      print('✅ ProfileNotifier: Profile saved successfully');
+      debugPrint('✅ ProfileNotifier: Profile saved successfully');
       // Allow loadProfile to proceed (it early-returns if already loading)
       state = state.copyWith(isLoading: false);
       // After saving, fetch the latest profile from API to ensure fresh data
@@ -246,7 +247,7 @@ class ProfileNotifier extends Notifier<ProfileState> {
         isEditing: false,
       );
     } on DioException catch (e) {
-      print('❌ ProfileNotifier: API Error saving profile - ${e.message}');
+      debugPrint('❌ ProfileNotifier: API Error saving profile - ${e.message}');
       if (e.response?.data != null) {
         final errorData = e.response!.data;
         if (errorData is Map<String, dynamic> && errorData.containsKey('errors')) {
@@ -275,7 +276,7 @@ class ProfileNotifier extends Notifier<ProfileState> {
         );
       }
     } catch (e) {
-      print('❌ ProfileNotifier: Unexpected error saving profile - $e');
+      debugPrint('❌ ProfileNotifier: Unexpected error saving profile - $e');
       state = state.copyWith(
         error: e.toString(),
         isLoading: false,
@@ -298,7 +299,7 @@ class ProfileNotifier extends Notifier<ProfileState> {
         
         // Upload the image to the backend (pass XFile directly for web compatibility)
         await _profileApiRepository.uploadProfilePhoto(image);
-        print('✅ ProfileNotifier: Profile image updated successfully');
+        debugPrint('✅ ProfileNotifier: Profile image updated successfully');
         // Allow loadProfile to proceed and fetch the freshest data, including CDN URLs
         state = state.copyWith(isLoading: false);
         await loadProfile();
@@ -326,7 +327,7 @@ class ProfileNotifier extends Notifier<ProfileState> {
 
         // Upload the image to the backend (pass XFile directly for web compatibility)
         await _profileApiRepository.uploadProfilePhoto(image);
-        print('✅ ProfileNotifier: Profile image updated successfully (from ${source.name})');
+        debugPrint('✅ ProfileNotifier: Profile image updated successfully (from ${source.name})');
         state = state.copyWith(isLoading: false);
         await loadProfile();
       }

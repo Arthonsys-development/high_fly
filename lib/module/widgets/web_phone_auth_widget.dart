@@ -9,7 +9,6 @@ import '../global/widgets/custom_text_field.dart';
 import '../global/widgets/custom_button.dart';
 import '../../config/constant/app_strings.dart';
 import '../../config/constant/const_assets.dart';
-import '../utils/app_fonts.dart';
 import 'organization_logo.dart';
 
 class WebPhoneAuthWidget extends ConsumerStatefulWidget {
@@ -231,7 +230,7 @@ class _WebPhoneAuthWidgetState extends ConsumerState<WebPhoneAuthWidget> {
                     }
                   }
                 } catch (e) {
-                  print('Error in web auth widget: $e');
+                  debugPrint('Error in web auth widget: $e');
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(

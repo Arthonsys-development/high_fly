@@ -17,7 +17,7 @@ class TenantApiKeys {
   static const String highFly =  'f5fb6328-dde1-495f-b30d-25086a806a43';
   static const String vistarak = '776e2413-2360-48fc-9a3a-3dc4990f466e';
   static const String testerKey = 'ef5192f3-b5e3-47e4-8cb4-4afe5199cac9';
-  static const String ben_developer = 'cdb83a60-c055-4235-9469-f2625ffc1f6e';
+  static const String benDeveloper = 'cdb83a60-c055-4235-9469-f2625ffc1f6e';
   static const String emily = 'd5ee582d-45b4-42e9-9fc9-7575b621c50f';
 
   // static const String anotherOrg = '<replace-with-key>';

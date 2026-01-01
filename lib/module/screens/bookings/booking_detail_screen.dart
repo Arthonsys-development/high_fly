@@ -158,7 +158,7 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
                 return Container(
                   padding: EdgeInsets.all(kIsWeb ? 20 : 16),
                   decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.1),
+                    color: statusColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(kIsWeb ? 16 : 12),
                     border: Border.all(
                       color: statusColor,
@@ -388,14 +388,14 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
         borderRadius: BorderRadius.circular(kIsWeb ? 16 : 12),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(kIsWeb ? 0.08 : 0.1),
+            color: Colors.grey.withValues(alpha: kIsWeb ? 0.08 : 0.1),
             spreadRadius: kIsWeb ? 0 : 1,
             blurRadius: kIsWeb ? 8 : 4,
             offset: Offset(0, kIsWeb ? 4 : 2),
           ),
         ],
         border: kIsWeb ? Border.all(
-          color: Colors.grey.withOpacity(0.1),
+          color: Colors.grey.withValues(alpha: 0.1),
           width: 1,
         ) : null,
       ),

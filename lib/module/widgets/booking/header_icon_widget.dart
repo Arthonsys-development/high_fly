@@ -33,17 +33,17 @@ class HeaderIconWidget extends StatelessWidget {
           width: iconSize,
           height: iconSize,
           decoration: BoxDecoration(
-            color: bgColor ?? AppColors.primaryColor.withOpacity(0.1),
+            color: bgColor ?? AppColors.primaryColor.withValues(alpha: 0.1),
             shape: BoxShape.circle,
             border: Border.all(
               color: kIsWeb 
-                  ? (iconColor ?? AppColors.primaryColor).withOpacity(0.2)
+                  ? (iconColor ?? AppColors.primaryColor).withValues(alpha: 0.2)
                   : const Color.fromARGB(0, 240, 89, 34),
               width: kIsWeb ? 2.5 : 2,
             ),
             boxShadow: kIsWeb ? [
               BoxShadow(
-                color: (iconColor ?? AppColors.primaryColor).withOpacity(0.1),
+                color: (iconColor ?? AppColors.primaryColor).withValues(alpha: 0.1),
                 blurRadius: 12,
                 offset: const Offset(0, 4),
               ),

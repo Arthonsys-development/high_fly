@@ -39,7 +39,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       debugPrint('SplashScreen: Failed to load organization: $error');
     } finally {
       await Future.delayed(const Duration(milliseconds: 600));
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       context.go(Routes.signIn);
     }
   }

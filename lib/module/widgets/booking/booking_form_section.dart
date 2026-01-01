@@ -126,7 +126,7 @@ class _BookingFormSectionState extends State<BookingFormSection> {
         setState(() {
           _isLoadingPlots = false;
         });
-        print("Error loading plots: ${result['message']}");
+        debugPrint("Error loading plots: ${result['message']}");
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error loading plots: ${result['message']}')),
         );
@@ -262,10 +262,10 @@ class _BookingFormSectionState extends State<BookingFormSection> {
               padding: const EdgeInsets.all(16),
               margin: const EdgeInsets.only(top: 16),
               decoration: BoxDecoration(
-                color: AppColors.primaryColor.withOpacity(0.1),
+                color: AppColors.primaryColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: AppColors.primaryColor.withOpacity(0.3),
+                  color: AppColors.primaryColor.withValues(alpha: 0.3),
                   width: 1,
                 ),
               ),

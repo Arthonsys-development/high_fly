@@ -58,15 +58,15 @@ class ApiClient {
     String baseUrl;
     try {
       baseUrl = dotenv.env['BASE_URL'] ?? 'https://api.example.com';
-      print('API Client: Using base URL: $baseUrl');
+      debugPrint('API Client: Using base URL: $baseUrl');
     } catch (e) {
-      print('API Client: Error getting BASE_URL from environment: $e');
+      debugPrint('API Client: Error getting BASE_URL from environment: $e');
       // Fallback URLs based on environment
       final env = dotenv.env['ENVIRONMENT'] ?? 'dev';
       baseUrl = env == 'prod' 
         ? 'https://pigeonm.com/api' 
         : 'https://daf8f7648993.ngrok-free.app/api/v1/';
-      print('API Client: Using fallback base URL: $baseUrl');
+      debugPrint('API Client: Using fallback base URL: $baseUrl');
     }
     
     _dio = Dio(BaseOptions(
@@ -102,13 +102,13 @@ class ApiClient {
           debugPrint('Access token from secure storage: $accessToken');
           if (accessToken != null) {
             options.headers['Authorization'] = 'Bearer $accessToken';
-            print('Added Authorization header to request');
+            debugPrint('Added Authorization header to request');
           } else {
-            print('No access token found in secure storage');
+            debugPrint('No access token found in secure storage');
           }
-          print('Request headers: ${options.headers}');
+          debugPrint('Request headers: ${options.headers}');
         } catch (e) {
-          print('Error reading access token: $e');
+          debugPrint('Error reading access token: $e');
         }
         return handler.next(options);
       },
@@ -119,8 +119,8 @@ class ApiClient {
         return handler.next(response);
       },
       onError: (DioException e, handler) async {
-        print('API error: ${e.message}');
-        print('Error URL: ${e.requestOptions.uri}');
+        debugPrint('API error: ${e.message}');
+        debugPrint('Error URL: ${e.requestOptions.uri}');
         
         // Detect CORS errors on web
         if (kIsWeb) {
@@ -153,8 +153,8 @@ class ApiClient {
         }
         
         if (e.response != null) {
-          print('Error status: ${e.response?.statusCode}');
-          print('Error data: ${e.response?.data}');
+          debugPrint('Error status: ${e.response?.statusCode}');
+          debugPrint('Error data: ${e.response?.data}');
           
           // Handle 401 Unauthorized - Force logout
           if (e.response?.statusCode == 401) {
@@ -167,7 +167,7 @@ class ApiClient {
         
         // Handle specific error cases
         if (e.error?.toString().contains('Failed host lookup') ?? false) {
-          print('Network error: Please check your internet connection');
+          debugPrint('Network error: Please check your internet connection');
         }
         
         return handler.next(e);
@@ -180,13 +180,13 @@ class ApiClient {
   // Generic GET request
   Future<Response> get(String endpoint, {Map<String, dynamic>? queryParameters}) async {
     try {
-      print('Making GET request to: $endpoint');
+      debugPrint('Making GET request to: $endpoint');
       return await _dio.get(endpoint, queryParameters: queryParameters);
     } on DioException catch (e) {
       _handleError(e);
       rethrow;
     } catch (e) {
-      print('Unexpected error in GET request: $e');
+      debugPrint('Unexpected error in GET request: $e');
       rethrow;
     }
   }
@@ -194,13 +194,13 @@ class ApiClient {
   // Generic POST request
   Future<Response> post(String endpoint, {Object? data, Map<String, dynamic>? queryParameters}) async {
     try {
-      print('Making POST request to: $endpoint');
+      debugPrint('Making POST request to: $endpoint');
       return await _dio.post(endpoint, data: data, queryParameters: queryParameters);
     } on DioException catch (e) {
       _handleError(e);
       rethrow;
     } catch (e) {
-      print('Unexpected error in POST request: $e');
+      debugPrint('Unexpected error in POST request: $e');
       rethrow;
     }
   }
@@ -208,7 +208,7 @@ class ApiClient {
   // Multipart POST request for file uploads
   Future<Response> postMultipart(String endpoint, {FormData? data, Map<String, dynamic>? queryParameters}) async {
     try {
-      print('Making multipart POST request to: $endpoint');
+      debugPrint('Making multipart POST request to: $endpoint');
       return await _dio.post(
         endpoint, 
         data: data, 
@@ -221,7 +221,7 @@ class ApiClient {
       _handleError(e);
       rethrow;
     } catch (e) {
-      print('Unexpected error in multipart POST request: $e');
+      debugPrint('Unexpected error in multipart POST request: $e');
       rethrow;
     }
   }
@@ -229,13 +229,13 @@ class ApiClient {
   // Generic PUT request
   Future<Response> put(String endpoint, {Object? data, Map<String, dynamic>? queryParameters}) async {
     try {
-      print('Making PUT request to: $endpoint');
+      debugPrint('Making PUT request to: $endpoint');
       return await _dio.put(endpoint, data: data, queryParameters: queryParameters);
     } on DioException catch (e) {
       _handleError(e);
       rethrow;
     } catch (e) {
-      print('Unexpected error in PUT request: $e');
+      debugPrint('Unexpected error in PUT request: $e');
       rethrow;
     }
   }
@@ -243,13 +243,13 @@ class ApiClient {
   // Generic PATCH request
   Future<Response> patch(String endpoint, {Object? data, Map<String, dynamic>? queryParameters}) async {
     try {
-      print('Making PATCH request to: $endpoint');
+      debugPrint('Making PATCH request to: $endpoint');
       return await _dio.patch(endpoint, data: data, queryParameters: queryParameters);
     } on DioException catch (e) {
       _handleError(e);
       rethrow;
     } catch (e) {
-      print('Unexpected error in PATCH request: $e');
+      debugPrint('Unexpected error in PATCH request: $e');
       rethrow;
     }
   }
@@ -257,43 +257,43 @@ class ApiClient {
   // Generic DELETE request
   Future<Response> delete(String endpoint, {Map<String, dynamic>? queryParameters}) async {
     try {
-      print('Making DELETE request to: $endpoint');
+      debugPrint('Making DELETE request to: $endpoint');
       return await _dio.delete(endpoint, queryParameters: queryParameters);
     } on DioException catch (e) {
       _handleError(e);
       rethrow;
     } catch (e) {
-      print('Unexpected error in DELETE request: $e');
+      debugPrint('Unexpected error in DELETE request: $e');
       rethrow;
     }
   }
 
   void _handleError(DioException error) {
-    print('API Error: ${error.message}');
-    print('Error URL: ${error.requestOptions.uri}');
+    debugPrint('API Error: ${error.message}');
+    debugPrint('Error URL: ${error.requestOptions.uri}');
     
     if (error.response != null) {
-      print('Error Status: ${error.response?.statusCode}');
-      print('Error Data: ${error.response?.data}');
+      debugPrint('Error Status: ${error.response?.statusCode}');
+      debugPrint('Error Data: ${error.response?.data}');
     }
     
     // Provide user-friendly error messages
     if (error.type == DioExceptionType.connectionTimeout || 
         error.type == DioExceptionType.receiveTimeout ||
         error.type == DioExceptionType.sendTimeout) {
-      print('Network timeout error. Please check your internet connection.');
+      debugPrint('Network timeout error. Please check your internet connection.');
     } else if (error.type == DioExceptionType.badCertificate) {
-      print('SSL certificate error. Please contact support.');
+      debugPrint('SSL certificate error. Please contact support.');
     } else if (error.type == DioExceptionType.badResponse) {
-      print('Server error. Please try again later.');
+      debugPrint('Server error. Please try again later.');
     } else if (error.type == DioExceptionType.cancel) {
-      print('Request was cancelled.');
+      debugPrint('Request was cancelled.');
     } else if (error.type == DioExceptionType.connectionError) {
       if (kIsWeb && error.message?.contains('CORS') == true) {
-        print('CORS Error: The server is not configured to allow cross-origin requests.');
-        print('This is a server-side configuration issue. The backend team needs to add CORS headers.');
+        debugPrint('CORS Error: The server is not configured to allow cross-origin requests.');
+        debugPrint('This is a server-side configuration issue. The backend team needs to add CORS headers.');
       } else {
-        print('Connection error. Please check your internet connection.');
+        debugPrint('Connection error. Please check your internet connection.');
       }
     }
   }

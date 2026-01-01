@@ -67,14 +67,14 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   /// Pick image from camera
   Future<void> _pickImageFromCamera() async {
     try {
-      print('🔥 Image Picker: Attempting to pick image from camera');
+      debugPrint('🔥 Image Picker: Attempting to pick image from camera');
       
       // Check and request camera permission on mobile
       if (!kIsWeb) {
         try {
           final status = await Permission.camera.request();
           if (status != PermissionStatus.granted) {
-            print('🔥 Image Picker: Camera permission denied');
+            debugPrint('🔥 Image Picker: Camera permission denied');
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
@@ -91,7 +91,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
             return;
           }
         } catch (permissionError) {
-          print('🔥 Image Picker: Permission error, trying to proceed anyway: $permissionError');
+          debugPrint('🔥 Image Picker: Permission error, trying to proceed anyway: $permissionError');
           // On some devices, we might still be able to pick an image even without explicit permission
           // This is a fallback approach
         }
@@ -104,16 +104,16 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
         maxHeight: 1920,
       );
       
-      print('🔥 Image Picker: Camera result: ${pickedImage != null ? 'Image captured' : 'No image captured'}');
+      debugPrint('🔥 Image Picker: Camera result: ${pickedImage != null ? 'Image captured' : 'No image captured'}');
       
       if (pickedImage != null) {
-        print('🔥 Image Picker: Processing captured image');
+        debugPrint('🔥 Image Picker: Processing captured image');
         
         if (kIsWeb) {
-          print('🔥 Image Picker: Web platform detected');
+          debugPrint('🔥 Image Picker: Web platform detected');
           // For web, we need to read the image as bytes
           final bytes = await pickedImage.readAsBytes();
-          print('🔥 Image Picker: Image bytes length: ${bytes.length}');
+          debugPrint('🔥 Image Picker: Image bytes length: ${bytes.length}');
           
           if (!mounted) return;
           setState(() {
@@ -121,9 +121,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
             _pickedImage = pickedImage;
           });
           
-          print('🔥 Image Picker: Web image state updated');
+          debugPrint('🔥 Image Picker: Web image state updated');
         } else {
-          print('🔥 Image Picker: Mobile platform detected');
+          debugPrint('🔥 Image Picker: Mobile platform detected');
           // For mobile, we can use the file directly
           if (!mounted) return;
           setState(() {
@@ -131,10 +131,10 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
             _webImage = null; // Clear web image data for mobile
           });
           
-          print('🔥 Image Picker: Mobile image state updated');
+          debugPrint('🔥 Image Picker: Mobile image state updated');
         }
       } else {
-        print('🔥 Image Picker: No image was captured');
+        debugPrint('🔥 Image Picker: No image was captured');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -145,7 +145,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
         }
       }
     } catch (e) {
-      print('🔥 Image Picker: Error picking image from camera: $e');
+      debugPrint('🔥 Image Picker: Error picking image from camera: $e');
       
       // Special handling for web camera errors
       if (kIsWeb) {
@@ -176,13 +176,13 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
       _pickedImage = null;
       _webImage = null;
     });
-    print('🔥 Image Picker: Image cleared');
+    debugPrint('🔥 Image Picker: Image cleared');
   }
 
   /// Pick image from gallery
   Future<void> _pickImageFromGallery() async {
     try {
-      print('🔥 Image Picker: Attempting to pick image from gallery');
+      debugPrint('🔥 Image Picker: Attempting to pick image from gallery');
       
       // Check and request gallery permission on mobile
       if (!kIsWeb) {
@@ -195,7 +195,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
               status = await Permission.storage.request();
             }
             if (status != PermissionStatus.granted) {
-              print('🔥 Image Picker: Gallery permission denied');
+              debugPrint('🔥 Image Picker: Gallery permission denied');
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
@@ -213,7 +213,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
             // iOS: PHPicker does not require Photos permission; proceed without requesting
           }
         } catch (permissionError) {
-          print('🔥 Image Picker: Permission error, trying to proceed anyway: $permissionError');
+          debugPrint('🔥 Image Picker: Permission error, trying to proceed anyway: $permissionError');
           // On some devices, we might still be able to pick an image even without explicit permission
         }
       }
@@ -225,16 +225,16 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
         maxHeight: 1920,
       );
       
-      print('🔥 Image Picker: Gallery result: ${pickedImage != null ? 'Image selected' : 'No image selected'}');
+      debugPrint('🔥 Image Picker: Gallery result: ${pickedImage != null ? 'Image selected' : 'No image selected'}');
       
       if (pickedImage != null) {
-        print('🔥 Image Picker: Processing selected image');
+        debugPrint('🔥 Image Picker: Processing selected image');
         
         if (kIsWeb) {
-          print('🔥 Image Picker: Web platform detected');
+          debugPrint('🔥 Image Picker: Web platform detected');
           // For web, we need to read the image as bytes
           final bytes = await pickedImage.readAsBytes();
-          print('🔥 Image Picker: Image bytes length: ${bytes.length}');
+          debugPrint('🔥 Image Picker: Image bytes length: ${bytes.length}');
           
           if (!mounted) return;
           setState(() {
@@ -242,9 +242,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
             _pickedImage = pickedImage;
           });
           
-          print('🔥 Image Picker: Web image state updated');
+          debugPrint('🔥 Image Picker: Web image state updated');
         } else {
-          print('🔥 Image Picker: Mobile platform detected');
+          debugPrint('🔥 Image Picker: Mobile platform detected');
           // For mobile, we can use the file directly
           if (!mounted) return;
           setState(() {
@@ -252,10 +252,10 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
             _webImage = null; // Clear web image data for mobile
           });
           
-          print('🔥 Image Picker: Mobile image state updated');
+          debugPrint('🔥 Image Picker: Mobile image state updated');
         }
       } else {
-        print('🔥 Image Picker: No image was selected');
+        debugPrint('🔥 Image Picker: No image was selected');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -266,7 +266,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
         }
       }
     } catch (e) {
-      print('🔥 Image Picker: Error picking image from gallery: $e');
+      debugPrint('🔥 Image Picker: Error picking image from gallery: $e');
       
       // Special handling for web gallery errors
       if (kIsWeb) {
@@ -384,7 +384,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                                   width: 90,
                                   height: 90,
                                   errorBuilder: (context, error, stackTrace) {
-                                    print('🔥 Image Picker: Error displaying web image: $error');
+                                    debugPrint('🔥 Image Picker: Error displaying web image: $error');
                                     return Icon(Icons.error, color: Colors.red);
                                   },
                                 )
@@ -396,7 +396,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                                   width: 90,
                                   height: 90,
                                   errorBuilder: (context, error, stackTrace) {
-                                    print('🔥 Image Picker: Error displaying mobile image: $error');
+                                    debugPrint('🔥 Image Picker: Error displaying mobile image: $error');
                                     return Icon(Icons.error, color: Colors.red);
                                   },
                                 )

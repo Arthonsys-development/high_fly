@@ -85,7 +85,7 @@ class _DashboardSideMenuState extends State<DashboardSideMenu> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withValues(alpha: 0.1),
             spreadRadius: 1,
             blurRadius: 3,
             offset: const Offset(0, 0),
@@ -99,7 +99,7 @@ class _DashboardSideMenuState extends State<DashboardSideMenu> {
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: AppColors.primaryColor.withOpacity(0.1),
+                    color: AppColors.primaryColor.withValues(alpha: 0.1),
                   ),
                   child: _OrganizationHeader(
                     showName: true,
@@ -136,7 +136,7 @@ class _DashboardSideMenuState extends State<DashboardSideMenu> {
                             ),
                             decoration: BoxDecoration(
                               color: isSelected
-                                  ?  AppColors.primaryColor.withOpacity(0.1)
+                                  ?  AppColors.primaryColor.withValues(alpha: 0.1)
                                   : Colors.transparent,
                               borderRadius: BorderRadius.circular(8),
                               border: isSelected
@@ -217,7 +217,7 @@ class _DashboardSideMenuState extends State<DashboardSideMenu> {
 
                           return CircleAvatar(
                             radius: 16,
-                            backgroundColor:  AppColors.primaryColor.withOpacity(0.2),
+                            backgroundColor:  AppColors.primaryColor.withValues(alpha: 0.2),
                             backgroundImage: profilePhoto != null && profilePhoto.isNotEmpty
                                 ? NetworkImage(profilePhoto)
                                 : null,
@@ -528,7 +528,7 @@ class MobileSideMenuDrawer extends ConsumerWidget {
           Container(
             height: 150,
             decoration: BoxDecoration(
-              color: AppColors.primaryColor.withOpacity(0.1),
+              color: AppColors.primaryColor.withValues(alpha: 0.1),
             ),
             child: const SafeArea(
               child: _OrganizationHeader(
@@ -565,7 +565,7 @@ class MobileSideMenuDrawer extends ConsumerWidget {
                       ),
                       decoration: BoxDecoration(
                         color: isSelected
-                            ?  AppColors.primaryColor.withOpacity(0.1)
+                            ?  AppColors.primaryColor.withValues(alpha: 0.1)
                             : Colors.transparent,
                         borderRadius: BorderRadius.circular(8),
                         border: isSelected
@@ -622,10 +622,10 @@ class MobileSideMenuDrawer extends ConsumerWidget {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color:  AppColors.primaryColor.withOpacity(0.05),
+          color:  AppColors.primaryColor.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color:  AppColors.primaryColor.withOpacity(0.2),
+            color:  AppColors.primaryColor.withValues(alpha: 0.2),
             width: 1,
           ),
         ),
@@ -649,7 +649,7 @@ class MobileSideMenuDrawer extends ConsumerWidget {
                 // User profile image or default icon
                 CircleAvatar(
                   radius: 24,
-                  backgroundColor:  AppColors.primaryColor.withOpacity(0.2),
+                  backgroundColor:  AppColors.primaryColor.withValues(alpha: 0.2),
                   backgroundImage: profilePhoto != null && profilePhoto.isNotEmpty
                       ? NetworkImage(profilePhoto)
                       : null,
@@ -679,7 +679,7 @@ class MobileSideMenuDrawer extends ConsumerWidget {
                       Text(
                         'View Profile',
                         style: TextStyle(
-                          color:  AppColors.primaryColor.withOpacity(0.8),
+                          color:  AppColors.primaryColor.withValues(alpha: 0.8),
                           fontSize: 12,
                           fontWeight: FontWeight.w400,
                         ),
@@ -690,7 +690,7 @@ class MobileSideMenuDrawer extends ConsumerWidget {
                 Icon(
                   Icons.arrow_forward_ios,
                   size: 16,
-                  color:  AppColors.primaryColor.withOpacity(0.6),
+                  color:  AppColors.primaryColor.withValues(alpha: 0.6),
                 ),
               ],
             );
@@ -722,10 +722,10 @@ class MobileSideMenuDrawer extends ConsumerWidget {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color:  AppColors.primaryColor.withOpacity(0.05),
+          color:  AppColors.primaryColor.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color:  AppColors.primaryColor.withOpacity(0.2),
+            color:  AppColors.primaryColor.withValues(alpha: 0.2),
             width: 1,
           ),
         ),
@@ -733,7 +733,7 @@ class MobileSideMenuDrawer extends ConsumerWidget {
           children: [
             CircleAvatar(
               radius: 24,
-              backgroundColor:  AppColors.primaryColor.withOpacity(0.2),
+              backgroundColor:  AppColors.primaryColor.withValues(alpha: 0.2),
               child: const Icon(
                 Icons.person,
                 color:  AppColors.primaryColor,
@@ -757,7 +757,7 @@ class MobileSideMenuDrawer extends ConsumerWidget {
                   Text(
                     'View Profile',
                     style: TextStyle(
-                      color:  AppColors.primaryColor.withOpacity(0.8),
+                      color:  AppColors.primaryColor.withValues(alpha: 0.8),
                       fontSize: 12,
                       fontWeight: FontWeight.w400,
                     ),
@@ -768,7 +768,7 @@ class MobileSideMenuDrawer extends ConsumerWidget {
             Icon(
               Icons.arrow_forward_ios,
               size: 16,
-              color:  AppColors.primaryColor.withOpacity(0.6),
+              color:  AppColors.primaryColor.withValues(alpha: 0.6),
             ),
           ],
         ),
