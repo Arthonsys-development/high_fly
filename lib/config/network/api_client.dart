@@ -57,7 +57,7 @@ class ApiClient {
   void _init() {
     String baseUrl;
     try {
-      baseUrl = dotenv.env['BASE_URL'] ?? 'https://2bb922f2af1d.ngrok-free.app/api/v1/';
+      baseUrl = dotenv.env['BASE_URL'] ?? 'http://64.227.154.65:81/api/v1/';
       debugPrint('API Client: Using base URL: $baseUrl');
     } catch (e) {
       debugPrint('API Client: Error getting BASE_URL from environment: $e');
@@ -146,7 +146,7 @@ class ApiClient {
               type: DioExceptionType.connectionError,
               error: 'CORS Error: The server at ${e.requestOptions.uri.host} is not configured to allow requests from this origin. '
                      'Please configure CORS headers on the server or contact your backend team.',
-              message: 'CORS policy blocked the request. Server must allow cross-origin requests.',
+              message: 'CORS policy blocked the request. Server must allow cross-origin requests.$baseUrl',
             );
             return handler.next(corsError);
           }
