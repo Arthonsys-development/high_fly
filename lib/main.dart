@@ -12,18 +12,36 @@ import 'config/routes.dart';
 import 'config/theme.dart';
 import 'module/providers/organization_provider.dart';
 import 'utils/flutter_web_error_handler.dart';
+import 'utils/notification_service.dart';
 
 final scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 final navigatorKey = GlobalKey<NavigatorState>();
 
-// Background message handler
+// Background message handler - MUST be a top-level function
+@pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // If you're going to use other Firebase services in the background, such as Firestore,
-  // make sure you call `initializeApp` before using other Firebase services.
-  debugPrint('Handling a background message: ${message.messageId}');
-  debugPrint('Message data: ${message.data}');
-  debugPrint('Message notification: ${message.notification?.title}');
+  // Initialize Firebase if not already initialized
+  await Firebase.initializeApp();
+  
+  debugPrint('🔔 Handling a background message: ${message.messageId}');
+  debugPrint('🔔 Message data: ${message.data}');
+  debugPrint('🔔 Message notification: ${message.notification?.title}');
+  debugPrint('🔔 Message notification body: ${message.notification?.body}');
 }
+
+// Handle notification tap
+void _handleNotificationTap(RemoteMessage message) {
+  debugPrint('🔔 Handling notification tap');
+  debugPrint('🔔 Message data: ${message.data}');
+  
+  // TODO: Navigate to appropriate screen based on message.data
+  // Example:
+  // final String? screen = message.data['screen'];
+  // if (screen != null && navigatorKey.currentState != null) {
+  //   navigatorKey.currentState!.pushNamed(screen);
+  // }
+}
+
 
 Future<void> main() async {
   // Add comprehensive error handling
@@ -80,6 +98,9 @@ Future<void> main() async {
   // Initialize Firebase Messaging
   try {
     if (!kIsWeb) {
+      // Initialize notification service for foreground notifications
+      await NotificationService().initialize();
+      
       // Request permission for notifications (iOS specific)
       if (defaultTargetPlatform == TargetPlatform.iOS) {
         await FirebaseMessaging.instance.requestPermission(
@@ -89,22 +110,63 @@ Future<void> main() async {
         );
       }
       
-      // Set the background messaging handler
+      // Set the background messaging handler early, before other initialization
       FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+      
+      // Configure foreground notification presentation (iOS)
+      await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+      
+      // Handle foreground messages
+      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+        debugPrint('🔔 Got a message whilst in the FOREGROUND!');
+        debugPrint('🔔 Message data: ${message.data}');
+
+        if (message.notification != null) {
+          debugPrint('🔔 Message also contained a notification: ${message.notification}');
+          debugPrint('🔔 Title: ${message.notification?.title}');
+          debugPrint('🔔 Body: ${message.notification?.body}');
+          
+          // Show notification in foreground
+          NotificationService().showNotification(message);
+        }
+      });
+
+      // Handle notification taps when app is in background (but not terminated)
+      FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+        debugPrint('🔔 A notification was tapped - app was in BACKGROUND');
+        debugPrint('🔔 Message data: ${message.data}');
+        
+        // Handle navigation based on notification data
+        _handleNotificationTap(message);
+      });
+
+      // Check if app was opened from a notification (terminated state)
+      RemoteMessage? initialMessage = await FirebaseMessaging.instance.getInitialMessage();
+      if (initialMessage != null) {
+        debugPrint('🔔 App opened from TERMINATED state via notification');
+        debugPrint('🔔 Message data: ${initialMessage.data}');
+        
+        // Handle navigation based on notification data
+        _handleNotificationTap(initialMessage);
+      }
       
       // Get the FCM token
       final String? token = await FirebaseMessaging.instance.getToken();
       if (token != null) {
-        debugPrint('FCM Registration Token: $token');
+        debugPrint('🔔 FCM Registration Token: $token');
       } else {
-        debugPrint('Failed to get FCM token');
+        debugPrint('🔔 Failed to get FCM token');
       }
       
       // Listen for token refreshes
       FirebaseMessaging.instance.onTokenRefresh.listen((newToken) {
-        debugPrint('FCM Token refreshed: $newToken');
+        debugPrint('🔔 FCM Token refreshed: $newToken');
       }).onError((error) {
-        debugPrint('Error listening for token refresh: $error');
+        debugPrint('🔔 Error listening for token refresh: $error');
       });
     }
   } catch (e) {
