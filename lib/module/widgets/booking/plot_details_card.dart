@@ -93,8 +93,8 @@ class PlotDetailsCard extends StatelessWidget {
                   if (plot.remark.isNotEmpty)
                     _DetailItem('Remark:', plot.remark),
                   _DetailItem('Plc:', plc),
-                  if (plot.plc || plot.plcApplied)
-                    _DetailItem(plcLabel, plot.plc || plot.plcApplied ? 'Yes' : 'No'),
+                  /*if (plot.plc || plot.plcApplied)
+                    _DetailItem(plcLabel, plot.plc || plot.plcApplied ? 'Yes' : 'No'),*/
                   if (plot.status.isNotEmpty)
                     _DetailItem('Status:', plot.status),
                 ]),

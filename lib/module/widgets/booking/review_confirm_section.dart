@@ -398,7 +398,7 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
                 child: ActionButtons(
                   onPrevious: widget.onPrevious,
                   onNext: _isLoading ? null : _handleBookingAction,
-                  nextButtonText: _isLoading ? 'Processing...' : widget.nextButtonText,
+                  nextButtonText: /*_isLoading ? 'Processing...' :*/ widget.nextButtonText,
                   isPreviousEnabled: widget.onPrevious != null && !_isLoading,
                 ),
               ),
@@ -407,7 +407,7 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
             ActionButtons(
               onPrevious: widget.onPrevious,
               onNext: _isLoading ? null : _handleBookingAction,
-              nextButtonText: _isLoading ? 'Processing...' : widget.nextButtonText,
+              nextButtonText: /*_isLoading ? 'Processing...' :*/ widget.nextButtonText,
               isPreviousEnabled: widget.onPrevious != null && !_isLoading,
             ),
         ],
