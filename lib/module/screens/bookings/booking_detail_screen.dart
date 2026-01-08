@@ -286,7 +286,7 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
                 _buildDetailRow('Payment Mode', PaymentMethod.getValue(booking.paymentMode).isNotEmpty 
                     ? PaymentMethod.getValue(booking.paymentMode) 
                     : booking.paymentMode),
-                _buildDetailRow('Payment Reference', booking.paymentReference),
+                /*_buildDetailRow('Payment Reference', booking.paymentReference),*/
                 if (booking.chequeNumber.isNotEmpty)
                   _buildDetailRow('Cheque Number', booking.chequeNumber),
                 if (booking.chequeDate != null && booking.chequeDate!.isNotEmpty)

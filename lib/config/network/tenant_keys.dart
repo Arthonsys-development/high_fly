@@ -7,7 +7,7 @@ class TenantApiKeyConfig {
   TenantApiKeyConfig._();
 
   /// Change this to the desired tenant before running a build.
-  static const String activeTenantApiKey = TenantApiKeys.testerKey;
+  static const String activeTenantApiKey = TenantApiKeys.emily;
 }
 
 /// Stores all tenant keys. Add new tenants here.
