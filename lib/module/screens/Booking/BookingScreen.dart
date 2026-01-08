@@ -308,7 +308,9 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
             }
             
             // Convert API Project models to local Project models
+            // Filter to show only "Active" status projects
             final localProjects = projectsState.projects
+                .where((project) => project.status.toLowerCase() == 'active')
                 .map((project) => project.toLocalModel())
                 .toList();
             
@@ -481,7 +483,9 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
             }
             
             // Convert API Project models to local Project models
+            // Filter to show only "Active" status projects
             final localProjects = projectsState.projects
+                .where((project) => project.status.toLowerCase() == 'active')
                 .map((project) => project.toLocalModel())
                 .toList();
             

@@ -25,7 +25,10 @@ class _PlotSelectionDialogState extends State<PlotSelectionDialog> {
   @override
   void initState() {
     super.initState();
-    _filteredPlots = widget.plots;
+    // Filter to show only "Active" status plots
+    _filteredPlots = widget.plots.where((plot) => 
+      plot.status.toLowerCase() == 'active'
+    ).toList();
   }
 
   @override
@@ -36,11 +39,16 @@ class _PlotSelectionDialogState extends State<PlotSelectionDialog> {
 
   void _filterPlots(String query) {
     setState(() {
+      // Always filter to show only "Active" status plots first
+      final activePlots = widget.plots.where((plot) => 
+        plot.status.toLowerCase() == 'active'
+      ).toList();
+      
       if (query.isEmpty) {
-        _filteredPlots = widget.plots;
+        _filteredPlots = activePlots;
       } else {
         final normalizedQuery = query.toLowerCase();
-        _filteredPlots = widget.plots.where((plot) {
+        _filteredPlots = activePlots.where((plot) {
           final remarkText = plot.remark.toLowerCase();
           return plot.plotNumber.toLowerCase().contains(normalizedQuery) ||
               remarkText.contains(normalizedQuery);
