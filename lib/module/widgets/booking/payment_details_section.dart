@@ -86,7 +86,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
     );
     _chequeDateController = TextEditingController(
       text: widget.initialPaymentDetails?.chequeDate != null
-          ? '${widget.initialPaymentDetails!.chequeDate!.day}/${widget.initialPaymentDetails!.chequeDate!.month}/${widget.initialPaymentDetails!.chequeDate!.year}'
+          ? '${widget.initialPaymentDetails!.chequeDate!.day.toString().padLeft(2, '0')}/${widget.initialPaymentDetails!.chequeDate!.month.toString().padLeft(2, '0')}/${widget.initialPaymentDetails!.chequeDate!.year}'
           : ''
     );
   }
@@ -712,7 +712,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
     if (picked != null) {
       setState(() {
         _paymentDetails = _paymentDetails.copyWith(chequeDate: picked);
-        _chequeDateController.text = '${picked.day}/${picked.month}/${picked.year}';
+        _chequeDateController.text = '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}';
       });
     }
   }

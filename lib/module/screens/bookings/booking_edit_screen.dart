@@ -23,6 +23,36 @@ class _BookingEditScreenState extends State<BookingEditScreen> {
   bool _isLoading = false;
   final BookingApiRepository _bookingRepository = BookingApiRepository();
 
+  /// Parse cheque date from various formats (YYYY-MM-DD, DD/MM/YYYY, DD-MM-YYYY)
+  DateTime? _parseChequeDate(String? dateString) {
+    if (dateString == null || dateString.isEmpty) return null;
+    
+    // Try ISO 8601 format first (YYYY-MM-DD)
+    DateTime? parsedDate = DateTime.tryParse(dateString);
+    if (parsedDate != null) return parsedDate;
+    
+    // Try DD/MM/YYYY or DD-MM-YYYY format
+    final parts = dateString.split(RegExp(r'[/-]'));
+    if (parts.length == 3) {
+      try {
+        final day = int.tryParse(parts[0]);
+        final month = int.tryParse(parts[1]);
+        final year = int.tryParse(parts[2]);
+        
+        if (day != null && month != null && year != null) {
+          // Check if it's DD/MM/YYYY format (day <= 31, month <= 12)
+          if (day <= 31 && month <= 12) {
+            return DateTime(year, month, day);
+          }
+        }
+      } catch (e) {
+        // Failed to parse
+      }
+    }
+    
+    return null;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -49,9 +79,7 @@ class _BookingEditScreenState extends State<BookingEditScreen> {
       form16APath: widget.booking.form16a,
       additionalNotes: widget.booking.remarks.isNotEmpty ? widget.booking.remarks : '',
       chequeNumber: widget.booking.chequeNumber.isNotEmpty ? widget.booking.chequeNumber : null,
-      chequeDate: widget.booking.chequeDate != null && widget.booking.chequeDate!.isNotEmpty
-          ? DateTime.tryParse(widget.booking.chequeDate!)
-          : null,
+      chequeDate: _parseChequeDate(widget.booking.chequeDate),
     );
     
     _bankDetails = BankDetails(
