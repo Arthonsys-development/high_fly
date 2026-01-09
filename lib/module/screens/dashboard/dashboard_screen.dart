@@ -18,6 +18,7 @@ import '../holds/holds_list_screen.dart';
 import '../bookings/bookings_list_screen.dart';
 import '../bookings/webview_screen.dart';
 import '../../providers/analytics_provider.dart';
+import '../../providers/booking_navigation_provider.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -1281,21 +1282,66 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     )
     ],
 
-          // Add Visit Button
+          // Action Buttons for Active Projects
           if(project.status == 'active')...[
             const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      // Set booking navigation with project and Book Now tab (index 0)
+                      ref.read(bookingNavigationProvider.notifier).navigateToBooking(project, 0);
+                      // Switch to booking tab in dashboard
+                      setState(() {
+                        selectedMenuIndex = 2;
+                      });
+                    },
+                    icon: const Icon(Icons.bookmark, size: 18),
+                    label: const Text('Book Now'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryColor,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      // Set booking navigation with project and Hold tab (index 1)
+                      ref.read(bookingNavigationProvider.notifier).navigateToBooking(project, 1);
+                      // Switch to booking tab in dashboard
+                      setState(() {
+                        selectedMenuIndex = 2;
+                      });
+                    },
+                    icon: const Icon(Icons.access_time, size: 18),
+                    label: const Text('Hold'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orange,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton.icon(
+              child: OutlinedButton.icon(
                 onPressed: () => context.go(Routes.addVisitScreen, extra: project),
-                // onPressed: () => context.push(Routes.addVisitScreen, extra: project),
-                // onPressed: () => AddVisitDialog(project: project),
-                // onPressed: () => context.go(Routes.addVisitScreen, extra: project),
                 icon: const Icon(Icons.add, size: 18),
                 label: const Text('Add Visit'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryColor,
-                  foregroundColor: Colors.white,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.primaryColor,
+                  side: const BorderSide(color: AppColors.primaryColor),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -1390,7 +1436,94 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                       children: [
                         _statusChip(project.status),
                         const SizedBox(height: 8),
-                        if (project.status == 'active')
+                        if (project.status == 'active') ...[
+                          // Book Now button
+                          Container(
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryColor.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: () {
+                                  ref.read(bookingNavigationProvider.notifier).navigateToBooking(project, 0);
+                                  onMenuItemSelected(2);
+                                },
+                                borderRadius: BorderRadius.circular(8),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 8,
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.bookmark,
+                                        size: 18,
+                                        color: AppColors.primaryColor,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      const Text(
+                                        'Book Now',
+                                        style: TextStyle(
+                                          color: AppColors.primaryColor,
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          // Hold button
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.orange.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: () {
+                                  ref.read(bookingNavigationProvider.notifier).navigateToBooking(project, 1);
+                                  onMenuItemSelected(2);
+                                },
+                                borderRadius: BorderRadius.circular(8),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 8,
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.access_time,
+                                        size: 18,
+                                        color: Colors.orange,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      const Text(
+                                        'Hold',
+                                        style: TextStyle(
+                                          color: Colors.orange,
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          // Add Visit button
                           Container(
                             decoration: BoxDecoration(
                               color: AppColors.primaryColor.withValues(alpha: 0.1),
@@ -1416,7 +1549,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                       ),
                                       const SizedBox(width: 4),
                                       const Text(
-                                        'Visit',
+                                        'Add Visit',
                                         style: TextStyle(
                                           color: AppColors.primaryColor,
                                           fontSize: 13,
@@ -1429,6 +1562,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                               ),
                             ),
                           ),
+                        ],
                       ],
                     ),
                   ],
@@ -1607,52 +1741,133 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                       const SizedBox(width: 16),
                       Expanded(
                         flex: 1,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: project.status == 'active'
-                                ? AppColors.primaryColor.withValues(alpha: 0.1)
-                                : Colors.grey.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              onTap: project.status == 'active'
-                                  ? () => context.go(Routes.addVisitScreen, extra: project)
-                                  : null,
-                              borderRadius: BorderRadius.circular(8),
-                              child: Padding(
+                        child: project.status == 'active'
+                            ? Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  // Book Now button
+                                  Expanded(
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: AppColors.primaryColor.withValues(alpha: 0.1),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Material(
+                                        color: Colors.transparent,
+                                        child: InkWell(
+                                          onTap: () {
+                                            ref.read(bookingNavigationProvider.notifier).navigateToBooking(project, 0);
+                                            onMenuItemSelected(2);
+                                          },
+                                          borderRadius: BorderRadius.circular(8),
+                                          child: Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 8,
+                                              vertical: 8,
+                                            ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: [
+                                                const Icon(
+                                                  Icons.bookmark,
+                                                  size: 16,
+                                                  color: AppColors.primaryColor,
+                                                ),
+                                                const SizedBox(width: 4),
+                                                const Text(
+                                                  'Book',
+                                                  style: TextStyle(
+                                                    color: AppColors.primaryColor,
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  // Hold button
+                                  Expanded(
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.orange.withValues(alpha: 0.1),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Material(
+                                        color: Colors.transparent,
+                                        child: InkWell(
+                                          onTap: () {
+                                            ref.read(bookingNavigationProvider.notifier).navigateToBooking(project, 1);
+                                            onMenuItemSelected(2);
+                                          },
+                                          borderRadius: BorderRadius.circular(8),
+                                          child: Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 8,
+                                              vertical: 8,
+                                            ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: [
+                                                const Icon(
+                                                  Icons.access_time,
+                                                  size: 16,
+                                                  color: Colors.orange,
+                                                ),
+                                                const SizedBox(width: 4),
+                                                const Text(
+                                                  'Hold',
+                                                  style: TextStyle(
+                                                    color: Colors.orange,
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              )
+                            : Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 12,
                                   vertical: 8,
                                 ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
+                                  mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Icon(
-                                      Icons.add,
-                                      size: 18,
-                                      color: project.status == 'active'
-                                          ? AppColors.primaryColor
-                                          : Colors.grey,
+                                      Icons.block,
+                                      size: 16,
+                                      color: Colors.grey,
                                     ),
                                     const SizedBox(width: 6),
                                     Text(
-                                      'Visit',
+                                      'Inactive',
                                       style: TextStyle(
-                                        color: project.status == 'active'
-                                            ? AppColors.primaryColor
-                                            : Colors.grey,
-                                        fontSize: 13,
+                                        color: Colors.grey,
+                                        fontSize: 12,
                                         fontWeight: FontWeight.w500,
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
-                            ),
-                          ),
-                        ),
                       ),
                     ],
                   ),

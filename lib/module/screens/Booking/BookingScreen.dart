@@ -12,6 +12,7 @@ import '../../../data/models/booking_summary_model.dart';
 import '../../../data/models/hold_details_model.dart';
 import '../../../data/providers/sample_data_provider.dart';
 import '../../providers/projects_provider.dart';
+import '../../providers/booking_navigation_provider.dart';
 import '../../widgets/booking/booking_form_section.dart';
 import '../../widgets/booking/customer_selection_section.dart';
 import '../../widgets/booking/hold_details_section.dart';
@@ -69,8 +70,11 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
       _currentStep = 0;
       _currentHoldStep = 0;
       _selectedPlotPrice = '85000';
+      _hasHandledNavigation = false;
     });
   }
+
+  bool _hasHandledNavigation = false;
 
   @override
   void initState() {
@@ -81,6 +85,30 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
       ref.read(projectsControllerProvider.notifier).loadProjects();
       ref.read(projectsControllerProvider.notifier).loadActiveProjects();
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    
+    // Handle navigation data only once when widget is first built
+    if (!_hasHandledNavigation) {
+      final navState = ref.read(bookingNavigationProvider);
+      if (navState.shouldNavigate && navState.selectedProject != null && navState.tabIndex != null) {
+        _hasHandledNavigation = true;
+        
+        // Convert API Project to local Project model and set state
+        _selectedProject = navState.selectedProject!.toLocalModel();
+        
+        // Switch to the appropriate tab
+        _tabController.index = navState.tabIndex!;
+        
+        // Clear navigation state after handling
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          ref.read(bookingNavigationProvider.notifier).clearNavigation();
+        });
+      }
+    }
   }
 
   @override
