@@ -57,7 +57,7 @@ class ApiClient {
   void _init() {
     String baseUrl;
     try {
-      baseUrl = dotenv.env['BASE_URL'] ?? 'http://64.227.154.65:81/api/v1/';
+      baseUrl = dotenv.env['BASE_URL'] ?? 'http://223.184.0.44:83/api/v1/';
       debugPrint('API Client: Using base URL: $baseUrl');
     } catch (e) {
       debugPrint('API Client: Error getting BASE_URL from environment: $e');
