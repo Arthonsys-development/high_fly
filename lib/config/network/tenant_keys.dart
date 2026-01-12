@@ -7,7 +7,7 @@ class TenantApiKeyConfig {
   TenantApiKeyConfig._();
 
   /// Change this to the desired tenant before running a build.
-  static const String activeTenantApiKey = TenantApiKeys.vistarak;
+  static const String activeTenantApiKey = TenantApiKeys.teprodVisstKey;
 }
 
 /// Stores all tenant keys. Add new tenants here.
@@ -19,6 +19,8 @@ class TenantApiKeys {
   static const String testerKey = 'ef5192f3-b5e3-47e4-8cb4-4afe5199cac9';
   static const String benDeveloper = 'cdb83a60-c055-4235-9469-f2625ffc1f6e';
   static const String emily = 'e198deae-ccf1-43c0-8e53-e7f1cff91d21';
+
+  static const String teprodVisstKey = '474ba05d-7f3c-4277-b715-6623e398d992';
 
   // static const String anotherOrg = '<replace-with-key>';
 }
