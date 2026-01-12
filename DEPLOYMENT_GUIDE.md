@@ -24,13 +24,15 @@ firebase deploy --only hosting
 ```
 
 **Access:**
-- Production URL: `https://high-fly-21a85.web.app`
-- Alternative URL: `https://high-fly-21a85.firebaseapp.com`
+- Production URL: `https://vistarak-apps.web.app`
+- Alternative URL: `https://vistarak-apps.firebaseapp.com`
 
 **Or use the automated script:**
 ```bash
-./deploy_web.sh
+./deploy_firebase.sh
 ```
+
+**For detailed Firebase Hosting instructions, see:** [FIREBASE_HOSTING.md](./FIREBASE_HOSTING.md)
 
 ---
 
@@ -202,7 +204,8 @@ flutter build web --release --dart-define=env=prod
 
 ## Need Help?
 
-- Check Firebase Console: https://console.firebase.google.com/project/high-fly-21a85
+- Check Firebase Console: https://console.firebase.google.com/project/vistarak-apps
 - Flutter Web Docs: https://docs.flutter.dev/deployment/web
 - Firebase Hosting Docs: https://firebase.google.com/docs/hosting
+- Detailed Firebase Hosting Guide: [FIREBASE_HOSTING.md](./FIREBASE_HOSTING.md)
 
