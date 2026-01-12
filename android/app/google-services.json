@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "1014216862088",
-    "project_id": "high-fly-21a85",
-    "storage_bucket": "high-fly-21a85.firebasestorage.app"
+    "project_number": "930030992658",
+    "project_id": "vistarak-apps",
+    "storage_bucket": "vistarak-apps.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1014216862088:android:ae680e4bb56d7f7e92723d",
+        "mobilesdk_app_id": "1:930030992658:android:b8d18fd63666f686f407cb",
         "android_client_info": {
-          "package_name": "com.highfly.app"
+          "package_name": "vistarak.apps"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyDq9-BbPUNnGwoQQsy0rpsb-ugUbL10CPA"
+          "current_key": "AIzaSyDLVwlKUwbShOWc_KczwQrMpdDvVEgLRmQ"
         }
       ],
       "services": {

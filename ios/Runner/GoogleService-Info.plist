@@ -3,17 +3,17 @@
 <plist version="1.0">
 <dict>
 	<key>API_KEY</key>
-	<string>AIzaSyBIBMre9R1KOnL7BM5IU1Y72LxRMezfEpM</string>
+	<string>AIzaSyChYkHuPx0-_NPnyaVgvQTcMq8XZTMSzHk</string>
 	<key>GCM_SENDER_ID</key>
-	<string>1014216862088</string>
+	<string>930030992658</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.highfly.app</string>
+	<string>vistarak.apps</string>
 	<key>PROJECT_ID</key>
-	<string>high-fly-21a85</string>
+	<string>vistarak-apps</string>
 	<key>STORAGE_BUCKET</key>
-	<string>high-fly-21a85.firebasestorage.app</string>
+	<string>vistarak-apps.firebasestorage.app</string>
 	<key>IS_ADS_ENABLED</key>
 	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
@@ -25,8 +25,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:1014216862088:ios:ae0e157b8658857f92723d</string>
-	<key>REVERSED_CLIENT_ID</key>
-    <string>com.googleusercontent.apps.XXXXXXXXXXXX-XXXXXXXXXXXX</string>
+	<string>1:930030992658:ios:8aa4338de40e3500f407cb</string>
 </dict>
 </plist>

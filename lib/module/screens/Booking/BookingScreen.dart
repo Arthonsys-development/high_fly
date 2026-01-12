@@ -18,6 +18,7 @@ import '../../widgets/booking/customer_selection_section.dart';
 import '../../widgets/booking/hold_details_section.dart';
 import '../../widgets/booking/payment_details_section.dart';
 import '../../widgets/booking/bank_details_section.dart';
+import '../../widgets/booking/upload_documents_section.dart';
 import '../../widgets/booking/review_confirm_section.dart';
 
 // Extension to convert API Project model to local Project model
@@ -45,8 +46,8 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
 
   late TabController _tabController;
   final List<Customer> customers = SampleDataProvider.getSampleCustomers();
-  int _currentStep = 0; // 0: Project & Plot, 1: Customer, 2: Payment, 3: Bank Details, 4: Review & Confirm
-  int _currentHoldStep = 0; // 0: Project & Plot, 1: Customer, 2: Hold Details, 4: Bank Details, 5: Review & Confirm
+  int _currentStep = 0; // 0: Project & Plot, 1: Customer, 2: Payment, 3: Bank Details, 4: Upload Documents, 5: Review & Confirm
+  int _currentHoldStep = 0; // 0: Project & Plot, 1: Customer, 2: Hold Details, 3: Bank Details, 4: Upload Documents, 5: Review & Confirm
   String _selectedPlotPrice = '85000'; // Default price, will be updated from plot selection
   final ScrollController _scrollController = ScrollController();
   
@@ -57,6 +58,7 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
   HoldDetails? _holdDetails;
   PaymentDetails? _paymentDetails;
   BankDetails? _bankDetails;
+  List<String> _documents = [];
 
   // Method to reset all form data
   void _resetFormData() {
@@ -67,6 +69,7 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
       _holdDetails = null;
       _paymentDetails = null;
       _bankDetails = null;
+      _documents = [];
       _currentStep = 0;
       _currentHoldStep = 0;
       _selectedPlotPrice = '85000';
@@ -421,7 +424,27 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
           onNext: (bankDetails) {
             setState(() {
               _bankDetails = bankDetails;
-              _currentStep = 4; // Move to review & confirm
+              _currentStep = 4; // Move to upload documents
+            });
+            _resetScrollPosition();
+          },
+        );
+      } else if (_currentStep == 4) {
+        // Upload Documents Step
+        return UploadDocumentsSection(
+          key: Key('booking_step_$_currentStep'),
+          title: actionType,
+          nextButtonText: "Next",
+          initialDocuments: _documents.isEmpty ? null : _documents,
+          onPrevious: () {
+            setState(() {
+              _currentStep = 3; // Go back to bank details
+            });
+          },
+          onNext: (documents) {
+            setState(() {
+              _documents = documents;
+              _currentStep = 5; // Move to review & confirm
             });
             _resetScrollPosition();
           },
@@ -440,7 +463,7 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
               nextButtonText: actionType,
               onPrevious: () {
                 setState(() {
-                  _currentStep = 3; // Go back to bank details
+                  _currentStep = 4; // Go back to upload documents
                 });
               },
               onNext: () {
@@ -452,6 +475,7 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
                 selectedCustomer: _selectedCustomer,
                 paymentDetails: _paymentDetails,
                 bankDetails: _bankDetails,
+                documents: _documents.isEmpty ? null : _documents,
               ),
               isHoldFlow: false,
             //  agentId: int.parse(agentId),
@@ -595,7 +619,27 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
           onNext: (bankDetails) {
             setState(() {
               _bankDetails = bankDetails;
-              _currentHoldStep = 4; // Move to review & confirm
+              _currentHoldStep = 4; // Move to upload documents
+            });
+            _resetScrollPosition();
+          },
+        );
+      } else if (_currentHoldStep == 4) {
+        // Upload Documents Step
+        return UploadDocumentsSection(
+          key: Key('hold_step_$_currentHoldStep'),
+          title: actionType,
+          nextButtonText: "Next",
+          initialDocuments: _documents.isEmpty ? null : _documents,
+          onPrevious: () {
+            setState(() {
+              _currentHoldStep = 3; // Go back to bank details
+            });
+          },
+          onNext: (documents) {
+            setState(() {
+              _documents = documents;
+              _currentHoldStep = 5; // Move to review & confirm
             });
             _resetScrollPosition();
           },
@@ -613,7 +657,7 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
               nextButtonText: "Hold",
               onPrevious: () {
                 setState(() {
-                  _currentHoldStep = 3; // Go back to bank details
+                  _currentHoldStep = 4; // Go back to upload documents
                 });
               },
               onNext: () {
@@ -626,6 +670,7 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
                 holdDetails: _holdDetails,
                // paymentDetails: _paymentDetails,
                 bankDetails: _bankDetails,
+                documents: _documents.isEmpty ? null : _documents,
               ),
               isHoldFlow: true,
             // agentId: int.parse(agentId),

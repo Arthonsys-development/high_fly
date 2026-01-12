@@ -150,6 +150,7 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
       salaryIndividual: summary.paymentDetails!.isSalariedIndividual,
       salarySlipPath: summary.paymentDetails!.salarySlipPath,
       form16APath: summary.paymentDetails!.form16APath,
+      documents: summary.documents,
     );
 
     await _bookingRepository.createBooking(request);
@@ -192,6 +193,7 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
       bankContactNumber: summary.bankDetails!.contactNumber ?? '',
       holdUntil: holdUntilString,
       remarks: summary.holdDetails!.additionalNotes ?? '',
+      documents: summary.documents,
     );
 
     await _bookingRepository.createHold(request);
@@ -343,6 +345,11 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
       ],
     );
     
+    final documentsCard = widget.bookingSummary.documents != null && 
+                          widget.bookingSummary.documents!.isNotEmpty
+        ? _buildDocumentsCard()
+        : null;
+    
     return SingleChildScrollView(
       padding: EdgeInsets.only(
         top: kIsWeb ? 20 : 20,
@@ -373,6 +380,7 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
                   paymentCard: paymentCard,
                   holdCard: holdCard,
                   bankCard: bankCard,
+                  documentsCard: documentsCard,
                   spacing: spacing,
                 ),
               ),
@@ -384,6 +392,7 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
               paymentCard: paymentCard,
               holdCard: holdCard,
               bankCard: bankCard,
+              documentsCard: documentsCard,
               spacing: spacing,
             ),
           
@@ -421,6 +430,7 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
     required Widget? paymentCard,
     required Widget? holdCard,
     required Widget bankCard,
+    required Widget? documentsCard,
     required double spacing,
   }) {
     return Column(
@@ -456,6 +466,12 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
             ),
           ],
         ),
+        
+        // Third row: Documents card (full width if exists)
+        if (documentsCard != null) ...[
+          SizedBox(height: spacing),
+          documentsCard,
+        ],
       ],
     );
   }
@@ -466,6 +482,7 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
     required Widget? paymentCard,
     required Widget? holdCard,
     required Widget bankCard,
+    required Widget? documentsCard,
     required double spacing,
   }) {
     return Column(
@@ -483,6 +500,10 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
         ],
         SizedBox(height: spacing),
         bankCard,
+        if (documentsCard != null) ...[
+          SizedBox(height: spacing),
+          documentsCard,
+        ],
       ],
     );
   }
@@ -656,6 +677,29 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
           'Additional Notes',
           holdDetails.additionalNotes ?? '-',
         ),
+      ],
+    );
+  }
+
+  Widget _buildDocumentsCard() {
+    final documents = widget.bookingSummary.documents ?? [];
+    return _buildInfoCard(
+      icon: IconsAssets.cardIcon, // Using card icon as placeholder
+      iconColor: Colors.purple,
+      title: 'Documents',
+      children: [
+        if (documents.isEmpty)
+          _buildInfoRow('Documents', 'No documents uploaded')
+        else
+          ...documents.asMap().entries.map((entry) {
+            final index = entry.key;
+            final filePath = entry.value;
+            final fileName = filePath.split('/').last;
+            return _buildInfoRow(
+              'Document ${index + 1}',
+              fileName,
+            );
+          }),
       ],
     );
   }

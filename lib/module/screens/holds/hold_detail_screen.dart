@@ -3,10 +3,12 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:highfly/config/constant/app_colors.dart';
 import 'package:highfly/data/models/hold_list_model.dart';
-import 'package:highfly/data/models/payment_model.dart';
+import 'package:highfly/data/models/hold_document_model.dart' as hold_document_model;
+import 'package:url_launcher/url_launcher.dart';
 import '../../providers/holds_provider.dart';
 import 'hold_booking_screen.dart';
 import 'hold_edit_screen.dart';
+import '../bookings/webview_screen.dart';
 
 String _formatStatusDisplay(String statusDisplay) {
   if (statusDisplay.isEmpty) return statusDisplay;
@@ -306,6 +308,13 @@ class _HoldDetailScreenState extends ConsumerState<HoldDetailScreen> {
                     SizedBox(height: kIsWeb ? 32 : 24),
                   ],
 
+                  // Documents Section
+                  if (hold.documents.isNotEmpty) ...[
+                    _buildSectionTitle('Documents (${hold.documentCount})'),
+                    _buildDocumentsGrid(hold.documents),
+                    SizedBox(height: kIsWeb ? 32 : 24),
+                  ],
+
                   // Additional Information
                   // _buildSectionTitle('Additional Information'),
                   // _buildDetailCard([
@@ -431,6 +440,385 @@ class _HoldDetailScreenState extends ConsumerState<HoldDetailScreen> {
                 color: AppColors.primaryTextColor,
                 fontWeight: FontWeight.w400,
                 height: kIsWeb ? 1.5 : 1.4,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDocumentsGrid(List<hold_document_model.HoldDocument> documents) {
+    return Container(
+      padding: EdgeInsets.all(kIsWeb ? 24 : 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(kIsWeb ? 16 : 12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withValues(alpha: kIsWeb ? 0.08 : 0.1),
+            spreadRadius: kIsWeb ? 0 : 1,
+            blurRadius: kIsWeb ? 8 : 4,
+            offset: Offset(0, kIsWeb ? 4 : 2),
+          ),
+        ],
+        border: kIsWeb ? Border.all(
+          color: Colors.grey.withValues(alpha: 0.1),
+          width: 1,
+        ) : null,
+      ),
+      child: GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: kIsWeb ? 4 : 2,
+          crossAxisSpacing: kIsWeb ? 16 : 12,
+          mainAxisSpacing: kIsWeb ? 16 : 12,
+          childAspectRatio: kIsWeb ? 0.85 : 0.9,
+        ),
+        itemCount: documents.length,
+        itemBuilder: (context, index) {
+          return _buildDocumentThumbnail(documents[index]);
+        },
+      ),
+    );
+  }
+
+  Widget _buildDocumentThumbnail(hold_document_model.HoldDocument document) {
+    final isPdf = document.documentUrl.toLowerCase().endsWith('.pdf') ||
+        document.filetype.toLowerCase() == 'pdf';
+    final isImage = document.documentUrl.toLowerCase().endsWith('.jpg') ||
+        document.documentUrl.toLowerCase().endsWith('.jpeg') ||
+        document.documentUrl.toLowerCase().endsWith('.png') ||
+        document.documentUrl.toLowerCase().endsWith('.gif') ||
+        document.filetype.toLowerCase() == 'image';
+    
+    return GestureDetector(
+      onTap: () => _openDocument(document.documentUrl),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(kIsWeb ? 12 : 8),
+          border: Border.all(
+            color: Colors.grey.withValues(alpha: 0.2),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withValues(alpha: 0.1),
+              spreadRadius: 0,
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Thumbnail Preview
+            Expanded(
+              child: ClipRRect(
+                borderRadius: BorderRadius.vertical(
+                  top: Radius.circular(kIsWeb ? 12 : 8),
+                ),
+                child: Container(
+                  color: Colors.grey.withValues(alpha: 0.1),
+                  child: isImage
+                      ? Image.network(
+                          document.documentUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              color: Colors.grey[200],
+                              child: Center(
+                                child: Icon(
+                                  Icons.image_not_supported,
+                                  size: 32,
+                                  color: Colors.grey[400],
+                                ),
+                              ),
+                            );
+                          },
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Container(
+                              color: Colors.grey[200],
+                              child: Center(
+                                child: SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: AppColors.primaryColor,
+                                    value: loadingProgress.expectedTotalBytes != null
+                                        ? loadingProgress.cumulativeBytesLoaded /
+                                            loadingProgress.expectedTotalBytes!
+                                        : null,
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        )
+                      : isPdf
+                          ? Container(
+                              color: Colors.red[50],
+                              child: Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.picture_as_pdf,
+                                      size: kIsWeb ? 40 : 36,
+                                      color: Colors.red[400],
+                                    ),
+                                    SizedBox(height: kIsWeb ? 6 : 4),
+                                    Text(
+                                      'PDF',
+                                      style: TextStyle(
+                                        fontSize: kIsWeb ? 11 : 10,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.red[700],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            )
+                          : Container(
+                              color: Colors.grey[200],
+                              child: Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.insert_drive_file,
+                                      size: kIsWeb ? 40 : 36,
+                                      color: Colors.grey[600],
+                                    ),
+                                    SizedBox(height: kIsWeb ? 6 : 4),
+                                    Text(
+                                      'File',
+                                      style: TextStyle(
+                                        fontSize: kIsWeb ? 11 : 10,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.grey[700],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                ),
+              ),
+            ),
+            // Document Info
+            Padding(
+              padding: EdgeInsets.all(kIsWeb ? 10 : 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        isPdf
+                            ? Icons.picture_as_pdf
+                            : isImage
+                                ? Icons.image
+                                : Icons.insert_drive_file,
+                        size: kIsWeb ? 14 : 12,
+                        color: isPdf
+                            ? Colors.red
+                            : isImage
+                                ? AppColors.primaryColor
+                                : AppColors.primaryColor,
+                      ),
+                      SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          document.filetypeDisplay.isNotEmpty
+                              ? document.filetypeDisplay
+                              : (isPdf ? 'PDF' : isImage ? 'Image' : 'Document'),
+                          style: TextStyle(
+                            fontSize: kIsWeb ? 11 : 10,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primaryTextColor,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (document.description.isNotEmpty) ...[
+                    SizedBox(height: 4),
+                    Text(
+                      document.description,
+                      style: TextStyle(
+                        fontSize: kIsWeb ? 10 : 9,
+                        color: AppColors.lightGreyColor,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openDocument(String url) async {
+    if (url.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Document URL is not available'),
+        ),
+      );
+      return;
+    }
+
+    try {
+      final uri = Uri.parse(url);
+      
+      // Check if it's a PDF or image
+      final isPdf = url.toLowerCase().endsWith('.pdf');
+      final isImage = url.toLowerCase().endsWith('.jpg') ||
+          url.toLowerCase().endsWith('.jpeg') ||
+          url.toLowerCase().endsWith('.png') ||
+          url.toLowerCase().endsWith('.gif');
+      
+      if (kIsWeb) {
+        // On web, open in new tab
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Unable to open document'),
+            ),
+          );
+        }
+      } else {
+        // On mobile
+        if (isImage) {
+          // Show full-screen image viewer for images
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => _FullScreenImagePage(imageUrl: url),
+            ),
+          );
+        } else if (isPdf) {
+          // Use WebView for PDFs
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => WebViewScreen(
+                url: url,
+                title: 'Document',
+              ),
+            ),
+          );
+        } else {
+          // Open other files in browser
+          if (await canLaunchUrl(uri)) {
+            await launchUrl(uri, mode: LaunchMode.externalApplication);
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Unable to open document'),
+              ),
+            );
+          }
+        }
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error opening document: $e'),
+        ),
+      );
+    }
+  }
+}
+
+// Full screen image viewer page
+class _FullScreenImagePage extends StatelessWidget {
+  final String imageUrl;
+
+  const _FullScreenImagePage({required this.imageUrl});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        iconTheme: const IconThemeData(color: Colors.white),
+        title: const Text(
+          'Image Preview',
+          style: TextStyle(color: Colors.white),
+        ),
+      ),
+      body: Stack(
+        children: [
+          // Full screen image viewer with zoom and pan
+          InteractiveViewer(
+            minScale: 0.5,
+            maxScale: 5.0,
+            panEnabled: true,
+            child: SizedBox(
+              width: MediaQuery.of(context).size.width,
+              height: MediaQuery.of(context).size.height,
+              child: Image.network(
+                imageUrl,
+                fit: BoxFit.contain,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    color: Colors.black,
+                    child: const Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.error_outline, size: 60, color: Colors.white70),
+                          SizedBox(height: 16),
+                          Text(
+                            'Failed to load image',
+                            style: TextStyle(color: Colors.white70, fontSize: 16),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Container(
+                    color: Colors.black,
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const CircularProgressIndicator(
+                            color: Colors.white70,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Loading image...',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
           ),

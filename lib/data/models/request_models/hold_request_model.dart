@@ -19,6 +19,7 @@ class HoldRequestModel {
   final String bankContactNumber;
   final String holdUntil;
   final String remarks;
+  final List<String>? documents;
 
   const HoldRequestModel({
     required this.plot,
@@ -41,6 +42,7 @@ class HoldRequestModel {
     required this.bankContactNumber,
     required this.holdUntil,
     required this.remarks,
+    this.documents,
   });
 
   Map<String, dynamic> toJson() {
@@ -65,6 +67,7 @@ class HoldRequestModel {
       'bank_contact_number': bankContactNumber,
       'hold_until': holdUntil,
       'remarks': remarks,
+      if (documents != null && documents!.isNotEmpty) 'documents': documents,
     };
   }
 }

@@ -13,6 +13,7 @@ class BookingSummary {
   final HoldDetails? holdDetails;
   final PaymentDetails? paymentDetails;
   final BankDetails? bankDetails;
+  final List<String>? documents;
 
   const BookingSummary({
     this.selectedProject,
@@ -21,6 +22,7 @@ class BookingSummary {
     this.holdDetails,
     this.paymentDetails,
     this.bankDetails,
+    this.documents,
   });
 
   BookingSummary copyWith({
@@ -30,6 +32,7 @@ class BookingSummary {
     HoldDetails? holdDetails,
     PaymentDetails? paymentDetails,
     BankDetails? bankDetails,
+    List<String>? documents,
   }) {
     return (holdDetails != null) ? BookingSummary(
       selectedProject: selectedProject ?? this.selectedProject,
@@ -37,17 +40,19 @@ class BookingSummary {
       selectedCustomer: selectedCustomer ?? this.selectedCustomer,
       holdDetails: holdDetails,
       bankDetails: bankDetails ?? this.bankDetails,
+      documents: documents ?? this.documents,
     ) : BookingSummary(
       selectedProject: selectedProject ?? this.selectedProject,
       selectedPlot: selectedPlot ?? this.selectedPlot,
       selectedCustomer: selectedCustomer ?? this.selectedCustomer,
       paymentDetails: paymentDetails ?? this.paymentDetails,
       bankDetails: bankDetails ?? this.bankDetails,
+      documents: documents ?? this.documents,
     );
   }
 
   @override
   String toString() {
-    return 'BookingSummary(selectedProject: $selectedProject, selectedPlot: $selectedPlot, selectedCustomer: $selectedCustomer, holdDetails: $holdDetails, paymentDetails: $paymentDetails, bankDetails: $bankDetails)';
+    return 'BookingSummary(selectedProject: $selectedProject, selectedPlot: $selectedPlot, selectedCustomer: $selectedCustomer, holdDetails: $holdDetails, paymentDetails: $paymentDetails, bankDetails: $bankDetails, documents: $documents)';
   }
 }

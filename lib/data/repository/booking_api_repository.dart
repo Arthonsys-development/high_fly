@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
+import 'package:http_parser/http_parser.dart';
 import '../../config/network/api_client.dart';
 import '../../config/network/api_constants.dart';
 import '../models/request_models/booking_request_model.dart';
@@ -127,7 +128,85 @@ class BookingApiRepository {
         }
       }
       
-      final formData = FormData.fromMap(formDataMap);
+      // Create FormData manually to ensure proper array handling for documents
+      final formData = FormData();
+      
+      // Track which file keys we have so we can skip corresponding path fields
+      final hasSalarySlipFile = formDataMap.containsKey('salary_slip') && formDataMap['salary_slip'] is MultipartFile;
+      final hasForm16AFile = formDataMap.containsKey('form_16a') && formDataMap['form_16a'] is MultipartFile;
+      
+      // Add all form fields from formDataMap
+      for (var entry in formDataMap.entries) {
+        // Skip documents key as we'll add files separately
+        if (entry.key == 'documents') continue;
+        
+        // Skip path fields if we have the actual file
+        if (entry.key == 'salary_slip_path' && hasSalarySlipFile) {
+          continue;
+        }
+        if (entry.key == 'form_16a_path' && hasForm16AFile) {
+          continue;
+        }
+        
+        // Handle MultipartFile entries (salary_slip, form_16a) - add as files
+        if (entry.value is MultipartFile) {
+          formData.files.add(MapEntry(entry.key, entry.value as MultipartFile));
+        } else {
+          formData.fields.add(MapEntry(entry.key, entry.value.toString()));
+        }
+      }
+      
+      // Handle documents array - add all documents with the same key "documents" to form an array
+      if (request.documents != null && request.documents!.isNotEmpty) {
+        for (var documentPath in request.documents!) {
+          if (documentPath.isEmpty) continue;
+          
+          if (kIsWeb) {
+            // On web, if it's a URL, add it as a string field
+            if (documentPath.startsWith('http')) {
+              formData.fields.add(MapEntry('documents', documentPath));
+              continue;
+            }
+            // For web, files from image_picker/file_picker need special handling
+            // Skip for now as web file handling requires bytes
+            debugPrint('Web file upload from path not supported: $documentPath');
+            continue;
+          } else {
+            // On mobile, use File API
+            try {
+              final documentFile = File(documentPath);
+              if (await documentFile.exists()) {
+                final fileName = documentPath.split('/').last;
+                final fileExtension = fileName.split('.').last.toLowerCase();
+                
+                // Determine content type
+                String? contentType;
+                if (fileExtension == 'pdf') {
+                  contentType = 'application/pdf';
+                } else if (['jpg', 'jpeg'].contains(fileExtension)) {
+                  contentType = 'image/jpeg';
+                } else if (fileExtension == 'png') {
+                  contentType = 'image/png';
+                }
+                
+                final multipartFile = await MultipartFile.fromFile(
+                  documentPath,
+                  filename: fileName,
+                  contentType: contentType != null 
+                      ? MediaType.parse(contentType) 
+                      : null,
+                );
+                
+                // Add each document file with the same key "documents" to create an array
+                formData.files.add(MapEntry('documents', multipartFile));
+              }
+            } catch (e) {
+              // File doesn't exist or can't be accessed, skip
+              debugPrint('Error adding document file: $e');
+            }
+          }
+        }
+      }
 
       final response = await _apiClient.postMultipart(
         ApiConstants.plotBookings,
@@ -152,12 +231,78 @@ class BookingApiRepository {
     }
   }
 
-  /// Create a new plot hold
+  /// Create a new plot hold with multipart/form-data
   Future<HoldResponseModel> createHold(HoldRequestModel request) async {
     try {
-      final response = await _apiClient.post(
+      // Create FormData for multipart request
+      final Map<String, dynamic> formDataMap = {...request.toJson()};
+      
+      // Create FormData manually to ensure proper array handling for documents
+      final formData = FormData();
+      
+      // Add all form fields from formDataMap
+      for (var entry in formDataMap.entries) {
+        // Skip documents key as we'll add files separately
+        if (entry.key == 'documents') continue;
+        
+        formData.fields.add(MapEntry(entry.key, entry.value.toString()));
+      }
+      
+      // Handle documents array - add all documents with the same key "documents" to form an array
+      if (request.documents != null && request.documents!.isNotEmpty) {
+        for (var documentPath in request.documents!) {
+          if (documentPath.isEmpty) continue;
+          
+          if (kIsWeb) {
+            // On web, if it's a URL, add it as a string field
+            if (documentPath.startsWith('http')) {
+              formData.fields.add(MapEntry('documents', documentPath));
+              continue;
+            }
+            // For web, files from image_picker/file_picker need special handling
+            // Skip for now as web file handling requires bytes
+            debugPrint('Web file upload from path not supported: $documentPath');
+            continue;
+          } else {
+            // On mobile, use File API
+            try {
+              final documentFile = File(documentPath);
+              if (await documentFile.exists()) {
+                final fileName = documentPath.split('/').last;
+                final fileExtension = fileName.split('.').last.toLowerCase();
+                
+                // Determine content type
+                String? contentType;
+                if (fileExtension == 'pdf') {
+                  contentType = 'application/pdf';
+                } else if (['jpg', 'jpeg'].contains(fileExtension)) {
+                  contentType = 'image/jpeg';
+                } else if (fileExtension == 'png') {
+                  contentType = 'image/png';
+                }
+                
+                final multipartFile = await MultipartFile.fromFile(
+                  documentPath,
+                  filename: fileName,
+                  contentType: contentType != null 
+                      ? MediaType.parse(contentType) 
+                      : null,
+                );
+                
+                // Add each document file with the same key "documents" to create an array
+                formData.files.add(MapEntry('documents', multipartFile));
+              }
+            } catch (e) {
+              // File doesn't exist or can't be accessed, skip
+              debugPrint('Error adding document file: $e');
+            }
+          }
+        }
+      }
+      
+      final response = await _apiClient.postMultipart(
         ApiConstants.plotHolds,
-        data: request.toJson(),
+        data: formData,
       );
       
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -166,6 +311,10 @@ class BookingApiRepository {
         throw Exception('Failed to create hold: ${response.statusMessage}');
       }
     } on DioException catch (e) {
+      // Check for 413 status code (Request Entity Too Large)
+      if (e.response?.statusCode == 413) {
+        throw Exception('Selected file size Too Large');
+      }
       // Extract the actual error message from the API response
       final errorMessage = _extractErrorMessage(e);
       throw Exception(errorMessage);

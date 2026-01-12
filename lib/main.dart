@@ -75,16 +75,16 @@ Future<void> main() async {
       // We just need to initialize the Flutter Firebase plugin
       await Firebase.initializeApp(
         options: const FirebaseOptions(
-          apiKey: "AIzaSyDdnfmVWzbB0k7JMpc3KfUyGDdMX5KC7fE",
-          authDomain: "high-fly-21a85.firebaseapp.com",
-          projectId: "high-fly-21a85",
-          storageBucket: "high-fly-21a85.firebasestorage.app",
-          messagingSenderId: "1014216862088",
-          appId: "1:1014216862088:web:af9c032fe727a84d92723d",
-          measurementId: "G-Z1B7S90QGE",
+          apiKey: "AIzaSyAuLYabgeakEBFP0vijPe0B1HlxJXLwmVg",
+          authDomain: "vistarak-apps.firebaseapp.com",
+          projectId: "vistarak-apps",
+          storageBucket: "vistarak-apps.firebasestorage.app",
+          messagingSenderId: "930030992658",
+          appId: "1:930030992658:web:0f03cbb4fd5ac8a0f407cb",
+          measurementId: "G-MTNV4XJEBF",
         ),
       );
-      debugPrint('🔥 Firebase Web initialized successfully for project: high-fly-21a85');
+      debugPrint('🔥 Firebase Web initialized successfully for project: vistarak-apps');
     } else {
       // For mobile platforms, use the google-services configuration
       await Firebase.initializeApp();

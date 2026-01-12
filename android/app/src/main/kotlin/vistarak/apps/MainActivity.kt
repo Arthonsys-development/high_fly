@@ -1,4 +1,4 @@
-package com.highfly.app
+package vistarak.apps
 
 import io.flutter.embedding.android.FlutterActivity
 

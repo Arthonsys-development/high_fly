@@ -15,7 +15,7 @@ class WebFirebaseAuth {
       }
       
       debugPrint('🔥 Web Firebase: Firebase JS SDK detected');
-      debugPrint('🔥 Web Firebase: Project: high-fly-21a85');
+      debugPrint('🔥 Web Firebase: Project: vistarak-apps');
       
       // Initialize reCAPTCHA container
       final container = html.document.getElementById('recaptcha-container');

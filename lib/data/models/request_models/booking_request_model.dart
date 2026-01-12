@@ -28,6 +28,7 @@ class BookingRequestModel {
   final String? salarySlipPath;
   final String? form16APath;
   final int? holdId;
+  final List<String>? documents;
 
   const BookingRequestModel({
     required this.plot,
@@ -59,6 +60,7 @@ class BookingRequestModel {
     this.salarySlipPath,
     this.form16APath,
     this.holdId,
+    this.documents,
   });
 
   Map<String, dynamic> toJson() {
@@ -92,12 +94,16 @@ class BookingRequestModel {
       if (salarySlipPath != null) 'salary_slip_path': salarySlipPath,
       if (form16APath != null) 'form_16a_path': form16APath,
       if (holdId != null) 'hold_id': holdId,
+      if (documents != null && documents!.isNotEmpty) 'documents': documents,
     };
   }
 
   // Convert to FormData for multipart requests
   Map<String, dynamic> toFormData() {
     final formData = toJson();
+    
+    // Remove documents from JSON as they will be handled as multipart files separately
+    formData.remove('documents');
     
     // Keep file paths in FormData as they are local file paths
     // The backend will handle these as file references

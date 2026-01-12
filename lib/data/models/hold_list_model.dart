@@ -1,4 +1,5 @@
 import 'response_model/project_response_model.dart';
+import 'hold_document_model.dart';
 
 class HoldListModel {
   final int id;
@@ -37,6 +38,8 @@ class HoldListModel {
   final int plot;
   final int agent;
   final int customer;
+  final List<HoldDocument> documents;
+  final int documentCount;
 
   const HoldListModel({
     required this.id,
@@ -75,6 +78,8 @@ class HoldListModel {
     required this.plot,
     required this.agent,
     required this.customer,
+    required this.documents,
+    required this.documentCount,
   });
 
   factory HoldListModel.fromJson(Map<String, dynamic> json) {
@@ -85,6 +90,18 @@ class HoldListModel {
         project = Project.fromJson(json['project'] as Map<String, dynamic>);
       } catch (e) {
         project = null;
+      }
+    }
+    
+    // Parse documents array
+    List<HoldDocument> documents = [];
+    if (json['document'] != null && json['document'] is List) {
+      try {
+        documents = (json['document'] as List)
+            .map((item) => HoldDocument.fromJson(item as Map<String, dynamic>))
+            .toList();
+      } catch (e) {
+        documents = [];
       }
     }
     
@@ -125,6 +142,8 @@ class HoldListModel {
       plot: json['plot'] ?? 0,
       agent: json['agent'] ?? 0,
       customer: json['customer'] ?? 0,
+      documents: documents,
+      documentCount: json['document_count'] ?? documents.length,
     );
   }
 
@@ -166,6 +185,8 @@ class HoldListModel {
       'plot': plot,
       'agent': agent,
       'customer': customer,
+      'document': documents.map((doc) => doc.toJson()).toList(),
+      'document_count': documentCount,
     };
   }
 }
