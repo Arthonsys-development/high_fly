@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../providers/holds_provider.dart';
 import 'hold_booking_screen.dart';
 import 'hold_edit_screen.dart';
+import 'hold_document_management_screen.dart';
 import '../bookings/webview_screen.dart';
 
 String _formatStatusDisplay(String statusDisplay) {
@@ -309,11 +310,35 @@ class _HoldDetailScreenState extends ConsumerState<HoldDetailScreen> {
                   ],
 
                   // Documents Section
-                  if (hold.documents.isNotEmpty) ...[
-                    _buildSectionTitle('Documents (${hold.documentCount})'),
-                    _buildDocumentsGrid(hold.documents),
-                    SizedBox(height: kIsWeb ? 32 : 24),
-                  ],
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: _buildSectionTitle('Documents (${hold.documentCount})'),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.edit, color: AppColors.primaryColor),
+                        onPressed: () async {
+                          final result = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => HoldDocumentManagementScreen(hold: hold),
+                            ),
+                          );
+                          if (result == true && mounted) {
+                            await _refreshHoldData();
+                          }
+                        },
+                        tooltip: 'Manage Documents',
+                      ),
+                    ],
+                  ),
+                  if (hold.documents.isNotEmpty)
+                    _buildDocumentsGrid(hold.documents)
+                  else
+                    _buildNoDocumentsMessage(),
+                  SizedBox(height: kIsWeb ? 32 : 24),
 
                   // Additional Information
                   // _buildSectionTitle('Additional Information'),
@@ -480,6 +505,52 @@ class _HoldDetailScreenState extends ConsumerState<HoldDetailScreen> {
         itemBuilder: (context, index) {
           return _buildDocumentThumbnail(documents[index]);
         },
+      ),
+    );
+  }
+
+  Widget _buildNoDocumentsMessage() {
+    return Container(
+      padding: EdgeInsets.all(kIsWeb ? 24 : 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(kIsWeb ? 16 : 12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withValues(alpha: kIsWeb ? 0.08 : 0.1),
+            spreadRadius: kIsWeb ? 0 : 1,
+            blurRadius: kIsWeb ? 8 : 4,
+            offset: Offset(0, kIsWeb ? 4 : 2),
+          ),
+        ],
+        border: kIsWeb ? Border.all(
+          color: Colors.grey.withValues(alpha: 0.1),
+          width: 1,
+        ) : null,
+      ),
+      child: Center(
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: kIsWeb ? 32 : 24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.description_outlined,
+                size: kIsWeb ? 48 : 40,
+                color: Colors.grey[400],
+              ),
+              SizedBox(height: kIsWeb ? 12 : 8),
+              Text(
+                'No documents uploaded',
+                style: TextStyle(
+                  fontSize: kIsWeb ? 16 : 14,
+                  color: Colors.grey[600],
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

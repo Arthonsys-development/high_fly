@@ -6,6 +6,10 @@ import '../../config/constant/app_strings.dart';
 import '../providers/organization_provider.dart';
 import '../utils/responsive.dart';
 import 'organization_logo.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:go_router/go_router.dart';
+import '../../config/routes.dart';
+import '../../data/repository/auth_api_repository.dart';
 
 class DashboardSideMenu extends StatefulWidget {
   final int selectedIndex;
@@ -180,104 +184,146 @@ class _DashboardSideMenuState extends State<DashboardSideMenu> {
                 // Footer with user profile
                 Container(
                   padding: EdgeInsets.all(isTablet ? 12 : 16),
-                  child: Row(
+                  child: Column(
                     children: [
-                      FutureBuilder<Map<String, String?>>(
-                        future: _getUserData(),
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState == ConnectionState.waiting) {
-                            return const CircleAvatar(
-                              radius: 16,
-                              backgroundColor:  AppColors.primaryColor,
-                              child: SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                ),
-                              ),
-                            );
-                          }
+                      Row(
+                        children: [
+                          FutureBuilder<Map<String, String?>>(
+                            future: _getUserData(),
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState == ConnectionState.waiting) {
+                                return const CircleAvatar(
+                                  radius: 16,
+                                  backgroundColor:  AppColors.primaryColor,
+                                  child: SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                    ),
+                                  ),
+                                );
+                              }
 
-                          if (snapshot.hasError || !snapshot.hasData) {
-                            return const CircleAvatar(
-                              radius: 16,
-                              backgroundColor:  AppColors.primaryColor,
-                              child: Icon(
-                                Icons.person,
-                                color: Colors.white,
-                                size: 18,
-                              ),
-                            );
-                          }
-
-                          final userData = snapshot.data!;
-                          final profilePhoto = userData['photo'];
-
-                          return CircleAvatar(
-                            radius: 16,
-                            backgroundColor:  AppColors.primaryColor.withValues(alpha: 0.2),
-                            backgroundImage: profilePhoto != null && profilePhoto.isNotEmpty
-                                ? NetworkImage(profilePhoto)
-                                : null,
-                            child: (profilePhoto == null || profilePhoto.isEmpty)
-                                ? const Icon(
+                              if (snapshot.hasError || !snapshot.hasData) {
+                                return const CircleAvatar(
+                                  radius: 16,
+                                  backgroundColor:  AppColors.primaryColor,
+                                  child: Icon(
                                     Icons.person,
-                                    color:  AppColors.primaryColor,
+                                    color: Colors.white,
                                     size: 18,
-                                  )
-                                : null,
-                          );
-                        },
+                                  ),
+                                );
+                              }
+
+                              final userData = snapshot.data!;
+                              final profilePhoto = userData['photo'];
+
+                              return CircleAvatar(
+                                radius: 16,
+                                backgroundColor:  AppColors.primaryColor.withValues(alpha: 0.2),
+                                backgroundImage: profilePhoto != null && profilePhoto.isNotEmpty
+                                    ? NetworkImage(profilePhoto)
+                                    : null,
+                                child: (profilePhoto == null || profilePhoto.isEmpty)
+                                    ? const Icon(
+                                        Icons.person,
+                                        color:  AppColors.primaryColor,
+                                        size: 18,
+                                      )
+                                    : null,
+                              );
+                            },
+                          ),
+                          const SizedBox(width: 12),
+                          FutureBuilder<Map<String, String?>>(
+                            future: _getUserData(),
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState == ConnectionState.waiting) {
+                                return const Expanded(
+                                  child: Text(
+                                    'Loading...',
+                                    style: TextStyle(
+                                      color: AppColors.primaryTextColor,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                );
+                              }
+
+                              if (snapshot.hasError || !snapshot.hasData) {
+                                return const Expanded(
+                                  child: Text(
+                                    'Guest User',
+                                    style: TextStyle(
+                                      color: AppColors.primaryTextColor,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                );
+                              }
+
+                              final userData = snapshot.data!;
+                              final userName = userData['name'] ?? 'Guest User';
+
+                              return Expanded(
+                                child: Text(
+                                  userName,
+                                  style: const TextStyle(
+                                    color: AppColors.primaryTextColor,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              );
+                            },
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 12),
-                      FutureBuilder<Map<String, String?>>(
-                        future: _getUserData(),
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState == ConnectionState.waiting) {
-                            return const Expanded(
-                              child: Text(
-                                'Loading...',
-                                style: TextStyle(
-                                  color: AppColors.primaryTextColor,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            );
-                          }
-
-                          if (snapshot.hasError || !snapshot.hasData) {
-                            return const Expanded(
-                              child: Text(
-                                'Guest User',
-                                style: TextStyle(
-                                  color: AppColors.primaryTextColor,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            );
-                          }
-
-                          final userData = snapshot.data!;
-                          final userName = userData['name'] ?? 'Guest User';
-
-                          return Expanded(
-                            child: Text(
-                              userName,
-                              style: const TextStyle(
-                                color: AppColors.primaryTextColor,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                              ),
-                              overflow: TextOverflow.ellipsis,
+                      const SizedBox(height: 12),
+                      // Logout button
+                      InkWell(
+                        onTap: () => _showLogoutConfirmationDialog(context),
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.red.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: Colors.red.withValues(alpha: 0.3),
+                              width: 1,
                             ),
-                          );
-                        },
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.logout,
+                                color: Colors.red[700],
+                                size: isTablet ? 18 : 20,
+                              ),
+                              SizedBox(width: isTablet ? 8 : 12),
+                              Text(
+                                'Logout',
+                                style: TextStyle(
+                                  color: Colors.red[700],
+                                  fontSize: isTablet ? 12 : 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -416,6 +462,83 @@ class _DashboardSideMenuState extends State<DashboardSideMenu> {
       'name': firstName,
       'photo': profilePhoto,
     };
+  }
+
+  void _showLogoutConfirmationDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          title: const Text(
+            'Logout',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: AppColors.primaryTextColor,
+            ),
+          ),
+          content: const Text(
+            'Are you sure you want to logout?',
+            style: TextStyle(
+              fontSize: 14,
+              color: AppColors.secondaryTextColor,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(
+                  color: AppColors.secondaryTextColor,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.of(dialogContext).pop();
+                try {
+                  // Call logout API
+                  final authRepository = AuthApiRepository();
+                  final result = await authRepository.logout();
+                  
+                  if (result['success'] == true) {
+                    debugPrint('Logout API call successful');
+                  } else {
+                    debugPrint('Logout API call failed: ${result['message']}');
+                    // Continue with logout even if API call fails
+                  }
+                } catch (e) {
+                  debugPrint('Error calling logout API: $e');
+                  // Continue with logout even if API call fails
+                }
+                
+                // Sign out from Firebase
+                await FirebaseAuth.instance.signOut();
+                // Clear access token from secure storage
+                const secureStorage = FlutterSecureStorage();
+                await secureStorage.deleteAll();
+                // Navigate back to sign in screen
+                if (context.mounted) {
+                  context.go(Routes.signIn);
+                }
+              },
+              child: const Text(
+                'Logout',
+                style: TextStyle(
+                  color: AppColors.primaryColor,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 }
 
@@ -603,10 +726,52 @@ class MobileSideMenuDrawer extends ConsumerWidget {
             ),
           ),
 
-          // Footer with user profile
+          // Footer with user profile and logout
           Container(
             padding: const EdgeInsets.all(20),
-            child: _buildUserProfile(context),
+            child: Column(
+              children: [
+                _buildUserProfile(context),
+                const SizedBox(height: 12),
+                // Logout button
+                InkWell(
+                  onTap: () => _showLogoutConfirmationDialog(context),
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: Colors.red.withValues(alpha: 0.3),
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.logout,
+                          color: Colors.red[700],
+                          size: 20,
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          'Logout',
+                          style: TextStyle(
+                            color: Colors.red[700],
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -773,6 +938,83 @@ class MobileSideMenuDrawer extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+
+  void _showLogoutConfirmationDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          title: const Text(
+            'Logout',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: AppColors.primaryTextColor,
+            ),
+          ),
+          content: const Text(
+            'Are you sure you want to logout?',
+            style: TextStyle(
+              fontSize: 14,
+              color: AppColors.secondaryTextColor,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(
+                  color: AppColors.secondaryTextColor,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.of(dialogContext).pop();
+                try {
+                  // Call logout API
+                  final authRepository = AuthApiRepository();
+                  final result = await authRepository.logout();
+                  
+                  if (result['success'] == true) {
+                    debugPrint('Logout API call successful');
+                  } else {
+                    debugPrint('Logout API call failed: ${result['message']}');
+                    // Continue with logout even if API call fails
+                  }
+                } catch (e) {
+                  debugPrint('Error calling logout API: $e');
+                  // Continue with logout even if API call fails
+                }
+                
+                // Sign out from Firebase
+                await FirebaseAuth.instance.signOut();
+                // Clear access token from secure storage
+                const secureStorage = FlutterSecureStorage();
+                await secureStorage.deleteAll();
+                // Navigate back to sign in screen
+                if (context.mounted) {
+                  context.go(Routes.signIn);
+                }
+              },
+              child: const Text(
+                'Logout',
+                style: TextStyle(
+                  color: AppColors.primaryColor,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

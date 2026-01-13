@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import 'package:highfly/config/routes.dart';
 import 'package:highfly/data/models/response_model/project_response_model.dart';
 import 'package:highfly/module/screens/profile/profile_screen.dart';
+import 'package:highfly/data/repository/auth_api_repository.dart';
 
 import '../../utils/responsive.dart';
 import '../../widgets/dashboard_side_menu.dart';
@@ -174,6 +175,22 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             TextButton(
               onPressed: () async {
                 Navigator.of(dialogContext).pop();
+                try {
+                  // Call logout API
+                  final authRepository = AuthApiRepository();
+                  final result = await authRepository.logout();
+                  
+                  if (result['success'] == true) {
+                    debugPrint('Logout API call successful');
+                  } else {
+                    debugPrint('Logout API call failed: ${result['message']}');
+                    // Continue with logout even if API call fails
+                  }
+                } catch (e) {
+                  debugPrint('Error calling logout API: $e');
+                  // Continue with logout even if API call fails
+                }
+                
                 // Sign out from Firebase
                 await FirebaseAuth.instance.signOut();
                 // Clear access token from secure storage
@@ -1643,7 +1660,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 ),
               ),
               Expanded(
-                flex: 1,
+                flex: 2,
                 child: Text(
                   "Actions",
                   style: TextStyle(
@@ -1740,51 +1757,48 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                       ),
                       const SizedBox(width: 16),
                       Expanded(
-                        flex: 1,
+                        flex: 2,
                         child: project.status == 'active'
                             ? Row(
-                                mainAxisSize: MainAxisSize.min,
                                 children: [
                                   // Book Now button
-                                  Expanded(
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: AppColors.primaryColor.withValues(alpha: 0.1),
+                                  Container(
+                                    width: 40,
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primaryColor.withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Material(
+                                      color: Colors.transparent,
+                                      child: InkWell(
+                                        onTap: () {
+                                          ref.read(bookingNavigationProvider.notifier).navigateToBooking(project, 0);
+                                          onMenuItemSelected(2);
+                                        },
                                         borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Material(
-                                        color: Colors.transparent,
-                                        child: InkWell(
-                                          onTap: () {
-                                            ref.read(bookingNavigationProvider.notifier).navigateToBooking(project, 0);
-                                            onMenuItemSelected(2);
-                                          },
-                                          borderRadius: BorderRadius.circular(8),
-                                          child: Padding(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 8,
-                                              vertical: 8,
-                                            ),
-                                            child: Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              mainAxisAlignment: MainAxisAlignment.center,
-                                              children: [
-                                                const Icon(
-                                                  Icons.bookmark,
-                                                  size: 16,
-                                                  color: AppColors.primaryColor,
-                                                ),
-                                                const SizedBox(width: 4),
-                                                const Text(
-                                                  'Book',
-                                                  style: TextStyle(
-                                                    color: AppColors.primaryColor,
-                                                    fontSize: 12,
-                                                    fontWeight: FontWeight.w500,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 8,
+                                          ),
+                                          child: Row(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              const Icon(
+                                                Icons.bookmark,
+                                                size: 16,
+                                                color: AppColors.primaryColor,
+                                              ),
+                                              // const SizedBox(width: 4),
+                                              // const Text(
+                                              //   'Book',
+                                              //   style: TextStyle(
+                                              //     color: AppColors.primaryColor,
+                                              //     fontSize: 12,
+                                              //     fontWeight: FontWeight.w500,
+                                              //   ),
+                                              // ),
+                                            ],
                                           ),
                                         ),
                                       ),
@@ -1792,45 +1806,84 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                   ),
                                   const SizedBox(width: 6),
                                   // Hold button
-                                  Expanded(
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: Colors.orange.withValues(alpha: 0.1),
+                                  Container(
+                                    width: 40,
+                                    decoration: BoxDecoration(
+                                      color: Colors.orange.withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Material(
+                                      color: Colors.transparent,
+                                      child: InkWell(
+                                        onTap: () {
+                                          ref.read(bookingNavigationProvider.notifier).navigateToBooking(project, 1);
+                                          onMenuItemSelected(2);
+                                        },
                                         borderRadius: BorderRadius.circular(8),
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 8,
+                                          ),
+                                          child: Row(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              const Icon(
+                                                Icons.access_time,
+                                                size: 16,
+                                                color: Colors.orange,
+                                              ),
+                                              // const SizedBox(width: 4),
+                                              // const Text(
+                                              //   'Hold',
+                                              //   style: TextStyle(
+                                              //     color: Colors.orange,
+                                              //     fontSize: 12,
+                                              //     fontWeight: FontWeight.w500,
+                                              //   ),
+                                              // ),
+                                            ],
+                                          ),
+                                        ),
                                       ),
-                                      child: Material(
-                                        color: Colors.transparent,
-                                        child: InkWell(
-                                          onTap: () {
-                                            ref.read(bookingNavigationProvider.notifier).navigateToBooking(project, 1);
-                                            onMenuItemSelected(2);
-                                          },
-                                          borderRadius: BorderRadius.circular(8),
-                                          child: Padding(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 8,
-                                              vertical: 8,
-                                            ),
-                                            child: Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              mainAxisAlignment: MainAxisAlignment.center,
-                                              children: [
-                                                const Icon(
-                                                  Icons.access_time,
-                                                  size: 16,
-                                                  color: Colors.orange,
-                                                ),
-                                                const SizedBox(width: 4),
-                                                const Text(
-                                                  'Hold',
-                                                  style: TextStyle(
-                                                    color: Colors.orange,
-                                                    fontSize: 12,
-                                                    fontWeight: FontWeight.w500,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  // Add Visit button
+                                  Container(
+                                    width: 40,
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primaryColor.withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Material(
+                                      color: Colors.transparent,
+                                      child: InkWell(
+                                        onTap: () => context.go(Routes.addVisitScreen, extra: project),
+                                        borderRadius: BorderRadius.circular(8),
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 8,
+                                          ),
+                                          child: Row(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              const Icon(
+                                                Icons.add,
+                                                size: 16,
+                                                color: AppColors.primaryColor,
+                                              ),
+                                              // const SizedBox(width: 4),
+                                              // const Text(
+                                              //   'Add Visit',
+                                              //   style: TextStyle(
+                                              //     color: AppColors.primaryColor,
+                                              //     fontSize: 12,
+                                              //     fontWeight: FontWeight.w500,
+                                              //   ),
+                                              // ),
+                                            ],
                                           ),
                                         ),
                                       ),

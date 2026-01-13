@@ -682,6 +682,53 @@ class AuthApiRepository {
       };
     }
   }
+
+  // Logout user
+  Future<Map<String, dynamic>> logout() async {
+    try {
+      debugPrint('Logging out user...');
+      final response = await _apiClient.post(
+        ApiConstants.logout,
+      );
+      debugPrint('Logout response status: ${response.statusCode}');
+      debugPrint('Logout response data: ${response.data}');
+      
+      return {
+        'success': true,
+        'data': response.data,
+        'message': 'Logout successful',
+      };
+    } on DioException catch (e) {
+      debugPrint('DioException in logout: ${e.message}');
+      String errorMessage = 'Logout failed';
+      
+      if (e.response != null) {
+        final responseData = e.response?.data;
+        if (responseData is Map<String, dynamic>) {
+          errorMessage = responseData['message']?.toString() ??
+              responseData['detail']?.toString() ??
+              errorMessage;
+        } else if (responseData is String && responseData.isNotEmpty) {
+          errorMessage = responseData;
+        }
+      } else if (e.message != null && e.message!.isNotEmpty) {
+        errorMessage = e.message!;
+      }
+      
+      return {
+        'success': false,
+        'error': e.toString(),
+        'message': errorMessage,
+      };
+    } catch (e) {
+      debugPrint('Exception in logout: $e');
+      return {
+        'success': false,
+        'error': e.toString(),
+        'message': 'Logout failed: ${e.toString()}',
+      };
+    }
+  }
 }
 
 // Plot model for API response

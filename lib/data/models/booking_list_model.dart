@@ -1,4 +1,5 @@
 import 'response_model/project_response_model.dart';
+import 'booking_document_model.dart';
 
 class BookingListModel {
   final int id;
@@ -51,6 +52,8 @@ class BookingListModel {
   final String? cancelledBy;
   final String? fromHold;
   final String bookedAt;
+  final List<BookingDocument> documents;
+  final int documentCount;
 
   const BookingListModel({
     required this.id,
@@ -103,6 +106,8 @@ class BookingListModel {
     this.cancelledBy,
     this.fromHold,
     required this.bookedAt,
+    required this.documents,
+    required this.documentCount,
   });
 
   factory BookingListModel.fromJson(Map<String, dynamic> json) {
@@ -113,6 +118,18 @@ class BookingListModel {
         project = Project.fromJson(json['project'] as Map<String, dynamic>);
       } catch (e) {
         project = null;
+      }
+    }
+    
+    // Parse documents array
+    List<BookingDocument> documents = [];
+    if (json['document'] != null && json['document'] is List) {
+      try {
+        documents = (json['document'] as List)
+            .map((doc) => BookingDocument.fromJson(doc as Map<String, dynamic>))
+            .toList();
+      } catch (e) {
+        documents = [];
       }
     }
     
@@ -167,6 +184,8 @@ class BookingListModel {
       cancelledBy: json['cancelled_by']?.toString(),
       fromHold: json['from_hold']?.toString(),
       bookedAt: json['booked_at'] ?? '',
+      documents: documents,
+      documentCount: json['document_count'] ?? documents.length,
     );
   }
 
@@ -222,6 +241,8 @@ class BookingListModel {
       'cancelled_by': cancelledBy,
       'from_hold': fromHold,
       'booked_at': bookedAt,
+      'document': documents.map((doc) => doc.toJson()).toList(),
+      'document_count': documentCount,
     };
   }
 }

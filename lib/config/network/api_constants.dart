@@ -3,6 +3,7 @@ class ApiConstants {
   static const String register = 'agents/auth/register/';
   static const String loginToken = 'agents/auth/verify-token/';
   static const String verifyPhone = 'agents/auth/verify-phone/';
+  static const String logout = 'users/logout/';
   static const String projects = 'agents/projects/';
   static const String visits = 'agents/visits/';
   static const String createVisits = 'agents/visits/create/';
@@ -20,6 +21,10 @@ class ApiConstants {
   static const String plotHolds = 'plot-holds/';
   static const String holdsList = 'projects/plots/holds/';
   static const String bookingsList = 'projects/plots/bookings/';
+  
+  // Document Endpoints
+  static const String plotHoldDocuments = 'plot-hold-documents/';
+  static const String plotBookingDocuments = 'plot-booking-documents/';
 
   // Organization Endpoints
   static const String organization = 'organization/';

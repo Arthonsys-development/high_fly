@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
 import 'package:http_parser/http_parser.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../config/network/api_client.dart';
 import '../../config/network/api_constants.dart';
 import '../models/request_models/booking_request_model.dart';
@@ -485,6 +486,288 @@ class BookingApiRepository {
         throw Exception('Selected file size Too Large');
       }
       // Extract the actual error message from the API response
+      final errorMessage = _extractErrorMessage(e);
+      throw Exception(errorMessage);
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
+  /// Add a document to a hold
+  Future<Map<String, dynamic>> addHoldDocument({
+    required int holdId,
+    required String filePath,
+    required String filetype,
+    String? description,
+    XFile? xFile,
+    List<int>? fileBytes,
+    String? fileName,
+  }) async {
+    try {
+      final formData = FormData();
+      
+      // Add hold ID
+      formData.fields.add(MapEntry('hold', holdId.toString()));
+      
+      // Add filetype
+      formData.fields.add(MapEntry('filetype', filetype));
+      
+      // Add description if provided
+      if (description != null && description.isNotEmpty) {
+        formData.fields.add(MapEntry('description', description));
+      }
+      
+      // Add file
+      if (kIsWeb) {
+        // On web, use XFile bytes if provided, otherwise try URL
+        if (xFile != null) {
+          try {
+            final bytes = await xFile.readAsBytes();
+            final fileName = xFile.name.isNotEmpty ? xFile.name : filePath.split('/').last;
+            final fileExtension = fileName.split('.').last.toLowerCase();
+            
+            // Determine content type
+            String? contentType;
+            if (fileExtension == 'pdf') {
+              contentType = 'application/pdf';
+            } else if (['jpg', 'jpeg'].contains(fileExtension)) {
+              contentType = 'image/jpeg';
+            } else if (fileExtension == 'png') {
+              contentType = 'image/png';
+            }
+            
+            final multipartFile = MultipartFile.fromBytes(
+              bytes,
+              filename: fileName,
+              contentType: contentType != null 
+                  ? MediaType.parse(contentType) 
+                  : null,
+            );
+            
+            formData.files.add(MapEntry('document', multipartFile));
+          } catch (e) {
+            throw Exception('Error reading file bytes: $e');
+          }
+        } else if (filePath.startsWith('http')) {
+          // If it's a URL, add it as a string field
+          formData.fields.add(MapEntry('document', filePath));
+        } else {
+          throw Exception('Web file upload requires XFile object or URL');
+        }
+      } else {
+        // On mobile, use File API
+        try {
+          final documentFile = File(filePath);
+          if (await documentFile.exists()) {
+            final fileName = filePath.split('/').last;
+            final fileExtension = fileName.split('.').last.toLowerCase();
+            
+            // Determine content type
+            String? contentType;
+            if (fileExtension == 'pdf') {
+              contentType = 'application/pdf';
+            } else if (['jpg', 'jpeg'].contains(fileExtension)) {
+              contentType = 'image/jpeg';
+            } else if (fileExtension == 'png') {
+              contentType = 'image/png';
+            }
+            
+            final multipartFile = await MultipartFile.fromFile(
+              filePath,
+              filename: fileName,
+              contentType: contentType != null 
+                  ? MediaType.parse(contentType) 
+                  : null,
+            );
+            
+            formData.files.add(MapEntry('document', multipartFile));
+          } else {
+            throw Exception('File does not exist');
+          }
+        } catch (e) {
+          throw Exception('Error adding file: $e');
+        }
+      }
+      
+      final response = await _apiClient.postMultipart(
+        ApiConstants.plotHoldDocuments,
+        data: formData,
+      );
+      
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return response.data is Map<String, dynamic> 
+            ? response.data as Map<String, dynamic>
+            : {'id': response.data};
+      } else {
+        throw Exception('Failed to add hold document: ${response.statusMessage}');
+      }
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 413) {
+        throw Exception('Selected file size Too Large');
+      }
+      final errorMessage = _extractErrorMessage(e);
+      throw Exception(errorMessage);
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
+  /// Delete a hold document
+  Future<void> deleteHoldDocument(int documentId) async {
+    try {
+      final endpoint = '${ApiConstants.plotHoldDocuments}$documentId/';
+      final response = await _apiClient.delete(endpoint);
+      
+      if (response.statusCode != 200 && response.statusCode != 204) {
+        throw Exception('Failed to delete hold document: ${response.statusMessage}');
+      }
+    } on DioException catch (e) {
+      final errorMessage = _extractErrorMessage(e);
+      throw Exception(errorMessage);
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
+  /// Add a document to a booking
+  Future<Map<String, dynamic>> addBookingDocument({
+    required int bookingId,
+    required String filePath,
+    required String filetype,
+    String? description,
+    XFile? xFile,
+    List<int>? fileBytes,
+    String? fileName,
+  }) async {
+    try {
+      final formData = FormData();
+      
+      // Add booking ID
+      formData.fields.add(MapEntry('booking', bookingId.toString()));
+      
+      // Add filetype
+      formData.fields.add(MapEntry('filetype', filetype));
+      
+      // Add description if provided
+      if (description != null && description.isNotEmpty) {
+        formData.fields.add(MapEntry('description', description));
+      }
+      
+      // Add file
+      if (kIsWeb) {
+        // On web, use file bytes (from XFile or file_picker)
+        List<int>? bytes;
+        String? finalFileName;
+        
+        if (xFile != null) {
+          try {
+            bytes = await xFile.readAsBytes();
+            finalFileName = xFile.name.isNotEmpty ? xFile.name : filePath.split('/').last;
+          } catch (e) {
+            throw Exception('Error reading file bytes: $e');
+          }
+        } else if (fileBytes != null) {
+          bytes = fileBytes;
+          finalFileName = fileName ?? filePath.split('/').last;
+        } else if (filePath.startsWith('http')) {
+          // If it's a URL, add it as a string field
+          formData.fields.add(MapEntry('document', filePath));
+          bytes = null; // Skip file processing
+        } else {
+          throw Exception('Web file upload requires XFile, file bytes, or URL');
+        }
+        
+        if (bytes != null && finalFileName != null) {
+          final fileExtension = finalFileName.split('.').last.toLowerCase();
+          
+          // Determine content type
+          String? contentType;
+          if (fileExtension == 'pdf') {
+            contentType = 'application/pdf';
+          } else if (['jpg', 'jpeg'].contains(fileExtension)) {
+            contentType = 'image/jpeg';
+          } else if (fileExtension == 'png') {
+            contentType = 'image/png';
+          }
+          
+          final multipartFile = MultipartFile.fromBytes(
+            bytes,
+            filename: finalFileName,
+            contentType: contentType != null 
+                ? MediaType.parse(contentType) 
+                : null,
+          );
+          
+          formData.files.add(MapEntry('document', multipartFile));
+        }
+      } else {
+        // On mobile, use File API
+        try {
+          final documentFile = File(filePath);
+          if (await documentFile.exists()) {
+            final fileName = filePath.split('/').last;
+            final fileExtension = fileName.split('.').last.toLowerCase();
+            
+            // Determine content type
+            String? contentType;
+            if (fileExtension == 'pdf') {
+              contentType = 'application/pdf';
+            } else if (['jpg', 'jpeg'].contains(fileExtension)) {
+              contentType = 'image/jpeg';
+            } else if (fileExtension == 'png') {
+              contentType = 'image/png';
+            }
+            
+            final multipartFile = await MultipartFile.fromFile(
+              filePath,
+              filename: fileName,
+              contentType: contentType != null 
+                  ? MediaType.parse(contentType) 
+                  : null,
+            );
+            
+            formData.files.add(MapEntry('document', multipartFile));
+          } else {
+            throw Exception('File does not exist');
+          }
+        } catch (e) {
+          throw Exception('Error adding file: $e');
+        }
+      }
+      
+      final response = await _apiClient.postMultipart(
+        ApiConstants.plotBookingDocuments,
+        data: formData,
+      );
+      
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return response.data is Map<String, dynamic> 
+            ? response.data as Map<String, dynamic>
+            : {'id': response.data};
+      } else {
+        throw Exception('Failed to add booking document: ${response.statusMessage}');
+      }
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 413) {
+        throw Exception('Selected file size Too Large');
+      }
+      final errorMessage = _extractErrorMessage(e);
+      throw Exception(errorMessage);
+    } catch (e) {
+      throw Exception('Unexpected error: $e');
+    }
+  }
+
+  /// Delete a booking document
+  Future<void> deleteBookingDocument(int documentId) async {
+    try {
+      final endpoint = '${ApiConstants.plotBookingDocuments}$documentId/';
+      final response = await _apiClient.delete(endpoint);
+      
+      if (response.statusCode != 200 && response.statusCode != 204) {
+        throw Exception('Failed to delete booking document: ${response.statusMessage}');
+      }
+    } on DioException catch (e) {
       final errorMessage = _extractErrorMessage(e);
       throw Exception(errorMessage);
     } catch (e) {
