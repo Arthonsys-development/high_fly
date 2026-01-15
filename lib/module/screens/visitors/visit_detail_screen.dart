@@ -5,6 +5,8 @@ import 'package:highfly/data/models/response_model/visit_response_model.dart';
 
 import '../../../config/constant/const_assets.dart';
 import '../../global/widgets/common_app_bar.dart';
+// Conditional import for web image widget
+import 'web_image_widget.dart' if (dart.library.io) 'web_image_widget_stub.dart';
 
 class VisitDetailScreen extends StatelessWidget {
   final Visit visit;
@@ -68,29 +70,12 @@ class VisitDetailScreen extends StatelessWidget {
                     children: [
                       // Visitor Image
                       if (visit.visitorPhoto != null && visit.visitorPhoto!.isNotEmpty)
-                        Image.network(
-                          visit.visitorPhoto!,
+                        WebImageWidget(
+                          imageUrl: visit.visitorPhoto!,
+                          width: double.infinity,
+                          height: double.infinity,
+                          borderRadius: 16,
                           fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              color: Colors.grey[200],
-                              child: Image.asset(
-                                ImageAssets.highFlyLogo,
-                                fit: BoxFit.contain,
-                              ),
-                            );
-                          },
-                          loadingBuilder: (context, child, loadingProgress) {
-                            if (loadingProgress == null) return child;
-                            return Container(
-                              color: Colors.grey[200],
-                              child: const Center(
-                                child: CircularProgressIndicator(
-                                  color: AppColors.primaryColor,
-                                ),
-                              ),
-                            );
-                          },
                         )
                       else
                         Container(
@@ -200,25 +185,12 @@ class VisitDetailScreen extends StatelessWidget {
                         ),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(75),
-                          child: Image.network(
-                            visit.clientPhoto!,
+                          child: WebImageWidget(
+                            imageUrl: visit.clientPhoto!,
+                            width: 150,
+                            height: 150,
+                            borderRadius: 75,
                             fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Image.asset(ImageAssets.highFlyLogo);
-                            },
-                            loadingBuilder: (context, child, loadingProgress) {
-                              if (loadingProgress == null) return child;
-                              return const Center(
-                                child: SizedBox(
-                                  height: 30,
-                                  width: 30,
-                                  child: CircularProgressIndicator(
-                                    color: AppColors.primaryColor,
-                                    strokeWidth: 2,
-                                  ),
-                                ),
-                              );
-                            },
                           ),
                         ),
                       ),
@@ -381,36 +353,12 @@ class VisitDetailScreen extends StatelessWidget {
               children: [
             // Visitor Image
             if (visit.visitorPhoto != null && visit.visitorPhoto!.isNotEmpty)
-              Image.network(
-                visit.visitorPhoto!,
+              WebImageWidget(
+                imageUrl: visit.visitorPhoto!,
                 width: double.infinity,
                 height: 300,
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    height: 300,
-                    color: Colors.grey[200],
-                    child: Center(
-                      child: Image.asset(
-                        ImageAssets.highFlyLogo,
-                        height: 120,
-                        fit: BoxFit.contain,
-                      ),
-                    ),
-                  );
-                },
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return Container(
-                    height: 300,
-                    color: Colors.grey[200],
-                    child: const Center(
-                      child: CircularProgressIndicator(
-                        color: AppColors.primaryColor,
-                      ),
-                    ),
-                  );
-                },
+                borderRadius: 1,
               )
             else
               Container(
@@ -699,20 +647,12 @@ class VisitDetailScreen extends StatelessWidget {
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(100),
-                  child: Image.network(
-                    visit.clientPhoto!,
+                  child: WebImageWidget(
+                    imageUrl: visit.clientPhoto!,
+                    width: 150,
+                    height: 150,
+                    borderRadius: 100,
                     fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Image.asset(ImageAssets.highFlyLogo);
-                    },
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return const Center(
-                        child: CircularProgressIndicator(
-                          color: AppColors.primaryColor,
-                        ),
-                      );
-                    },
                   ),
                 ),
               ),
@@ -941,27 +881,35 @@ class VisitDetailScreen extends StatelessWidget {
             child: InteractiveViewer(
               minScale: 0.5,
               maxScale: 4.0,
-              child: Image.network(
-                imageUrl,
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) {
-                  return const Center(
-                    child: Icon(
-                      Icons.error_outline,
-                      color: Colors.white,
-                      size: 64,
+              child: kIsWeb
+                  ? WebImageWidget(
+                      imageUrl: imageUrl,
+                      width: MediaQuery.of(context).size.width,
+                      height: MediaQuery.of(context).size.height,
+                      fit: BoxFit.contain,
+                      borderRadius: 1,
+                    )
+                  : Image.network(
+                      imageUrl,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        return const Center(
+                          child: Icon(
+                            Icons.error_outline,
+                            color: Colors.white,
+                            size: 64,
+                          ),
+                        );
+                      },
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return const Center(
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                          ),
+                        );
+                      },
                     ),
-                  );
-                },
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return const Center(
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                    ),
-                  );
-                },
-              ),
             ),
           ),
         ),

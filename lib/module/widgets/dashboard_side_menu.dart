@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:highfly/config/constant/app_colors.dart';
@@ -10,6 +11,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:go_router/go_router.dart';
 import '../../config/routes.dart';
 import '../../data/repository/auth_api_repository.dart';
+// Conditional import for web image widget
+import '../screens/visitors/web_image_widget.dart' if (dart.library.io) '../screens/visitors/web_image_widget_stub.dart';
 
 class DashboardSideMenu extends StatefulWidget {
   final int selectedIndex;
@@ -101,18 +104,20 @@ class _DashboardSideMenuState extends State<DashboardSideMenu> {
               children: [
                 // Header
                 Container(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
                     color: AppColors.primaryColor.withValues(alpha: 0.1),
                   ),
                   child: _OrganizationHeader(
-                    showName: true,
-                    logoHeight: isTablet ? 56 : 72,
-                    textStyle: TextStyle(
-                      fontSize: isTablet ? 15 : 17,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.primaryTextColor,
-                    ),
+                    showName: false,
+                    logoHeight: kIsWeb 
+                        ? (isTablet ? 80 : 120) 
+                        : (isTablet ? 56 : 72),
+                    // textStyle: TextStyle(
+                    //   fontSize: isTablet ? 15 : 17,
+                    //   fontWeight: FontWeight.w600,
+                    //   color: AppColors.primaryTextColor,
+                    // ),
                   ),
                 ),
 
@@ -221,19 +226,10 @@ class _DashboardSideMenuState extends State<DashboardSideMenu> {
                               final userData = snapshot.data!;
                               final profilePhoto = userData['photo'];
 
-                              return CircleAvatar(
+                              return _buildProfileAvatar(
+                                photoUrl: profilePhoto,
                                 radius: 16,
-                                backgroundColor:  AppColors.primaryColor.withValues(alpha: 0.2),
-                                backgroundImage: profilePhoto != null && profilePhoto.isNotEmpty
-                                    ? NetworkImage(profilePhoto)
-                                    : null,
-                                child: (profilePhoto == null || profilePhoto.isEmpty)
-                                    ? const Icon(
-                                        Icons.person,
-                                        color:  AppColors.primaryColor,
-                                        size: 18,
-                                      )
-                                    : null,
+                                iconSize: 18,
                               );
                             },
                           ),
@@ -451,6 +447,50 @@ class _DashboardSideMenuState extends State<DashboardSideMenu> {
             )
           : null,
     );
+  }
+
+  Widget _buildProfileAvatar({
+    required String? photoUrl,
+    required double radius,
+    required double iconSize,
+  }) {
+    if (photoUrl == null || photoUrl.isEmpty) {
+      return CircleAvatar(
+        radius: radius,
+        backgroundColor: AppColors.primaryColor.withValues(alpha: 0.2),
+        child: Icon(
+          Icons.person,
+          color: AppColors.primaryColor,
+          size: iconSize,
+        ),
+      );
+    }
+
+    if (kIsWeb) {
+      // Use WebImageWidget for web to avoid CORS issues
+      return ClipOval(
+        child: Container(
+          width: radius * 2,
+          height: radius * 2,
+          color: AppColors.primaryColor.withValues(alpha: 0.2),
+          child: WebImageWidget(
+            imageUrl: photoUrl,
+            width: radius * 2,
+            height: radius * 2,
+            borderRadius: radius,
+            fit: BoxFit.cover,
+          ),
+        ),
+      );
+    } else {
+      // Use CircleAvatar with NetworkImage for mobile
+      return CircleAvatar(
+        radius: radius,
+        backgroundColor: AppColors.primaryColor.withValues(alpha: 0.2),
+        backgroundImage: NetworkImage(photoUrl),
+        child: null,
+      );
+    }
   }
 
   Future<Map<String, String?>> _getUserData() async {
@@ -812,19 +852,10 @@ class MobileSideMenuDrawer extends ConsumerWidget {
             return Row(
               children: [
                 // User profile image or default icon
-                CircleAvatar(
+                _buildProfileAvatar(
+                  photoUrl: profilePhoto,
                   radius: 24,
-                  backgroundColor:  AppColors.primaryColor.withValues(alpha: 0.2),
-                  backgroundImage: profilePhoto != null && profilePhoto.isNotEmpty
-                      ? NetworkImage(profilePhoto)
-                      : null,
-                  child: (profilePhoto == null || profilePhoto.isEmpty)
-                      ? const Icon(
-                          Icons.person,
-                          color:  AppColors.primaryColor,
-                          size: 20,
-                        )
-                      : null,
+                  iconSize: 20,
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -863,6 +894,50 @@ class MobileSideMenuDrawer extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Widget _buildProfileAvatar({
+    required String? photoUrl,
+    required double radius,
+    required double iconSize,
+  }) {
+    if (photoUrl == null || photoUrl.isEmpty) {
+      return CircleAvatar(
+        radius: radius,
+        backgroundColor: AppColors.primaryColor.withValues(alpha: 0.2),
+        child: Icon(
+          Icons.person,
+          color: AppColors.primaryColor,
+          size: iconSize,
+        ),
+      );
+    }
+
+    if (kIsWeb) {
+      // Use WebImageWidget for web to avoid CORS issues
+      return ClipOval(
+        child: Container(
+          width: radius * 2,
+          height: radius * 2,
+          color: AppColors.primaryColor.withValues(alpha: 0.2),
+          child: WebImageWidget(
+            imageUrl: photoUrl,
+            width: radius * 2,
+            height: radius * 2,
+            borderRadius: radius,
+            fit: BoxFit.cover,
+          ),
+        ),
+      );
+    } else {
+      // Use CircleAvatar with NetworkImage for mobile
+      return CircleAvatar(
+        radius: radius,
+        backgroundColor: AppColors.primaryColor.withValues(alpha: 0.2),
+        backgroundImage: NetworkImage(photoUrl),
+        child: null,
+      );
+    }
   }
 
   Future<Map<String, String?>> _getUserData() async {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:highfly/config/constant/app_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:highfly/config/constant/const_assets.dart';
@@ -20,6 +21,8 @@ import '../bookings/bookings_list_screen.dart';
 import '../bookings/webview_screen.dart';
 import '../../providers/analytics_provider.dart';
 import '../../providers/booking_navigation_provider.dart';
+// Conditional import for web image widget
+import '../visitors/web_image_widget.dart' if (dart.library.io) '../visitors/web_image_widget_stub.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -1195,28 +1198,36 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             children: [
               ClipRRect(
                 borderRadius: BorderRadiusGeometry.all(Radius.circular(5)),
-                child: Image.network(
-                project.projectImage, // sample image url
-                width: MediaQuery.of(context).size.width,
-                height: 150,
-                fit: BoxFit.cover,
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child; // Image loaded
-                  return Center(
-                    child: CircularProgressIndicator(
-                      value: loadingProgress.expectedTotalBytes != null
-                          ? loadingProgress.cumulativeBytesLoaded /
-                          (loadingProgress.expectedTotalBytes ?? 1)
-                          : null,
-                    ),
-                  );
-                },
-                  errorBuilder: (context, child, loadingProgress) {
-                  return Center(child: Column(
-                    children: [
-                      Icon(Icons.image, size: 80, color: Colors.grey),
-                      Text("No Image Available", style: TextStyle(color: Colors.grey, fontSize: 20, fontWeight: FontWeight.w600),)
-                    ],
+                child: kIsWeb
+                    ? WebImageWidget(
+                        imageUrl: project.projectImage,
+                        width: MediaQuery.of(context).size.width,
+                        height: 150,
+                        borderRadius: 5,
+                        fit: BoxFit.cover,
+                      )
+                    : Image.network(
+                        project.projectImage, // sample image url
+                        width: MediaQuery.of(context).size.width,
+                        height: 150,
+                        fit: BoxFit.cover,
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child; // Image loaded
+                          return Center(
+                            child: CircularProgressIndicator(
+                              value: loadingProgress.expectedTotalBytes != null
+                                  ? loadingProgress.cumulativeBytesLoaded /
+                                  (loadingProgress.expectedTotalBytes ?? 1)
+                                  : null,
+                            ),
+                          );
+                        },
+                        errorBuilder: (context, child, loadingProgress) {
+                          return Center(child: Column(
+                            children: [
+                              Icon(Icons.image, size: 80, color: Colors.grey),
+                              Text("No Image Available", style: TextStyle(color: Colors.grey, fontSize: 20, fontWeight: FontWeight.w600),)
+                            ],
                   ));
                   },
                 ),

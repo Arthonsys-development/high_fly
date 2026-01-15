@@ -16,6 +16,7 @@ class AuthApiRepository {
 
   Future<Map<String, dynamic>> verifyPhoneNumber(String phoneNumber) async {
     try {
+      debugPrint('📞 verifyPhoneNumber: Making request for phone: $phoneNumber');
       final response = await _apiClient.post(
         ApiConstants.verifyPhone,
         data: {
@@ -23,25 +24,55 @@ class AuthApiRepository {
         },
       );
 
+      debugPrint('📞 verifyPhoneNumber: Response status: ${response.statusCode}');
+      debugPrint('📞 verifyPhoneNumber: Response data: ${response.data}');
+      debugPrint('📞 verifyPhoneNumber: Response data type: ${response.data.runtimeType}');
+
+      // Handle different response formats
+      Map<String, dynamic> responseData;
+      if (response.data is Map) {
+        responseData = response.data as Map<String, dynamic>;
+      } else {
+        // If response is not a map, wrap it
+        responseData = {'data': response.data};
+      }
+
+      // Check if the response indicates success
+      // Some APIs return success in different ways
+      final isSuccess = response.statusCode == 200 || 
+                       response.statusCode == 201 ||
+                       (responseData.containsKey('success') && responseData['success'] == true) ||
+                       (!responseData.containsKey('error') && !responseData.containsKey('detail'));
+
+      debugPrint('📞 verifyPhoneNumber: Is success: $isSuccess');
+
       return {
-        'success': true,
-        'data': response.data,
-        'message': response.data is Map && response.data['message'] != null
-            ? response.data['message'].toString()
-            : 'Phone number verification successful',
+        'success': isSuccess,
+        'data': responseData,
+        'message': responseData['message']?.toString() ??
+            (isSuccess ? 'Phone number verification successful' : 'Phone number verification failed'),
       };
     } on DioException catch (e) {
-      debugPrint('DioException in verifyPhoneNumber: ${e.message}');
+      debugPrint('❌ DioException in verifyPhoneNumber: ${e.message}');
+      debugPrint('❌ Error type: ${e.type}');
+      debugPrint('❌ Error response: ${e.response?.data}');
+      debugPrint('❌ Error status code: ${e.response?.statusCode}');
+      
       String errorMessage = 'Unable to verify phone number';
 
       if (e.response != null) {
         final responseData = e.response?.data;
+        debugPrint('❌ Response data type: ${responseData.runtimeType}');
+        
         if (responseData is Map<String, dynamic>) {
           errorMessage = responseData['message']?.toString() ??
               responseData['detail']?.toString() ??
+              responseData['error']?.toString() ??
               errorMessage;
         } else if (responseData is String && responseData.isNotEmpty) {
           errorMessage = responseData;
+        } else if (responseData is List && responseData.isNotEmpty) {
+          errorMessage = responseData.join(', ');
         }
       } else if (e.message != null && e.message!.isNotEmpty) {
         errorMessage = e.message!;
@@ -52,8 +83,9 @@ class AuthApiRepository {
         'error': e.toString(),
         'message': errorMessage,
       };
-    } catch (e) {
-      debugPrint('Exception in verifyPhoneNumber: $e');
+    } catch (e, stackTrace) {
+      debugPrint('❌ Exception in verifyPhoneNumber: $e');
+      debugPrint('❌ Stack trace: $stackTrace');
       return {
         'success': false,
         'error': e.toString(),

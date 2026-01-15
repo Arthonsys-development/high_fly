@@ -12,6 +12,8 @@ import 'package:highfly/data/repository/booking_api_repository.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../providers/bookings_provider.dart';
 import 'webview_screen.dart';
+// Conditional import for web image widget
+import '../visitors/web_image_widget.dart' if (dart.library.io) '../visitors/web_image_widget_stub.dart';
 
 class BookingDocumentManagementScreen extends ConsumerStatefulWidget {
   final BookingListModel booking;
@@ -651,20 +653,28 @@ class _BookingDocumentManagementScreenState extends ConsumerState<BookingDocumen
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(8),
-          child: Image.network(
-            url,
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) {
-              return Container(
-                color: Colors.grey[200],
-                child: Icon(
-                  Icons.image_not_supported,
-                  color: Colors.grey[400],
-                  size: 24,
-                ),
-              );
-            },
-            loadingBuilder: (context, child, loadingProgress) {
+          child: kIsWeb
+              ? WebImageWidget(
+                  imageUrl: url,
+                  width: double.infinity,
+                  height: double.infinity,
+                  borderRadius: 8,
+                  fit: BoxFit.cover,
+                )
+              : Image.network(
+                  url,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      color: Colors.grey[200],
+                      child: Icon(
+                        Icons.image_not_supported,
+                        color: Colors.grey[400],
+                        size: 24,
+                      ),
+                    );
+                  },
+                  loadingBuilder: (context, child, loadingProgress) {
               if (loadingProgress == null) return child;
               return Container(
                 color: Colors.grey[200],
@@ -803,52 +813,59 @@ class _FullScreenImagePage extends StatelessWidget {
         child: SizedBox(
           width: MediaQuery.of(context).size.width,
           height: MediaQuery.of(context).size.height,
-          child: Image.network(
-            imageUrl,
-            fit: BoxFit.contain,
-            errorBuilder: (context, error, stackTrace) {
-              return Container(
-                color: Colors.black,
-                child: const Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.error_outline, size: 60, color: Colors.white70),
-                      SizedBox(height: 16),
-                      Text(
-                        'Failed to load image',
-                        style: TextStyle(color: Colors.white70, fontSize: 16),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
-            loadingBuilder: (context, child, loadingProgress) {
-              if (loadingProgress == null) return child;
-              return Container(
-                color: Colors.black,
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const CircularProgressIndicator(
-                        color: Colors.white70,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Loading image...',
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 14,
+          child: kIsWeb
+              ? WebImageWidget(
+                  imageUrl: imageUrl,
+                  width: MediaQuery.of(context).size.width,
+                  height: MediaQuery.of(context).size.height,
+                  fit: BoxFit.contain,
+                )
+              : Image.network(
+                  imageUrl,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      color: Colors.black,
+                      child: const Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.error_outline, size: 60, color: Colors.white70),
+                            SizedBox(height: 16),
+                            Text(
+                              'Failed to load image',
+                              style: TextStyle(color: Colors.white70, fontSize: 16),
+                            ),
+                          ],
                         ),
                       ),
-                    ],
-                  ),
+                    );
+                  },
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return Container(
+                      color: Colors.black,
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const CircularProgressIndicator(
+                              color: Colors.white70,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Loading image...',
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
                 ),
-              );
-            },
-          ),
         ),
       ),
     );

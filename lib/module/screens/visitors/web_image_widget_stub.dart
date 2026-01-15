@@ -6,19 +6,23 @@ class WebImageWidget extends StatelessWidget {
   final String imageUrl;
   final double width;
   final double height;
+  final double? borderRadius;
+  final BoxFit fit;
 
   const WebImageWidget({
     super.key,
     required this.imageUrl,
     required this.width,
     required this.height,
+    this.borderRadius,
+    this.fit = BoxFit.cover,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Image.network(
+    Widget image = Image.network(
       imageUrl,
-      fit: BoxFit.cover,
+      fit: fit,
       width: width,
       height: height,
       errorBuilder: (context, error, stackTrace) {
@@ -40,6 +44,15 @@ class WebImageWidget extends StatelessWidget {
         );
       },
     );
+
+    if (borderRadius != null) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(borderRadius!),
+        child: image,
+      );
+    }
+
+    return image;
   }
 }
 

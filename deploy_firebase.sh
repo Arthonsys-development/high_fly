@@ -93,8 +93,8 @@ $FLUTTER_CMD clean
 echo ""
 
 # Step 3: Build web app
-echo -e "${BLUE}🔨 Step 3: Building web app (release mode)...${NC}"
-$FLUTTER_CMD build web --release
+echo -e "${BLUE}🔨 Step 3: Building web app (release mode - production)...${NC}"
+$FLUTTER_CMD build web --release --dart-define=env=prod
 
 if [ $? -ne 0 ]; then
   echo -e "${RED}❌ Build failed${NC}"

@@ -358,23 +358,66 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
           });
 
           final rawPhoneNumber = _phoneController.text.trim();
+          debugPrint('🔍 Verifying phone number: $rawPhoneNumber');
           final verifyResponse = await ref
               .read(authApiRepositoryProvider)
               .verifyPhoneNumber(rawPhoneNumber);
 
+          debugPrint('📱 Verify phone response: $verifyResponse');
+          
           final apiSuccess = verifyResponse['success'] == true;
           final apiData = verifyResponse['data'];
-          final existsValue = (apiData is Map
-                  ? apiData['exists']
-                  : null)
-              ?.toString()
-              .toLowerCase();
+          debugPrint('📱 API Success: $apiSuccess');
+          debugPrint('📱 API Data: $apiData');
+          debugPrint('📱 API Data type: ${apiData.runtimeType}');
+          
+          // Handle different response formats
+          String? existsValue;
+          if (apiData is Map) {
+            // Try different possible field names and formats
+            final exists = apiData['exists'];
+            debugPrint('📱 Exists field value: $exists (type: ${exists.runtimeType})');
+            
+            if (exists != null) {
+              // Handle boolean, string, or number
+              if (exists is bool) {
+                existsValue = exists ? 'yes' : 'no';
+              } else {
+                existsValue = exists.toString().toLowerCase();
+              }
+            }
+          }
+          
+          debugPrint('📱 Parsed existsValue: $existsValue');
+          
           final apiMessage = (apiData is Map
                   ? apiData['message']
                   : verifyResponse['message'])
               ?.toString();
 
-          if (!apiSuccess || existsValue != 'yes') {
+          // Check if phone exists - be more flexible with the check
+          // If existsValue is null but API succeeded, assume phone exists (server returned 200 OK)
+          final phoneExists = existsValue == null 
+              ? apiSuccess  // If no exists field but API succeeded, assume it exists
+              : (existsValue == 'yes' || existsValue == 'true' || existsValue == '1');
+          
+          debugPrint('📱 Phone exists check: $phoneExists (existsValue: $existsValue, apiSuccess: $apiSuccess)');
+          
+          if (!apiSuccess) {
+            debugPrint('❌ API call failed: $apiMessage');
+            final message = apiMessage?.isNotEmpty == true
+                ? apiMessage!
+                : 'Phone number verification failed';
+            if (mounted) {
+              _showErrorSnackBar(message);
+            }
+            return;
+          }
+          
+          // Only check existsValue if it was provided in the response
+          // If API succeeded (200 OK) but no exists field, proceed anyway
+          if (existsValue != null && !phoneExists) {
+            debugPrint('❌ Phone number not registered (existsValue: $existsValue)');
             final message = apiMessage?.isNotEmpty == true
                 ? apiMessage!
                 : 'Phone number not registered';
@@ -383,8 +426,11 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
             }
             return;
           }
-        } catch (e) {
-          debugPrint('Error verifying phone number: $e');
+          
+          debugPrint('✅ Phone verification successful, proceeding to send OTP');
+        } catch (e, stackTrace) {
+          debugPrint('❌ Error verifying phone number: $e');
+          debugPrint('❌ Stack trace: $stackTrace');
           if (mounted) {
             _showErrorSnackBar('Unable to verify phone number. Please try again.');
           }

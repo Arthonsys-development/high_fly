@@ -8,12 +8,16 @@ class WebImageWidget extends StatefulWidget {
   final String imageUrl;
   final double width;
   final double height;
+  final double? borderRadius;
+  final BoxFit fit;
 
   const WebImageWidget({
     super.key,
     required this.imageUrl,
     required this.width,
     required this.height,
+    this.borderRadius,
+    this.fit = BoxFit.cover,
   });
 
   @override
@@ -46,25 +50,34 @@ class WebImageWidgetState extends State<WebImageWidget> {
             ..src = widget.imageUrl
             ..style.width = '${widget.width}px'
             ..style.height = '${widget.height}px'
-            ..style.objectFit = 'cover'
-            ..style.objectPosition = 'center'
-            ..style.borderRadius = '50%'
-            ..crossOrigin = 'anonymous' // Try to handle CORS
-            ..onError.listen((_) {
-              if (mounted) {
-                setState(() {
-                  _hasError = true;
-                });
-              }
-              debugPrint('❌ Image failed to load: ${widget.imageUrl}');
-            })
-            ..onLoad.listen((_) {
-              if (mounted) {
-                setState(() {
-                  _hasError = false;
-                });
-              }
-            });
+            ..style.objectFit = _getObjectFit(widget.fit)
+            ..style.objectPosition = 'center';
+          
+          // Set border radius if provided, otherwise default to circular for backward compatibility
+          if (widget.borderRadius != null) {
+            img.style.borderRadius = '${widget.borderRadius}px';
+          } else {
+            img.style.borderRadius = '50%'; // Default to circular for backward compatibility
+          }
+          
+          // Note: crossOrigin is not set to allow images without CORS headers
+          // This works for display purposes. Only set crossOrigin if you need
+          // to manipulate the image with canvas or read its pixels.
+          img.onError.listen((_) {
+            if (mounted) {
+              setState(() {
+                _hasError = true;
+              });
+            }
+            debugPrint('❌ Image failed to load: ${widget.imageUrl}');
+          });
+          img.onLoad.listen((_) {
+            if (mounted) {
+              setState(() {
+                _hasError = false;
+              });
+            }
+          });
 
           return img;
         },
@@ -76,6 +89,25 @@ class WebImageWidgetState extends State<WebImageWidget> {
           _hasError = true;
         });
       }
+    }
+  }
+
+  String _getObjectFit(BoxFit fit) {
+    switch (fit) {
+      case BoxFit.cover:
+        return 'cover';
+      case BoxFit.contain:
+        return 'contain';
+      case BoxFit.fill:
+        return 'fill';
+      case BoxFit.fitWidth:
+        return 'cover'; // Approximate
+      case BoxFit.fitHeight:
+        return 'cover'; // Approximate
+      case BoxFit.none:
+        return 'none';
+      case BoxFit.scaleDown:
+        return 'contain';
     }
   }
 

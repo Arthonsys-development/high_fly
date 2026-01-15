@@ -1,8 +1,4 @@
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:http_parser/http_parser.dart';
 import 'package:highfly/config/network/api_client.dart';
 import 'package:highfly/config/network/api_constants.dart';
 import 'package:highfly/data/models/response_model/profile_model.dart';
@@ -13,14 +9,14 @@ class ProfileApiRepository {
   // Get user profile
   Future<ProfileResponseData> getProfile() async {
     try {
-      debugPrint('🔍 ProfileApiRepository: Fetching user profile...');
+      print('🔍 ProfileApiRepository: Fetching user profile...');
       
       final response = await _apiClient.get(
         ApiConstants.profileData,
       );
 
-      debugPrint('✅ ProfileApiRepository: Profile fetched successfully');
-      debugPrint('📊 ProfileApiRepository: Response data: ${response.data}');
+      print('✅ ProfileApiRepository: Profile fetched successfully');
+      print('📊 ProfileApiRepository: Response data: ${response.data}');
 
       // Parse the profile data from the response
       if (response.data is Map<String, dynamic>) {
@@ -30,8 +26,8 @@ class ProfileApiRepository {
         throw Exception('Invalid response format');
       }
     } on DioException catch (e) {
-      debugPrint('❌ ProfileApiRepository: Error fetching profile - ${e.message}');
-      debugPrint('📊 ProfileApiRepository: Error response: ${e.response?.data}');
+      print('❌ ProfileApiRepository: Error fetching profile - ${e.message}');
+      print('📊 ProfileApiRepository: Error response: ${e.response?.data}');
       
       if (e.response?.statusCode == 401) {
         throw Exception('Unauthorized - Please login again');
@@ -41,7 +37,7 @@ class ProfileApiRepository {
         throw Exception('Failed to fetch profile: ${e.message}');
       }
     } catch (e) {
-      debugPrint('❌ ProfileApiRepository: Unexpected error - $e');
+      print('❌ ProfileApiRepository: Unexpected error - $e');
       throw Exception('Failed to fetch profile: $e');
     }
   }
@@ -49,8 +45,8 @@ class ProfileApiRepository {
   // Update user profile
   Future<ProfileResponseData> updateProfile(ProfileResponseData currentProfile, Map<String, dynamic> updateData) async {
     try {
-      debugPrint('🔄 ProfileApiRepository: Updating user profile...');
-      debugPrint('📊 ProfileApiRepository: Update data: $updateData');
+      print('🔄 ProfileApiRepository: Updating user profile...');
+      print('📊 ProfileApiRepository: Update data: $updateData');
       
       // Ensure required fields are included in the update
       final completeData = Map<String, dynamic>.from(updateData);
@@ -93,15 +89,15 @@ class ProfileApiRepository {
         completeData['commission_rate'] = currentProfile.commissionRate;
       }
       
-      debugPrint('📊 ProfileApiRepository: Complete update data: $completeData');
+      print('📊 ProfileApiRepository: Complete update data: $completeData');
 
       final response = await _apiClient.patch(
         ApiConstants.profileData,
         data: completeData,
       );
 
-      debugPrint('✅ ProfileApiRepository: Profile updated successfully');
-      debugPrint('📊 ProfileApiRepository: Response data: ${response.data}');
+      print('✅ ProfileApiRepository: Profile updated successfully');
+      print('📊 ProfileApiRepository: Response data: ${response.data}');
 
       // Parse the profile data from the response
       if (response.data is Map<String, dynamic>) {
@@ -111,8 +107,8 @@ class ProfileApiRepository {
         throw Exception('Invalid response format');
       }
     } on DioException catch (e) {
-      debugPrint('❌ ProfileApiRepository: Error updating profile - ${e.message}');
-      debugPrint('📊 ProfileApiRepository: Error response: ${e.response?.data}');
+      print('❌ ProfileApiRepository: Error updating profile - ${e.message}');
+      print('📊 ProfileApiRepository: Error response: ${e.response?.data}');
       
       if (e.response?.statusCode == 401) {
         throw Exception('Unauthorized - Please login again');
@@ -126,38 +122,21 @@ class ProfileApiRepository {
         throw Exception('Failed to update profile: ${e.message}');
       }
     } catch (e) {
-      debugPrint('❌ ProfileApiRepository: Unexpected error - $e');
+      print('❌ ProfileApiRepository: Unexpected error - $e');
       throw Exception('Failed to update profile: $e');
     }
   }
 
   // Upload profile photo
-  Future<ProfileResponseData> uploadProfilePhoto(XFile imageFile) async {
+  Future<ProfileResponseData> uploadProfilePhoto(String imagePath) async {
     try {
-      debugPrint('📸 ProfileApiRepository: Uploading profile photo...');
-      
-      MultipartFile multipartFile;
-      
-      if (kIsWeb) {
-        // For web, read bytes from XFile
-        final bytes = await imageFile.readAsBytes();
-        multipartFile = MultipartFile.fromBytes(
-          bytes,
-          filename: imageFile.name.isNotEmpty ? imageFile.name : 'profile_image.jpg',
-          contentType: MediaType('image', 'jpeg'),
-        );
-        debugPrint('📸 ProfileApiRepository: Using bytes for web upload (${bytes.length} bytes)');
-      } else {
-        // For mobile, use file path
-        multipartFile = await MultipartFile.fromFile(
-          imageFile.path,
-          filename: imageFile.name.isNotEmpty ? imageFile.name : 'profile_image.jpg',
-        );
-        debugPrint('📸 ProfileApiRepository: Using file path for mobile upload: ${imageFile.path}');
-      }
+      print('📸 ProfileApiRepository: Uploading profile photo...');
       
       final formData = FormData.fromMap({
-        'profile_image': multipartFile,
+        'profile_image': await MultipartFile.fromFile(
+          imagePath,
+          filename: 'profile_image.jpg',
+        ),
       });
 
       // Try different possible endpoints for photo upload
@@ -172,11 +151,11 @@ class ProfileApiRepository {
       
       for (final endpoint in endpoints) {
         try {
-          debugPrint('📸 ProfileApiRepository: Trying endpoint: $endpoint');
+          print('📸 ProfileApiRepository: Trying endpoint: $endpoint');
           final response = await _apiClient.patch(endpoint, data: formData);
           
-          debugPrint('✅ ProfileApiRepository: Profile photo uploaded successfully');
-          debugPrint('📊 ProfileApiRepository: Response data: ${response.data}');
+          print('✅ ProfileApiRepository: Profile photo uploaded successfully');
+          print('📊 ProfileApiRepository: Response data: ${response.data}');
           
           // Parse the profile data from the response
           if (response.data is Map<String, dynamic>) {
@@ -185,9 +164,9 @@ class ProfileApiRepository {
           }
         } on DioException catch (e) {
           lastError = e.message;
-          debugPrint('❌ ProfileApiRepository: Endpoint $endpoint failed - ${e.message}');
+          print('❌ ProfileApiRepository: Endpoint $endpoint failed - ${e.message}');
           if (e.response?.data != null) {
-            debugPrint('📊 ProfileApiRepository: Error response: ${e.response?.data}');
+            print('📊 ProfileApiRepository: Error response: ${e.response?.data}');
           }
           continue;
         }
@@ -199,8 +178,8 @@ class ProfileApiRepository {
         throw Exception('Failed to upload photo: $lastError');
       }
     } on DioException catch (e) {
-      debugPrint('❌ ProfileApiRepository: Error uploading photo - ${e.message}');
-      debugPrint('📊 ProfileApiRepository: Error response: ${e.response?.data}');
+      print('❌ ProfileApiRepository: Error uploading photo - ${e.message}');
+      print('📊 ProfileApiRepository: Error response: ${e.response?.data}');
       
       if (e.response?.statusCode == 401) {
         throw Exception('Unauthorized - Please login again');
@@ -208,7 +187,7 @@ class ProfileApiRepository {
         throw Exception('Failed to upload photo: ${e.message}');
       }
     } catch (e) {
-      debugPrint('❌ ProfileApiRepository: Unexpected error - $e');
+      print('❌ ProfileApiRepository: Unexpected error - $e');
       throw Exception('Failed to upload photo: $e');
     }
   }

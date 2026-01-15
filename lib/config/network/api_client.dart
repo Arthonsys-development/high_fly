@@ -57,16 +57,35 @@ class ApiClient {
   void _init() {
     String baseUrl;
     try {
-      baseUrl = dotenv.env['BASE_URL'] ?? 'http://223.184.0.44:83/api/v1/';
-      debugPrint('API Client: Using base URL: $baseUrl');
+      // Check if dotenv is loaded and has BASE_URL
+      final baseUrlFromEnv = dotenv.env['BASE_URL'];
+      
+      if (baseUrlFromEnv != null && baseUrlFromEnv.isNotEmpty) {
+        baseUrl = baseUrlFromEnv;
+        debugPrint('API Client: Using base URL from env: $baseUrl');
+      } else {
+        // If BASE_URL is not set or empty, use fallback
+        debugPrint('API Client: BASE_URL not found in env or empty, using fallback');
+        final env = dotenv.env['ENVIRONMENT'] ?? 'dev';
+        baseUrl = env == 'prod' 
+          ? 'https://dashboard.vistarakgroup.com/api/v1/' 
+          : 'http://223.184.0.44:83/api/v1/';
+        debugPrint('API Client: Using fallback base URL: $baseUrl');
+      }
     } catch (e) {
       debugPrint('API Client: Error getting BASE_URL from environment: $e');
       // Fallback URLs based on environment
       final env = dotenv.env['ENVIRONMENT'] ?? 'dev';
       baseUrl = env == 'prod' 
-        ? 'https://pigeonm.com/api' 
-        : 'https://daf8f7648993.ngrok-free.app/api/v1/';
+        ? 'https://dashboard.vistarakgroup.com/api/v1/' 
+        : 'http://223.184.0.44:83/api/v1/';
       debugPrint('API Client: Using fallback base URL: $baseUrl');
+    }
+    
+    // For web platform, if baseUrl is still empty, use production URL
+    if (kIsWeb && (baseUrl.isEmpty || baseUrl == '')) {
+      debugPrint('API Client: Web platform detected with empty baseUrl, using production URL');
+      baseUrl = 'https://dashboard.vistarakgroup.com/api/v1/';
     }
     
     _dio = Dio(BaseOptions(
@@ -176,6 +195,28 @@ class ApiClient {
   }
 
   Dio get dio => _dio;
+
+  // Method to update base URL after env is loaded
+  // This is useful for web deployments where env files might load asynchronously
+  void updateBaseUrl() {
+    try {
+      final baseUrlFromEnv = dotenv.env['BASE_URL'];
+      
+      if (baseUrlFromEnv != null && baseUrlFromEnv.isNotEmpty) {
+        final currentBaseUrl = _dio.options.baseUrl;
+        if (currentBaseUrl != baseUrlFromEnv) {
+          _dio.options.baseUrl = baseUrlFromEnv;
+          debugPrint('API Client: Updated base URL from $currentBaseUrl to $baseUrlFromEnv');
+        } else {
+          debugPrint('API Client: Base URL already set to $baseUrlFromEnv');
+        }
+      } else {
+        debugPrint('API Client: BASE_URL not found in env, keeping current base URL: ${_dio.options.baseUrl}');
+      }
+    } catch (e) {
+      debugPrint('API Client: Error updating base URL: $e');
+    }
+  }
 
   // Generic GET request
   Future<Response> get(String endpoint, {Map<String, dynamic>? queryParameters}) async {

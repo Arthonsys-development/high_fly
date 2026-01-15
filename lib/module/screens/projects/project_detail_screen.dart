@@ -5,6 +5,8 @@ import 'package:highfly/config/constant/app_colors.dart';
 import 'package:highfly/data/models/response_model/project_response_model.dart';
 import '../../global/widgets/common_app_bar.dart';
 import '../bookings/webview_screen.dart';
+// Conditional import for web image widget
+import '../visitors/web_image_widget.dart' if (dart.library.io) '../visitors/web_image_widget_stub.dart';
 
 class ProjectDetailScreen extends StatelessWidget {
   final Project project;
@@ -130,28 +132,12 @@ class ProjectDetailScreen extends StatelessWidget {
           children: [
             // Project Image
             if (project.projectImage.isNotEmpty)
-              Image.network(
-                project.projectImage,
+              WebImageWidget(
+                imageUrl: project.projectImage,
+                width: double.infinity,
+                height: double.infinity,
+                borderRadius: 16,
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    color: Colors.grey[200],
-                    child: const Center(
-                      child: Icon(Icons.image, size: 80, color: Colors.grey),
-                    ),
-                  );
-                },
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return Container(
-                    color: Colors.grey[200],
-                    child: const Center(
-                      child: CircularProgressIndicator(
-                        color: AppColors.primaryColor,
-                      ),
-                    ),
-                  );
-                },
               )
             else
               Container(
@@ -785,30 +771,38 @@ class ProjectDetailScreen extends StatelessWidget {
                 onTap: () => _showFullScreenImage(context, file.fileUrl.isNotEmpty ? file.fileUrl : file.thumbnailUrl),
                 child: ClipRRect(
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                  child: Image.network(
-                    file.thumbnailUrl.isNotEmpty ? file.thumbnailUrl : file.fileUrl,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        color: Colors.grey[200],
-                        child: const Center(
-                          child: Icon(Icons.image, size: 60, color: Colors.grey),
+                  child: kIsWeb
+                      ? WebImageWidget(
+                          imageUrl: file.thumbnailUrl.isNotEmpty ? file.thumbnailUrl : file.fileUrl,
+                          width: double.infinity,
+                          height: double.infinity,
+                          borderRadius: 12,
+                          fit: BoxFit.cover,
+                        )
+                      : Image.network(
+                          file.thumbnailUrl.isNotEmpty ? file.thumbnailUrl : file.fileUrl,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              color: Colors.grey[200],
+                              child: const Center(
+                                child: Icon(Icons.image, size: 60, color: Colors.grey),
+                              ),
+                            );
+                          },
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Container(
+                              color: Colors.grey[200],
+                              child: const Center(
+                                child: CircularProgressIndicator(
+                                  color: AppColors.primaryColor,
+                                ),
+                              ),
+                            );
+                          },
                         ),
-                      );
-                    },
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return Container(
-                        color: Colors.grey[200],
-                        child: const Center(
-                          child: CircularProgressIndicator(
-                            color: AppColors.primaryColor,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
                 ),
               ),
             ),
@@ -927,33 +921,41 @@ class ProjectDetailScreen extends StatelessWidget {
               onTap: () => _showFullScreenImage(context, file.fileUrl.isNotEmpty ? file.fileUrl : file.thumbnailUrl),
               child: ClipRRect(
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                child: Image.network(
-                  file.thumbnailUrl.isNotEmpty ? file.thumbnailUrl : file.fileUrl,
-                  width: double.infinity,
-                  height: 200,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      height: 200,
-                      color: Colors.grey[200],
-                      child: const Center(
-                        child: Icon(Icons.image, size: 60, color: Colors.grey),
+                child: kIsWeb
+                    ? WebImageWidget(
+                        imageUrl: file.thumbnailUrl.isNotEmpty ? file.thumbnailUrl : file.fileUrl,
+                        width: double.infinity,
+                        height: 200,
+                        borderRadius: 12,
+                        fit: BoxFit.cover,
+                      )
+                    : Image.network(
+                        file.thumbnailUrl.isNotEmpty ? file.thumbnailUrl : file.fileUrl,
+                        width: double.infinity,
+                        height: 200,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            height: 200,
+                            color: Colors.grey[200],
+                            child: const Center(
+                              child: Icon(Icons.image, size: 60, color: Colors.grey),
+                            ),
+                          );
+                        },
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Container(
+                            height: 200,
+                            color: Colors.grey[200],
+                            child: const Center(
+                              child: CircularProgressIndicator(
+                                color: AppColors.primaryColor,
+                              ),
+                            ),
+                          );
+                        },
                       ),
-                    );
-                  },
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return Container(
-                      height: 200,
-                      color: Colors.grey[200],
-                      child: const Center(
-                        child: CircularProgressIndicator(
-                          color: AppColors.primaryColor,
-                        ),
-                      ),
-                    );
-                  },
-                ),
               ),
             ),
           // File Details
@@ -1130,31 +1132,38 @@ class _FullScreenImagePage extends StatelessWidget {
             child: SizedBox(
               width: MediaQuery.of(context).size.width,
               height: MediaQuery.of(context).size.height,
-              child: Image.network(
-                imageUrl,
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    color: Colors.black,
-                    child: const Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.error_outline, size: 60, color: Colors.white70),
-                          SizedBox(height: 16),
-                          Text(
-                            'Failed to load image',
-                            style: TextStyle(color: Colors.white70, fontSize: 16),
+              child: kIsWeb
+                  ? WebImageWidget(
+                      imageUrl: imageUrl,
+                      width: MediaQuery.of(context).size.width,
+                      height: MediaQuery.of(context).size.height,
+                      fit: BoxFit.contain,
+                    )
+                  : Image.network(
+                      imageUrl,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          color: Colors.black,
+                          child: const Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.error_outline, size: 60, color: Colors.white70),
+                                SizedBox(height: 16),
+                                Text(
+                                  'Failed to load image',
+                                  style: TextStyle(color: Colors.white70, fontSize: 16),
+                                ),
+                              ],
+                            ),
                           ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return Container(
-                    color: Colors.black,
+                        );
+                      },
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Container(
+                          color: Colors.black,
                     child: Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,

@@ -10,6 +10,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'config/constant/app_strings.dart';
 import 'config/routes.dart';
 import 'config/theme.dart';
+import 'config/network/api_client.dart';
 import 'module/providers/organization_provider.dart';
 import 'utils/flutter_web_error_handler.dart';
 import 'utils/notification_service.dart';
@@ -187,6 +188,16 @@ Future<void> main() async {
   try {
     await initEnv();
     debugPrint('🔥 App: Environment initialized');
+    
+    // Update ApiClient base URL after env is loaded
+    // This is important for web deployments where ApiClient might initialize before env loads
+    try {
+      final apiClient = ApiClient();
+      apiClient.updateBaseUrl();
+      debugPrint('🔥 App: ApiClient base URL updated after env load');
+    } catch (e) {
+      debugPrint('🔥 App: Error updating ApiClient base URL: $e');
+    }
   } catch (e) {
     debugPrint('🔥 App: Environment initialization error: $e');
     // Continue with default environment
@@ -199,14 +210,42 @@ Future<void> main() async {
 Future<void> initEnv() async{
   const env = String.fromEnvironment('env', defaultValue: 'dev');
   try {
-    await dotenv.load(fileName: 'assets/env/.env.$env');
-    debugPrint('Environment loaded successfully: $env');
-    debugPrint('BASE_URL: ${dotenv.env['BASE_URL']}');
+    final envFileName = 'assets/env/.env.$env';
+    debugPrint('🔥 Loading environment file: $envFileName');
+    
+    await dotenv.load(fileName: envFileName);
+    debugPrint('🔥 Environment loaded successfully: $env');
+    
+    final baseUrl = dotenv.env['BASE_URL'];
+    if (baseUrl != null && baseUrl.isNotEmpty) {
+      debugPrint('🔥 BASE_URL loaded: $baseUrl');
+    } else {
+      debugPrint('⚠️ BASE_URL is empty or null in env file');
+      // Set fallback based on environment
+      if (env == 'prod') {
+        dotenv.env['BASE_URL'] = 'https://dashboard.vistarakgroup.com/api/v1/';
+        debugPrint('🔥 Using production fallback BASE_URL: ${dotenv.env['BASE_URL']}');
+      } else {
+        dotenv.env['BASE_URL'] = 'http://223.184.0.44:83/api/v1/';
+        debugPrint('🔥 Using development fallback BASE_URL: ${dotenv.env['BASE_URL']}');
+      }
+    }
+    
+    // Log all env variables for debugging (be careful with sensitive data in production)
+    if (kIsWeb) {
+      debugPrint('🔥 Web platform detected - env variables loaded');
+    }
   } catch (e) {
-    debugPrint('Failed to load environment file: $e');
+    debugPrint('❌ Failed to load environment file: $e');
+    debugPrint('⚠️ Using fallback environment values');
     // Fallback to default values
     dotenv.env['ENVIRONMENT'] = env;
-    dotenv.env['BASE_URL'] = 'https://2bb922f2af1d.ngrok-free.app/api/v1/';
+    if (env == 'prod') {
+      dotenv.env['BASE_URL'] = 'https://dashboard.vistarakgroup.com/api/v1/';
+    } else {
+      dotenv.env['BASE_URL'] = 'http://223.184.0.44:83/api/v1/';
+    }
+    debugPrint('🔥 Fallback BASE_URL set to: ${dotenv.env['BASE_URL']}');
   }
 }
 
