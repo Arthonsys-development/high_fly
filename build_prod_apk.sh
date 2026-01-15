@@ -27,3 +27,4 @@ echo "💡 To install on a device:"
 echo "   adb install build/app/outputs/flutter-apk/app-release.apk"
 
 
+
