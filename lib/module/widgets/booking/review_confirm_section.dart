@@ -14,6 +14,10 @@ import '../../../data/models/request_models/hold_request_model.dart';
 import '../../providers/projects_provider.dart';
 import 'header_icon_widget.dart';
 import 'action_buttons.dart';
+import 'upload_documents_section.dart';
+
+// Import DocumentFileData from upload_documents_section
+// The class is already defined there, we'll import it directly
 
 class ReviewConfirmSection extends StatefulWidget {
   final String title;
@@ -24,6 +28,7 @@ class ReviewConfirmSection extends StatefulWidget {
   final bool isHoldFlow; // New parameter to distinguish between booking and hold flows
  // final int agentId; // Agent ID for API calls
   final VoidCallback? onResetForm; // Callback to reset form data
+  final List<DocumentFileData>? documentFiles; // File data for web uploads
 
   const ReviewConfirmSection({
     super.key,
@@ -35,6 +40,7 @@ class ReviewConfirmSection extends StatefulWidget {
     this.isHoldFlow = false,
   //  this.agentId = 1, // Default agent ID, should be passed from parent
     this.onResetForm, // Callback to reset form data
+    this.documentFiles, // File data for web uploads
   });
 
   @override
@@ -153,7 +159,22 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
       documents: summary.documents,
     );
 
-    await _bookingRepository.createBooking(request);
+    // Prepare document files for web upload
+    List<Map<String, dynamic>>? documentFiles;
+    if (kIsWeb && widget.documentFiles != null && widget.documentFiles!.isNotEmpty) {
+      debugPrint('📋 ReviewConfirmSection: Preparing ${widget.documentFiles!.length} document files for booking upload');
+      documentFiles = widget.documentFiles!.map((file) {
+        debugPrint('📄 ReviewConfirmSection: File ${file.name}, bytes: ${file.bytes?.length ?? 0}');
+        return {
+          'bytes': file.bytes,
+          'name': file.name,
+        };
+      }).toList();
+    } else {
+      debugPrint('⚠️ ReviewConfirmSection: No document files available for booking (isWeb: $kIsWeb, files: ${widget.documentFiles?.length ?? 0})');
+    }
+
+    await _bookingRepository.createBooking(request, documentFiles: documentFiles);
   }
 
   Future<void> _createHold() async {
@@ -196,7 +217,22 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
       documents: summary.documents,
     );
 
-    await _bookingRepository.createHold(request);
+    // Prepare document files for web upload
+    List<Map<String, dynamic>>? documentFiles;
+    if (kIsWeb && widget.documentFiles != null && widget.documentFiles!.isNotEmpty) {
+      debugPrint('📋 ReviewConfirmSection: Preparing ${widget.documentFiles!.length} document files for upload');
+      documentFiles = widget.documentFiles!.map((file) {
+        debugPrint('📄 ReviewConfirmSection: File ${file.name}, bytes: ${file.bytes?.length ?? 0}');
+        return {
+          'bytes': file.bytes,
+          'name': file.name,
+        };
+      }).toList();
+    } else {
+      debugPrint('⚠️ ReviewConfirmSection: No document files available (isWeb: $kIsWeb, files: ${widget.documentFiles?.length ?? 0})');
+    }
+
+    await _bookingRepository.createHold(request, documentFiles: documentFiles);
   }
 
   String _generatePaymentReference() {

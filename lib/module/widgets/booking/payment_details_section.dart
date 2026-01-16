@@ -279,7 +279,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                     SizedBox(height: spacing),
                     
                     // Salaried Individual checkbox (only visible if Payment Type is Finance)
-                    if (_selectedPaymentTypeKey == PaymentType.finance) ...[
+                    if (_selectedPaymentTypeKey == PaymentType.finance ) ...[
                       Row(
                         mainAxisSize: MainAxisSize.max,
                         children: [
@@ -328,7 +328,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                       ),
                       const SizedBox(height: 20),
                     ],
-                    
+                    /*
                     // Salary Slip field (only visible if Salaried Individual is checked)
                     if (_paymentDetails.isSalariedIndividual) ...[
                       PdfUploadWidget(
@@ -360,7 +360,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                       ),
                       SizedBox(height: spacing),
                     ],
-                    
+                    */
                     // Additional Notes field (full width)
                     CustomTextField(
                       titleText: 'Additional Notes',

@@ -18,7 +18,7 @@ import '../../widgets/booking/customer_selection_section.dart';
 import '../../widgets/booking/hold_details_section.dart';
 import '../../widgets/booking/payment_details_section.dart';
 import '../../widgets/booking/bank_details_section.dart';
-import '../../widgets/booking/upload_documents_section.dart';
+import '../../widgets/booking/upload_documents_section.dart' show UploadDocumentsSection, DocumentFileData;
 import '../../widgets/booking/review_confirm_section.dart';
 
 // Extension to convert API Project model to local Project model
@@ -59,6 +59,7 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
   PaymentDetails? _paymentDetails;
   BankDetails? _bankDetails;
   List<String> _documents = [];
+  List<DocumentFileData> _documentFiles = []; // Store file data for web uploads
 
   // Method to reset all form data
   void _resetFormData() {
@@ -70,6 +71,7 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
       _paymentDetails = null;
       _bankDetails = null;
       _documents = [];
+      _documentFiles = [];
       _currentStep = 0;
       _currentHoldStep = 0;
       _selectedPlotPrice = '85000';
@@ -448,6 +450,14 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
             });
             _resetScrollPosition();
           },
+          onNextWithData: kIsWeb ? (documentFiles) {
+            setState(() {
+              _documentFiles = documentFiles;
+              _documents = documentFiles.map((f) => f.path).toList();
+              _currentStep = 5; // Move to review & confirm
+            });
+            _resetScrollPosition();
+          } : null,
         );
       } else {
         // Review & Confirm Step
@@ -477,6 +487,7 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
                 bankDetails: _bankDetails,
                 documents: _documents.isEmpty ? null : _documents,
               ),
+              documentFiles: kIsWeb ? _documentFiles : null,
               isHoldFlow: false,
             //  agentId: int.parse(agentId),
               onResetForm: _resetFormData,
@@ -643,6 +654,14 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
             });
             _resetScrollPosition();
           },
+          onNextWithData: kIsWeb ? (documentFiles) {
+            setState(() {
+              _documentFiles = documentFiles;
+              _documents = documentFiles.map((f) => f.path).toList();
+              _currentHoldStep = 5; // Move to review & confirm
+            });
+            _resetScrollPosition();
+          } : null,
         );
       } else {
         // Review & Confirm Step
@@ -672,6 +691,7 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
                 bankDetails: _bankDetails,
                 documents: _documents.isEmpty ? null : _documents,
               ),
+              documentFiles: kIsWeb ? _documentFiles : null,
               isHoldFlow: true,
             // agentId: int.parse(agentId),
               onResetForm: _resetFormData,

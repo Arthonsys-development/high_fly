@@ -73,7 +73,11 @@ class BookingApiRepository {
   }
 
   /// Create a new plot booking with multipart/form-data
-  Future<BookingResponseModel> createBooking(BookingRequestModel request) async {
+  /// [documentFiles] is optional list of file data (bytes + names) for web uploads
+  Future<BookingResponseModel> createBooking(
+    BookingRequestModel request, {
+    List<Map<String, dynamic>>? documentFiles,
+  }) async {
     try {
       // Create FormData for multipart request
       final Map<String, dynamic> formDataMap = {...request.toFormData()};
@@ -158,7 +162,47 @@ class BookingApiRepository {
       }
       
       // Handle documents array - add all documents with the same key "documents" to form an array
-      if (request.documents != null && request.documents!.isNotEmpty) {
+      if (kIsWeb && documentFiles != null && documentFiles.isNotEmpty) {
+        debugPrint('📤 createBooking: Processing ${documentFiles.length} document files for web upload');
+        // On web, use file bytes from documentFiles
+        for (var fileData in documentFiles) {
+          final bytes = fileData['bytes'] as List<int>?;
+          final fileName = fileData['name'] as String?;
+          
+          debugPrint('📄 createBooking: File ${fileName}, bytes: ${bytes?.length ?? 0}');
+          
+          if (bytes == null || fileName == null || bytes.isEmpty) {
+            debugPrint('⚠️ createBooking: Skipping file ${fileName} - missing bytes or name');
+            continue;
+          }
+          
+          final fileExtension = fileName.split('.').last.toLowerCase();
+          
+          // Determine content type
+          String? contentType;
+          if (fileExtension == 'pdf') {
+            contentType = 'application/pdf';
+          } else if (['jpg', 'jpeg'].contains(fileExtension)) {
+            contentType = 'image/jpeg';
+          } else if (fileExtension == 'png') {
+            contentType = 'image/png';
+          }
+          
+          final multipartFile = MultipartFile.fromBytes(
+            bytes,
+            filename: fileName,
+            contentType: contentType != null 
+                ? MediaType.parse(contentType) 
+                : null,
+          );
+          
+          // Add each document file with the same key "documents" to create an array
+          formData.files.add(MapEntry('documents', multipartFile));
+          debugPrint('✅ createBooking: Added document file ${fileName} to form data');
+        }
+        debugPrint('📦 createBooking: Total files in form data: ${formData.files.length}');
+      } else if (request.documents != null && request.documents!.isNotEmpty) {
+        // On mobile, use file paths
         for (var documentPath in request.documents!) {
           if (documentPath.isEmpty) continue;
           
@@ -168,8 +212,7 @@ class BookingApiRepository {
               formData.fields.add(MapEntry('documents', documentPath));
               continue;
             }
-            // For web, files from image_picker/file_picker need special handling
-            // Skip for now as web file handling requires bytes
+            // Skip web file paths if no file data provided
             debugPrint('Web file upload from path not supported: $documentPath');
             continue;
           } else {
@@ -233,7 +276,11 @@ class BookingApiRepository {
   }
 
   /// Create a new plot hold with multipart/form-data
-  Future<HoldResponseModel> createHold(HoldRequestModel request) async {
+  /// [documentFiles] is optional list of file data (bytes + names) for web uploads
+  Future<HoldResponseModel> createHold(
+    HoldRequestModel request, {
+    List<Map<String, dynamic>>? documentFiles,
+  }) async {
     try {
       // Create FormData for multipart request
       final Map<String, dynamic> formDataMap = {...request.toJson()};
@@ -250,7 +297,47 @@ class BookingApiRepository {
       }
       
       // Handle documents array - add all documents with the same key "documents" to form an array
-      if (request.documents != null && request.documents!.isNotEmpty) {
+      if (kIsWeb && documentFiles != null && documentFiles.isNotEmpty) {
+        debugPrint('📤 createHold: Processing ${documentFiles.length} document files for web upload');
+        // On web, use file bytes from documentFiles
+        for (var fileData in documentFiles) {
+          final bytes = fileData['bytes'] as List<int>?;
+          final fileName = fileData['name'] as String?;
+          
+          debugPrint('📄 createHold: File ${fileName}, bytes: ${bytes?.length ?? 0}');
+          
+          if (bytes == null || fileName == null || bytes.isEmpty) {
+            debugPrint('⚠️ createHold: Skipping file ${fileName} - missing bytes or name');
+            continue;
+          }
+          
+          final fileExtension = fileName.split('.').last.toLowerCase();
+          
+          // Determine content type
+          String? contentType;
+          if (fileExtension == 'pdf') {
+            contentType = 'application/pdf';
+          } else if (['jpg', 'jpeg'].contains(fileExtension)) {
+            contentType = 'image/jpeg';
+          } else if (fileExtension == 'png') {
+            contentType = 'image/png';
+          }
+          
+          final multipartFile = MultipartFile.fromBytes(
+            bytes,
+            filename: fileName,
+            contentType: contentType != null 
+                ? MediaType.parse(contentType) 
+                : null,
+          );
+          
+          // Add each document file with the same key "documents" to create an array
+          formData.files.add(MapEntry('documents', multipartFile));
+          debugPrint('✅ createHold: Added document file ${fileName} to form data');
+        }
+        debugPrint('📦 createHold: Total files in form data: ${formData.files.length}');
+      } else if (request.documents != null && request.documents!.isNotEmpty) {
+        // On mobile, use file paths
         for (var documentPath in request.documents!) {
           if (documentPath.isEmpty) continue;
           
@@ -260,8 +347,7 @@ class BookingApiRepository {
               formData.fields.add(MapEntry('documents', documentPath));
               continue;
             }
-            // For web, files from image_picker/file_picker need special handling
-            // Skip for now as web file handling requires bytes
+            // Skip web file paths if no file data provided
             debugPrint('Web file upload from path not supported: $documentPath');
             continue;
           } else {

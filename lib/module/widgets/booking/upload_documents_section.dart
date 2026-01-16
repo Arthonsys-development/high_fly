@@ -8,11 +8,24 @@ import '../../../config/constant/const_assets.dart';
 import 'header_icon_widget.dart';
 import 'action_buttons.dart';
 
+class DocumentFileData {
+  final String path;
+  final String name;
+  final List<int>? bytes;
+
+  DocumentFileData({
+    required this.path,
+    required this.name,
+    this.bytes,
+  });
+}
+
 class UploadDocumentsSection extends StatefulWidget {
   final String title;
   final String nextButtonText;
   final VoidCallback? onPrevious;
   final Function(List<String>)? onNext;
+  final Function(List<DocumentFileData>)? onNextWithData; // New callback for passing file data
   final List<String>? initialDocuments;
 
   const UploadDocumentsSection({
@@ -21,6 +34,7 @@ class UploadDocumentsSection extends StatefulWidget {
     required this.nextButtonText,
     this.onPrevious,
     this.onNext,
+    this.onNextWithData,
     this.initialDocuments,
   });
 
@@ -30,6 +44,7 @@ class UploadDocumentsSection extends StatefulWidget {
 
 class _UploadDocumentsSectionState extends State<UploadDocumentsSection> {
   List<String> _documentPaths = [];
+  List<DocumentFileData> _documentFiles = []; // Store file data for web
   final ImagePicker _imagePicker = ImagePicker();
 
   @override
@@ -172,12 +187,24 @@ class _UploadDocumentsSectionState extends State<UploadDocumentsSection> {
           return;
         }
 
+        // Read bytes on web
+        List<int>? bytes;
+        if (kIsWeb) {
+          bytes = await pickedImage.readAsBytes();
+          debugPrint('📷 UploadDocumentsSection: Camera image selected, bytes: ${bytes.length}');
+        }
+
         setState(() {
           _documentPaths.add(pickedImage.path);
+          _documentFiles.add(DocumentFileData(
+            path: pickedImage.path,
+            name: pickedImage.name.isNotEmpty ? pickedImage.name : pickedImage.path.split('/').last,
+            bytes: bytes,
+          ));
         });
       }
     } catch (e) {
-      debugPrint('Error picking image from camera: $e');
+      debugPrint('❌ Error picking image from camera: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -216,12 +243,24 @@ class _UploadDocumentsSectionState extends State<UploadDocumentsSection> {
           return;
         }
 
+        // Read bytes on web
+        List<int>? bytes;
+        if (kIsWeb) {
+          bytes = await pickedImage.readAsBytes();
+          debugPrint('🖼️ UploadDocumentsSection: Gallery image selected, bytes: ${bytes.length}');
+        }
+
         setState(() {
           _documentPaths.add(pickedImage.path);
+          _documentFiles.add(DocumentFileData(
+            path: pickedImage.path,
+            name: pickedImage.name.isNotEmpty ? pickedImage.name : pickedImage.path.split('/').last,
+            bytes: bytes,
+          ));
         });
       }
     } catch (e) {
-      debugPrint('Error picking image from gallery: $e');
+      debugPrint('❌ Error picking image from gallery: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -239,11 +278,12 @@ class _UploadDocumentsSectionState extends State<UploadDocumentsSection> {
       await _requestPermission();
 
       // Pick multiple files - allow PDF, images
+      // On web, we need file data (bytes) for upload
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
         allowMultiple: true,
-        withData: false,
+        withData: kIsWeb, // Read file bytes on web
       );
 
       if (result == null || result.files.isEmpty) {
@@ -252,6 +292,7 @@ class _UploadDocumentsSectionState extends State<UploadDocumentsSection> {
 
       // Validate and add files
       final List<String> validFiles = [];
+      final List<DocumentFileData> validFileData = [];
       for (var file in result.files) {
         // Validate file
         if (file.size == 0) {
@@ -282,11 +323,22 @@ class _UploadDocumentsSectionState extends State<UploadDocumentsSection> {
         // On web, file.path might be null, so use file.name instead
         final filePath = kIsWeb ? file.name : (file.path ?? file.name);
         validFiles.add(filePath);
+        
+        // Store file data for web (bytes + name)
+        final fileBytes = kIsWeb ? file.bytes : null;
+        debugPrint('📁 UploadDocumentsSection: Selected file ${file.name}, bytes: ${fileBytes?.length ?? 0}');
+        
+        validFileData.add(DocumentFileData(
+          path: filePath,
+          name: file.name,
+          bytes: fileBytes,
+        ));
       }
 
       if (validFiles.isNotEmpty) {
         setState(() {
           _documentPaths.addAll(validFiles);
+          _documentFiles.addAll(validFileData);
         });
       }
     } catch (e) {
@@ -304,6 +356,9 @@ class _UploadDocumentsSectionState extends State<UploadDocumentsSection> {
   void _removeDocument(int index) {
     setState(() {
       _documentPaths.removeAt(index);
+      if (index < _documentFiles.length) {
+        _documentFiles.removeAt(index);
+      }
     });
   }
 
@@ -349,7 +404,19 @@ class _UploadDocumentsSectionState extends State<UploadDocumentsSection> {
           // Action buttons
           ActionButtons(
             onPrevious: widget.onPrevious,
-            onNext: () => widget.onNext?.call(_documentPaths),
+            onNext: () {
+              debugPrint('🔘 UploadDocumentsSection: Next button clicked. isWeb: $kIsWeb, files: ${_documentFiles.length}, paths: ${_documentPaths.length}');
+              // Pass file data if callback supports it (for web uploads)
+              if (kIsWeb && widget.onNextWithData != null && _documentFiles.isNotEmpty) {
+                debugPrint('📤 UploadDocumentsSection: Calling onNextWithData with ${_documentFiles.length} files');
+                widget.onNextWithData?.call(_documentFiles);
+              } else if (widget.onNext != null) {
+                debugPrint('📤 UploadDocumentsSection: Calling onNext with ${_documentPaths.length} paths');
+                widget.onNext?.call(_documentPaths);
+              } else {
+                debugPrint('⚠️ UploadDocumentsSection: No callback available!');
+              }
+            },
             isPreviousEnabled: widget.onPrevious != null,
             nextButtonText: widget.nextButtonText,
           ),

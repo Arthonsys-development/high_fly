@@ -111,7 +111,7 @@ class _DashboardSideMenuState extends State<DashboardSideMenu> {
                   child: _OrganizationHeader(
                     showName: false,
                     logoHeight: kIsWeb 
-                        ? (isTablet ? 80 : 120) 
+                        ? (isTablet ? 80 : 130) 
                         : (isTablet ? 56 : 72),
                     // textStyle: TextStyle(
                     //   fontSize: isTablet ? 15 : 17,
@@ -696,7 +696,7 @@ class MobileSideMenuDrawer extends ConsumerWidget {
             child: const SafeArea(
               child: _OrganizationHeader(
                 showName: false,
-                logoHeight: 70,
+                logoHeight: 150,
               ),
             ),
           ),
