@@ -4,7 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
-import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
+import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode, defaultTargetPlatform, TargetPlatform;
+import 'package:flutter/foundation.dart' as foundation;
 import 'package:permission_handler/permission_handler.dart';
 
 import 'config/constant/app_strings.dart';
@@ -45,6 +46,16 @@ void _handleNotificationTap(RemoteMessage message) {
 
 
 Future<void> main() async {
+  // Override debugPrint to suppress logs in release mode (especially for web)
+  // This prevents logs from appearing in the browser console in production
+  if (!kDebugMode) {
+    // In release mode, suppress all debugPrint output
+    foundation.debugPrint = (String? message, {int? wrapWidth}) {
+      // Do nothing - suppress all logs in release mode
+      return;
+    };
+  }
+  
   // Add comprehensive error handling
   try {
     WidgetsFlutterBinding.ensureInitialized();

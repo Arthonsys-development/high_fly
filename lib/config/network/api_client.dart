@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:highfly/config/network/tenant_keys.dart';
@@ -108,8 +108,10 @@ class ApiClient {
       debugPrint('API Client: Running on web platform - CORS must be enabled on server');
     }
 
-    // Add logging interceptor
-    _dio.interceptors.add(TalkerDioLogger());
+    // Add logging interceptor only in debug mode
+    if (kDebugMode) {
+      _dio.interceptors.add(TalkerDioLogger());
+    }
     
     // Add interceptor to include access token in requests
     _dio.interceptors.add(InterceptorsWrapper(
@@ -132,9 +134,11 @@ class ApiClient {
         return handler.next(options);
       },
       onResponse: (response, handler) { 
-        dev.log('API URL: $baseUrl');
-        dev.log('API response status: ${response.statusCode}');
-        dev.log('API response data: ${response.data}');
+        if (kDebugMode) {
+          dev.log('API URL: $baseUrl');
+          dev.log('API response status: ${response.statusCode}');
+          dev.log('API response data: ${response.data}');
+        }
         return handler.next(response);
       },
       onError: (DioException e, handler) async {
