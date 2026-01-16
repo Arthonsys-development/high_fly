@@ -9,10 +9,20 @@ class MySeparator extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
+        // Prevent unconstrained layout errors
+        if (!constraints.hasBoundedWidth) {
+          return const SizedBox.shrink();
+        }
+        
         final boxWidth = constraints.constrainWidth();
         const dashWidth = 6.0;
         final dashHeight = height;
         final dashCount = (boxWidth / (2 * dashWidth)).floor();
+        
+        if (dashCount <= 0) {
+          return const SizedBox.shrink();
+        }
+        
         return Flex(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           direction: Axis.horizontal,

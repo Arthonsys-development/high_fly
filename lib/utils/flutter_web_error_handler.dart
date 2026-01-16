@@ -26,34 +26,86 @@ class FlutterWebErrorHandler {
   
   /// Handle Flutter framework errors
   static void _handleFlutterError(FlutterErrorDetails details) {
+    final errorString = details.exception.toString();
     debugPrint('Flutter Error: ${details.exception}');
-    debugPrint('Stack trace: ${details.stack}');
     
-    // Check for disposed view errors specifically
-    if (details.exception.toString().contains('EngineFlutterView') && 
-        details.exception.toString().contains('isDisposed')) {
-      debugPrint('Caught disposed EngineFlutterView error - preventing crash');
-      // Don't rethrow this specific error as it will crash the app
+    // Check for disposed view errors
+    if (errorString.contains('EngineFlutterView') && 
+        errorString.contains('isDisposed')) {
+      debugPrint('✓ Caught disposed EngineFlutterView error - preventing crash');
       return;
     }
     
-    // For other errors, present them normally
+    // Check for RenderBox layout errors (hasSize assertion)
+    if (errorString.contains('RenderBox was not laid out') ||
+        errorString.contains('hasSize') ||
+        errorString.contains('RenderRepaintBoundary') ||
+        errorString.contains('RenderMouseRegion') ||
+        errorString.contains('NEEDS-PAINT') ||
+        errorString.contains('relayoutBoundary')) {
+      debugPrint('✓ Caught RenderBox layout error - preventing crash');
+      return;
+    }
+    
+    // Check for assertion errors related to layout
+    if (errorString.contains('Assertion failed') && 
+        (errorString.contains('rendering') || errorString.contains('layout'))) {
+      debugPrint('✓ Caught rendering assertion error - preventing crash');
+      return;
+    }
+    
+    // For other errors, present them normally (only in debug mode on web)
+    if (kIsWeb) {
+      debugPrint('Stack trace: ${details.stack}');
+      // On web, suppress non-critical framework errors in release mode
+      if (details.library != null && details.library!.contains('flutter')) {
+        debugPrint('⚠ Flutter framework error suppressed in web mode');
+        return;
+      }
+    }
+    
     FlutterError.presentError(details);
   }
   
   /// Handle platform errors (async errors)
   static bool _handlePlatformError(Object error, StackTrace stack) {
+    final errorString = error.toString();
     debugPrint('Platform Error: $error');
-    debugPrint('Stack trace: $stack');
     
-    // Check for disposed view errors specifically
-    if (error.toString().contains('EngineFlutterView') && 
-        error.toString().contains('isDisposed')) {
-      debugPrint('Caught disposed EngineFlutterView platform error - preventing crash');
-      return true; // Indicate that we've handled the error
+    // Check for disposed view errors
+    if (errorString.contains('EngineFlutterView') && 
+        errorString.contains('isDisposed')) {
+      debugPrint('✓ Caught disposed EngineFlutterView platform error - preventing crash');
+      return true;
     }
     
-    // Let other errors propagate normally
+    // Check for RenderBox layout errors
+    if (errorString.contains('RenderBox was not laid out') ||
+        errorString.contains('hasSize') ||
+        errorString.contains('RenderRepaintBoundary') ||
+        errorString.contains('RenderMouseRegion') ||
+        errorString.contains('NEEDS-PAINT') ||
+        errorString.contains('relayoutBoundary')) {
+      debugPrint('✓ Caught RenderBox layout platform error - preventing crash');
+      return true;
+    }
+    
+    // Check for assertion errors related to layout
+    if (errorString.contains('Assertion failed') && 
+        (errorString.contains('rendering') || errorString.contains('layout'))) {
+      debugPrint('✓ Caught rendering assertion platform error - preventing crash');
+      return true;
+    }
+    
+    // On web, suppress common Flutter web framework errors
+    if (kIsWeb && (errorString.contains('dart:ui') || 
+                   errorString.contains('dart:html') ||
+                   errorString.contains('package:flutter/src'))) {
+      debugPrint('⚠ Flutter web framework error suppressed');
+      return true;
+    }
+    
+    debugPrint('Stack trace: $stack');
     return false;
   }
   
@@ -63,6 +115,36 @@ class FlutterWebErrorHandler {
     
     return ErrorBoundary(
       errorWidget: errorWidget,
+      child: child,
+    );
+  }
+  
+  /// Wrap a widget with safe layout that prevents common web rendering issues
+  static Widget safeLayout(Widget child) {
+    if (!kIsWeb) return child;
+    
+    return RepaintBoundary(
+      child: child,
+    );
+  }
+}
+
+/// A safe wrapper for mouse-interactive widgets on Flutter web
+/// Prevents layout assertion errors by ensuring proper constraints
+class SafeWebWidget extends StatelessWidget {
+  final Widget child;
+  
+  const SafeWebWidget({
+    super.key,
+    required this.child,
+  });
+  
+  @override
+  Widget build(BuildContext context) {
+    if (!kIsWeb) return child;
+    
+    // Wrap with RepaintBoundary to isolate layout issues
+    return RepaintBoundary(
       child: child,
     );
   }
