@@ -240,6 +240,51 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     }).toList();
   }
 
+  bool _hasAvailablePlots(Project project) {
+    return (project.availablePlotCount ?? 0) > 0;
+  }
+
+  void _showNoPlotsAvailableAlert(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          title: const Text(
+            'No Plots Available',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: AppColors.primaryTextColor,
+            ),
+          ),
+          content: const Text(
+            'There are no available plots for this project. Please try another project.',
+            style: TextStyle(
+              fontSize: 14,
+              color: AppColors.secondaryTextColor,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text(
+                'OK',
+                style: TextStyle(
+                  color: AppColors.primaryColor,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isMobile = Responsive.isMobile(context);
@@ -1233,6 +1278,16 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 ),
               ),
 
+              // Transparent overlay to capture taps on web
+              Positioned.fill(
+                child: GestureDetector(
+                  onTap: () => context.push(Routes.projectDetailScreen, extra: project),
+                  behavior: HitTestBehavior.opaque,
+                  child: Container(
+                    color: Colors.transparent,
+                  ),
+                ),
+              ),
 
               Align(
                 alignment: Alignment.topRight,
@@ -1317,18 +1372,22 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               children: [
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: () {
+                    onPressed: _hasAvailablePlots(project) ? () {
                       // Set booking navigation with project and Book Now tab (index 0)
                       ref.read(bookingNavigationProvider.notifier).navigateToBooking(project, 0);
                       // Switch to booking tab in dashboard
                       setState(() {
                         selectedMenuIndex = 2;
                       });
+                    } : () {
+                      _showNoPlotsAvailableAlert(context);
                     },
                     icon: const Icon(Icons.bookmark, size: 18),
                     label: const Text('Book Now'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryColor,
+                      backgroundColor: _hasAvailablePlots(project) 
+                          ? AppColors.primaryColor 
+                          : Colors.grey,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
@@ -1339,18 +1398,22 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 const SizedBox(width: 8),
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: () {
+                    onPressed: _hasAvailablePlots(project) ? () {
                       // Set booking navigation with project and Hold tab (index 1)
                       ref.read(bookingNavigationProvider.notifier).navigateToBooking(project, 1);
                       // Switch to booking tab in dashboard
                       setState(() {
                         selectedMenuIndex = 2;
                       });
+                    } : () {
+                      _showNoPlotsAvailableAlert(context);
                     },
                     icon: const Icon(Icons.access_time, size: 18),
                     label: const Text('Hold'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.orange,
+                      backgroundColor: _hasAvailablePlots(project) 
+                          ? Colors.orange 
+                          : Colors.grey,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
@@ -1468,15 +1531,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                           // Book Now button
                           Container(
                             decoration: BoxDecoration(
-                              color: AppColors.primaryColor.withValues(alpha: 0.1),
+                              color: _hasAvailablePlots(project) 
+                                  ? AppColors.primaryColor.withValues(alpha: 0.1)
+                                  : Colors.grey.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Material(
                               color: Colors.transparent,
                               child: InkWell(
-                                onTap: () {
+                                onTap: _hasAvailablePlots(project) ? () {
                                   ref.read(bookingNavigationProvider.notifier).navigateToBooking(project, 0);
                                   onMenuItemSelected(2);
+                                } : () {
+                                  _showNoPlotsAvailableAlert(context);
                                 },
                                 borderRadius: BorderRadius.circular(8),
                                 child: Padding(
@@ -1487,16 +1554,20 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      const Icon(
+                                      Icon(
                                         Icons.bookmark,
                                         size: 18,
-                                        color: AppColors.primaryColor,
+                                        color: _hasAvailablePlots(project) 
+                                            ? AppColors.primaryColor 
+                                            : Colors.grey,
                                       ),
                                       const SizedBox(width: 4),
-                                      const Text(
+                                      Text(
                                         'Book Now',
                                         style: TextStyle(
-                                          color: AppColors.primaryColor,
+                                          color: _hasAvailablePlots(project) 
+                                              ? AppColors.primaryColor 
+                                              : Colors.grey,
                                           fontSize: 13,
                                           fontWeight: FontWeight.w500,
                                         ),
@@ -1511,15 +1582,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                           // Hold button
                           Container(
                             decoration: BoxDecoration(
-                              color: Colors.orange.withValues(alpha: 0.1),
+                              color: _hasAvailablePlots(project) 
+                                  ? Colors.orange.withValues(alpha: 0.1)
+                                  : Colors.grey.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Material(
                               color: Colors.transparent,
                               child: InkWell(
-                                onTap: () {
+                                onTap: _hasAvailablePlots(project) ? () {
                                   ref.read(bookingNavigationProvider.notifier).navigateToBooking(project, 1);
                                   onMenuItemSelected(2);
+                                } : () {
+                                  _showNoPlotsAvailableAlert(context);
                                 },
                                 borderRadius: BorderRadius.circular(8),
                                 child: Padding(
@@ -1530,16 +1605,20 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      const Icon(
+                                      Icon(
                                         Icons.access_time,
                                         size: 18,
-                                        color: Colors.orange,
+                                        color: _hasAvailablePlots(project) 
+                                            ? Colors.orange 
+                                            : Colors.grey,
                                       ),
                                       const SizedBox(width: 4),
-                                      const Text(
+                                      Text(
                                         'Hold',
                                         style: TextStyle(
-                                          color: Colors.orange,
+                                          color: _hasAvailablePlots(project) 
+                                              ? Colors.orange 
+                                              : Colors.grey,
                                           fontSize: 13,
                                           fontWeight: FontWeight.w500,
                                         ),
@@ -1776,15 +1855,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                   Container(
                                     width: 40,
                                     decoration: BoxDecoration(
-                                      color: AppColors.primaryColor.withValues(alpha: 0.1),
+                                      color: _hasAvailablePlots(project) 
+                                          ? AppColors.primaryColor.withValues(alpha: 0.1)
+                                          : Colors.grey.withValues(alpha: 0.1),
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Material(
                                       color: Colors.transparent,
                                       child: InkWell(
-                                        onTap: () {
+                                        onTap: _hasAvailablePlots(project) ? () {
                                           ref.read(bookingNavigationProvider.notifier).navigateToBooking(project, 0);
                                           onMenuItemSelected(2);
+                                        } : () {
+                                          _showNoPlotsAvailableAlert(context);
                                         },
                                         borderRadius: BorderRadius.circular(8),
                                         child: Padding(
@@ -1795,10 +1878,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                           child: Row(
                                             mainAxisAlignment: MainAxisAlignment.center,
                                             children: [
-                                              const Icon(
+                                              Icon(
                                                 Icons.bookmark,
                                                 size: 16,
-                                                color: AppColors.primaryColor,
+                                                color: _hasAvailablePlots(project) 
+                                                    ? AppColors.primaryColor 
+                                                    : Colors.grey,
                                               ),
                                               // const SizedBox(width: 4),
                                               // const Text(
@@ -1820,15 +1905,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                   Container(
                                     width: 40,
                                     decoration: BoxDecoration(
-                                      color: Colors.orange.withValues(alpha: 0.1),
+                                      color: _hasAvailablePlots(project) 
+                                          ? Colors.orange.withValues(alpha: 0.1)
+                                          : Colors.grey.withValues(alpha: 0.1),
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Material(
                                       color: Colors.transparent,
                                       child: InkWell(
-                                        onTap: () {
+                                        onTap: _hasAvailablePlots(project) ? () {
                                           ref.read(bookingNavigationProvider.notifier).navigateToBooking(project, 1);
                                           onMenuItemSelected(2);
+                                        } : () {
+                                          _showNoPlotsAvailableAlert(context);
                                         },
                                         borderRadius: BorderRadius.circular(8),
                                         child: Padding(
@@ -1839,10 +1928,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                           child: Row(
                                             mainAxisAlignment: MainAxisAlignment.center,
                                             children: [
-                                              const Icon(
+                                              Icon(
                                                 Icons.access_time,
                                                 size: 16,
-                                                color: Colors.orange,
+                                                color: _hasAvailablePlots(project) 
+                                                    ? Colors.orange 
+                                                    : Colors.grey,
                                               ),
                                               // const SizedBox(width: 4),
                                               // const Text(

@@ -6,6 +6,7 @@ import 'package:highfly/data/models/hold_list_model.dart';
 import 'package:highfly/data/models/hold_document_model.dart' as hold_document_model;
 import 'package:url_launcher/url_launcher.dart';
 import '../../providers/holds_provider.dart';
+import '../../utils/responsive.dart';
 import 'hold_booking_screen.dart';
 import 'hold_edit_screen.dart';
 import 'hold_document_management_screen.dart';
@@ -93,9 +94,15 @@ class _HoldDetailScreenState extends ConsumerState<HoldDetailScreen> {
     }
   }
 
+  // Returns true for desktop web UI, false for mobile UI (mobile browser or native app)
+  bool _isDesktopWeb(BuildContext context) {
+    return !Responsive.isMobile(context) && kIsWeb;
+  }
+
   @override
   Widget build(BuildContext context) {
     final hold = _currentHold;
+    final isDesktopWeb = _isDesktopWeb(context);
 
     return Scaffold(
       appBar: PreferredSize(
@@ -124,11 +131,11 @@ class _HoldDetailScreenState extends ConsumerState<HoldDetailScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-              padding: EdgeInsets.all(kIsWeb ? 32.0 : 16.0),
+              padding: EdgeInsets.all(isDesktopWeb ? 32.0 : 16.0),
               child: Center(
                 child: ConstrainedBox(
                   constraints: BoxConstraints(
-                    maxWidth: kIsWeb ? 1200 : double.infinity,
+                    maxWidth: isDesktopWeb ? 1200 : double.infinity,
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -158,13 +165,13 @@ class _HoldDetailScreenState extends ConsumerState<HoldDetailScreen> {
                       }
                       
                       return Container(
-                        padding: EdgeInsets.all(kIsWeb ? 20 : 16),
+                        padding: EdgeInsets.all(isDesktopWeb ? 20 : 16),
                         decoration: BoxDecoration(
                           color: statusColor.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(kIsWeb ? 16 : 12),
+                          borderRadius: BorderRadius.circular(isDesktopWeb ? 16 : 12),
                           border: Border.all(
                             color: statusColor,
-                            width: kIsWeb ? 1.5 : 1,
+                            width: isDesktopWeb ? 1.5 : 1,
                           ),
                         ),
                         child: Row(
@@ -176,30 +183,30 @@ class _HoldDetailScreenState extends ConsumerState<HoldDetailScreen> {
                                 Text(
                                   'Status',
                                   style: TextStyle(
-                                    fontSize: kIsWeb ? 15 : 14,
+                                    fontSize: isDesktopWeb ? 15 : 14,
                                     color: AppColors.lightGreyColor,
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
-                                SizedBox(height: kIsWeb ? 6 : 4),
+                                SizedBox(height: isDesktopWeb ? 6 : 4),
                                 Text(
                                   _formatStatusDisplay(hold.statusDisplay),
                                   style: TextStyle(
-                                    fontSize: kIsWeb ? 20 : 18,
+                                    fontSize: isDesktopWeb ? 20 : 18,
                                     fontWeight: FontWeight.w600,
                                     color: statusColor,
-                                    letterSpacing: kIsWeb ? 0.3 : 0,
+                                    letterSpacing: isDesktopWeb ? 0.3 : 0,
                                   ),
                                 ),
                               ],
                             ),
-                            Icon(statusIcon, color: statusColor, size: kIsWeb ? 36 : 32),
+                            Icon(statusIcon, color: statusColor, size: isDesktopWeb ? 36 : 32),
                           ],
                         ),
                       );
                     },
                   ),
-                  SizedBox(height: kIsWeb ? 32 : 24),
+                  SizedBox(height: isDesktopWeb ? 32 : 24),
 
                   // Plot Information Section
                   _buildSectionTitle('Plot Information'),
@@ -220,10 +227,10 @@ class _HoldDetailScreenState extends ConsumerState<HoldDetailScreen> {
                     _buildDetailRow('Created At', hold.createdAt),
                     _buildDetailRow('Updated At', hold.updatedAt),
                   ]),
-                  SizedBox(height: kIsWeb ? 32 : 24),
+                  SizedBox(height: isDesktopWeb ? 32 : 24),
 
-                  // Customer Information and Hold Details in a row for web
-                  if (kIsWeb)
+                  // Customer Information and Hold Details in a row for desktop web
+                  if (isDesktopWeb)
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -278,7 +285,7 @@ class _HoldDetailScreenState extends ConsumerState<HoldDetailScreen> {
                       _buildDetailRow('Client Aadhar', hold.clientAadhar),
                     ]),
                   ],
-                  SizedBox(height: kIsWeb ? 32 : 24),
+                  SizedBox(height: isDesktopWeb ? 32 : 24),
 
                   // Payment Information Section
                   /*_buildSectionTitle('Payment Information'),
@@ -288,7 +295,7 @@ class _HoldDetailScreenState extends ConsumerState<HoldDetailScreen> {
                         : hold.paymentMode),
                     _buildDetailRow('Payment Reference', hold.paymentReference),
                   ]),
-                  SizedBox(height: kIsWeb ? 32 : 24),*/
+                  SizedBox(height: isDesktopWeb ? 32 : 24),*/
 
                   // Bank Details Section
                   _buildSectionTitle('Bank Details'),
@@ -300,7 +307,7 @@ class _HoldDetailScreenState extends ConsumerState<HoldDetailScreen> {
                     _buildDetailRow('Account Type', hold.accountType),
                     _buildDetailRow('Bank Contact', hold.bankContactNumber),
                   ]),
-                  SizedBox(height: kIsWeb ? 32 : 24),
+                  SizedBox(height: isDesktopWeb ? 32 : 24),
 
                   // Remarks Section
                   if (hold.remarks.isNotEmpty) ...[
@@ -308,7 +315,7 @@ class _HoldDetailScreenState extends ConsumerState<HoldDetailScreen> {
                     _buildDetailCard([
                       _buildDetailRow('Notes', hold.remarks),
                     ]),
-                    SizedBox(height: kIsWeb ? 32 : 24),
+                    SizedBox(height: isDesktopWeb ? 32 : 24),
                   ],
 
                   // Documents Section
@@ -340,7 +347,7 @@ class _HoldDetailScreenState extends ConsumerState<HoldDetailScreen> {
                     _buildDocumentsGrid(hold.documents)
                   else
                     _buildNoDocumentsMessage(),
-                  SizedBox(height: kIsWeb ? 32 : 24),
+                  SizedBox(height: isDesktopWeb ? 32 : 24),
 
                   // Additional Information
                   // _buildSectionTitle('Additional Information'),
@@ -354,9 +361,9 @@ class _HoldDetailScreenState extends ConsumerState<HoldDetailScreen> {
                   // Book Now Button (only show if hold is active)
                   if (hold.status.toLowerCase() == 'active' && !hold.isExpired)
                     Padding(
-                      padding: EdgeInsets.symmetric(vertical: kIsWeb ? 24.0 : 16.0),
+                      padding: EdgeInsets.symmetric(vertical: isDesktopWeb ? 24.0 : 16.0),
                       child: SizedBox(
-                        width: kIsWeb ? 300 : double.infinity,
+                        width: isDesktopWeb ? 300 : double.infinity,
                         child: ElevatedButton(
                           onPressed: () async {
                             final result = await Navigator.push(
@@ -374,18 +381,18 @@ class _HoldDetailScreenState extends ConsumerState<HoldDetailScreen> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primaryColor,
                             padding: EdgeInsets.symmetric(
-                              vertical: kIsWeb ? 18 : 16,
-                              horizontal: kIsWeb ? 32 : 16,
+                              vertical: isDesktopWeb ? 18 : 16,
+                              horizontal: isDesktopWeb ? 32 : 16,
                             ),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(kIsWeb ? 12 : 8),
+                              borderRadius: BorderRadius.circular(isDesktopWeb ? 12 : 8),
                             ),
-                            elevation: kIsWeb ? 2 : 1,
+                            elevation: isDesktopWeb ? 2 : 1,
                           ),
                           child: Text(
                             'Book Now',
                             style: TextStyle(
-                              fontSize: kIsWeb ? 16 : 18,
+                              fontSize: isDesktopWeb ? 16 : 18,
                               fontWeight: FontWeight.w600,
                               color: Colors.white,
                             ),
@@ -402,35 +409,37 @@ class _HoldDetailScreenState extends ConsumerState<HoldDetailScreen> {
   }
 
   Widget _buildSectionTitle(String title) {
+    final isDesktopWeb = _isDesktopWeb(context);
     return Padding(
-      padding: EdgeInsets.only(bottom: kIsWeb ? 16.0 : 12.0),
+      padding: EdgeInsets.only(bottom: isDesktopWeb ? 16.0 : 12.0),
       child: Text(
         title,
         style: TextStyle(
-          fontSize: kIsWeb ? 22 : 20,
+          fontSize: isDesktopWeb ? 22 : 20,
           fontWeight: FontWeight.w600,
           color: AppColors.primaryTextColor,
-          letterSpacing: kIsWeb ? 0.5 : 0,
+          letterSpacing: isDesktopWeb ? 0.5 : 0,
         ),
       ),
     );
   }
 
   Widget _buildDetailCard(List<Widget> children) {
+    final isDesktopWeb = _isDesktopWeb(context);
     return Container(
-      padding: EdgeInsets.all(kIsWeb ? 24 : 16),
+      padding: EdgeInsets.all(isDesktopWeb ? 24 : 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(kIsWeb ? 16 : 12),
+        borderRadius: BorderRadius.circular(isDesktopWeb ? 16 : 12),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withValues(alpha: kIsWeb ? 0.08 : 0.1),
-            spreadRadius: kIsWeb ? 0 : 1,
-            blurRadius: kIsWeb ? 8 : 4,
-            offset: Offset(0, kIsWeb ? 4 : 2),
+            color: Colors.grey.withValues(alpha: isDesktopWeb ? 0.08 : 0.1),
+            spreadRadius: isDesktopWeb ? 0 : 1,
+            blurRadius: isDesktopWeb ? 8 : 4,
+            offset: Offset(0, isDesktopWeb ? 4 : 2),
           ),
         ],
-        border: kIsWeb ? Border.all(
+        border: isDesktopWeb ? Border.all(
           color: Colors.grey.withValues(alpha: 0.1),
           width: 1,
         ) : null,
@@ -443,17 +452,18 @@ class _HoldDetailScreenState extends ConsumerState<HoldDetailScreen> {
   }
 
   Widget _buildDetailRow(String label, String value) {
+    final isDesktopWeb = _isDesktopWeb(context);
     return Padding(
-      padding: EdgeInsets.only(bottom: kIsWeb ? 16.0 : 12.0),
+      padding: EdgeInsets.only(bottom: isDesktopWeb ? 16.0 : 12.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: kIsWeb ? 180 : 140,
+            width: isDesktopWeb ? 180 : 140,
             child: Text(
               '$label:',
               style: TextStyle(
-                fontSize: kIsWeb ? 15 : 14,
+                fontSize: isDesktopWeb ? 15 : 14,
                 color: AppColors.lightGreyColor,
                 fontWeight: FontWeight.w500,
               ),
@@ -463,10 +473,10 @@ class _HoldDetailScreenState extends ConsumerState<HoldDetailScreen> {
             child: Text(
               value.isNotEmpty ? value : '-',
               style: TextStyle(
-                fontSize: kIsWeb ? 15 : 14,
+                fontSize: isDesktopWeb ? 15 : 14,
                 color: AppColors.primaryTextColor,
                 fontWeight: FontWeight.w400,
-                height: kIsWeb ? 1.5 : 1.4,
+                height: isDesktopWeb ? 1.5 : 1.4,
               ),
             ),
           ),
@@ -476,20 +486,21 @@ class _HoldDetailScreenState extends ConsumerState<HoldDetailScreen> {
   }
 
   Widget _buildDocumentsGrid(List<hold_document_model.HoldDocument> documents) {
+    final isDesktopWeb = _isDesktopWeb(context);
     return Container(
-      padding: EdgeInsets.all(kIsWeb ? 24 : 16),
+      padding: EdgeInsets.all(isDesktopWeb ? 24 : 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(kIsWeb ? 16 : 12),
+        borderRadius: BorderRadius.circular(isDesktopWeb ? 16 : 12),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withValues(alpha: kIsWeb ? 0.08 : 0.1),
-            spreadRadius: kIsWeb ? 0 : 1,
-            blurRadius: kIsWeb ? 8 : 4,
-            offset: Offset(0, kIsWeb ? 4 : 2),
+            color: Colors.grey.withValues(alpha: isDesktopWeb ? 0.08 : 0.1),
+            spreadRadius: isDesktopWeb ? 0 : 1,
+            blurRadius: isDesktopWeb ? 8 : 4,
+            offset: Offset(0, isDesktopWeb ? 4 : 2),
           ),
         ],
-        border: kIsWeb ? Border.all(
+        border: isDesktopWeb ? Border.all(
           color: Colors.grey.withValues(alpha: 0.1),
           width: 1,
         ) : null,
@@ -498,10 +509,10 @@ class _HoldDetailScreenState extends ConsumerState<HoldDetailScreen> {
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: kIsWeb ? 4 : 2,
-          crossAxisSpacing: kIsWeb ? 16 : 12,
-          mainAxisSpacing: kIsWeb ? 16 : 12,
-          childAspectRatio: kIsWeb ? 0.85 : 0.9,
+          crossAxisCount: isDesktopWeb ? 4 : 2,
+          crossAxisSpacing: isDesktopWeb ? 16 : 12,
+          mainAxisSpacing: isDesktopWeb ? 16 : 12,
+          childAspectRatio: isDesktopWeb ? 0.85 : 0.9,
         ),
         itemCount: documents.length,
         itemBuilder: (context, index) {
@@ -512,40 +523,41 @@ class _HoldDetailScreenState extends ConsumerState<HoldDetailScreen> {
   }
 
   Widget _buildNoDocumentsMessage() {
+    final isDesktopWeb = _isDesktopWeb(context);
     return Container(
-      padding: EdgeInsets.all(kIsWeb ? 24 : 16),
+      padding: EdgeInsets.all(isDesktopWeb ? 24 : 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(kIsWeb ? 16 : 12),
+        borderRadius: BorderRadius.circular(isDesktopWeb ? 16 : 12),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withValues(alpha: kIsWeb ? 0.08 : 0.1),
-            spreadRadius: kIsWeb ? 0 : 1,
-            blurRadius: kIsWeb ? 8 : 4,
-            offset: Offset(0, kIsWeb ? 4 : 2),
+            color: Colors.grey.withValues(alpha: isDesktopWeb ? 0.08 : 0.1),
+            spreadRadius: isDesktopWeb ? 0 : 1,
+            blurRadius: isDesktopWeb ? 8 : 4,
+            offset: Offset(0, isDesktopWeb ? 4 : 2),
           ),
         ],
-        border: kIsWeb ? Border.all(
+        border: isDesktopWeb ? Border.all(
           color: Colors.grey.withValues(alpha: 0.1),
           width: 1,
         ) : null,
       ),
       child: Center(
         child: Padding(
-          padding: EdgeInsets.symmetric(vertical: kIsWeb ? 32 : 24),
+          padding: EdgeInsets.symmetric(vertical: isDesktopWeb ? 32 : 24),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
                 Icons.description_outlined,
-                size: kIsWeb ? 48 : 40,
+                size: isDesktopWeb ? 48 : 40,
                 color: Colors.grey[400],
               ),
-              SizedBox(height: kIsWeb ? 12 : 8),
+              SizedBox(height: isDesktopWeb ? 12 : 8),
               Text(
                 'No documents uploaded',
                 style: TextStyle(
-                  fontSize: kIsWeb ? 16 : 14,
+                  fontSize: isDesktopWeb ? 16 : 14,
                   color: Colors.grey[600],
                   fontWeight: FontWeight.w500,
                 ),
@@ -558,6 +570,7 @@ class _HoldDetailScreenState extends ConsumerState<HoldDetailScreen> {
   }
 
   Widget _buildDocumentThumbnail(hold_document_model.HoldDocument document) {
+    final isDesktopWeb = _isDesktopWeb(context);
     final isPdf = document.documentUrl.toLowerCase().endsWith('.pdf') ||
         document.filetype.toLowerCase() == 'pdf';
     final isImage = document.documentUrl.toLowerCase().endsWith('.jpg') ||
@@ -571,7 +584,7 @@ class _HoldDetailScreenState extends ConsumerState<HoldDetailScreen> {
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(kIsWeb ? 12 : 8),
+          borderRadius: BorderRadius.circular(isDesktopWeb ? 12 : 8),
           border: Border.all(
             color: Colors.grey.withValues(alpha: 0.2),
             width: 1,
@@ -592,7 +605,7 @@ class _HoldDetailScreenState extends ConsumerState<HoldDetailScreen> {
             Expanded(
               child: ClipRRect(
                 borderRadius: BorderRadius.vertical(
-                  top: Radius.circular(kIsWeb ? 12 : 8),
+                  top: Radius.circular(isDesktopWeb ? 12 : 8),
                 ),
                 child: Container(
                   color: Colors.grey.withValues(alpha: 0.1),
@@ -649,14 +662,14 @@ class _HoldDetailScreenState extends ConsumerState<HoldDetailScreen> {
                                   children: [
                                     Icon(
                                       Icons.picture_as_pdf,
-                                      size: kIsWeb ? 40 : 36,
+                                      size: isDesktopWeb ? 40 : 36,
                                       color: Colors.red[400],
                                     ),
-                                    SizedBox(height: kIsWeb ? 6 : 4),
+                                    SizedBox(height: isDesktopWeb ? 6 : 4),
                                     Text(
                                       'PDF',
                                       style: TextStyle(
-                                        fontSize: kIsWeb ? 11 : 10,
+                                        fontSize: isDesktopWeb ? 11 : 10,
                                         fontWeight: FontWeight.w600,
                                         color: Colors.red[700],
                                       ),
@@ -673,14 +686,14 @@ class _HoldDetailScreenState extends ConsumerState<HoldDetailScreen> {
                                   children: [
                                     Icon(
                                       Icons.insert_drive_file,
-                                      size: kIsWeb ? 40 : 36,
+                                      size: isDesktopWeb ? 40 : 36,
                                       color: Colors.grey[600],
                                     ),
-                                    SizedBox(height: kIsWeb ? 6 : 4),
+                                    SizedBox(height: isDesktopWeb ? 6 : 4),
                                     Text(
                                       'File',
                                       style: TextStyle(
-                                        fontSize: kIsWeb ? 11 : 10,
+                                        fontSize: isDesktopWeb ? 11 : 10,
                                         fontWeight: FontWeight.w600,
                                         color: Colors.grey[700],
                                       ),
@@ -694,7 +707,7 @@ class _HoldDetailScreenState extends ConsumerState<HoldDetailScreen> {
             ),
             // Document Info
             Padding(
-              padding: EdgeInsets.all(kIsWeb ? 10 : 8),
+              padding: EdgeInsets.all(isDesktopWeb ? 10 : 8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -706,7 +719,7 @@ class _HoldDetailScreenState extends ConsumerState<HoldDetailScreen> {
                             : isImage
                                 ? Icons.image
                                 : Icons.insert_drive_file,
-                        size: kIsWeb ? 14 : 12,
+                        size: isDesktopWeb ? 14 : 12,
                         color: isPdf
                             ? Colors.red
                             : isImage
@@ -720,7 +733,7 @@ class _HoldDetailScreenState extends ConsumerState<HoldDetailScreen> {
                               ? document.filetypeDisplay
                               : (isPdf ? 'PDF' : isImage ? 'Image' : 'Document'),
                           style: TextStyle(
-                            fontSize: kIsWeb ? 11 : 10,
+                            fontSize: isDesktopWeb ? 11 : 10,
                             fontWeight: FontWeight.w600,
                             color: AppColors.primaryTextColor,
                           ),
@@ -735,7 +748,7 @@ class _HoldDetailScreenState extends ConsumerState<HoldDetailScreen> {
                     Text(
                       document.description,
                       style: TextStyle(
-                        fontSize: kIsWeb ? 10 : 9,
+                        fontSize: isDesktopWeb ? 10 : 9,
                         color: AppColors.lightGreyColor,
                       ),
                       maxLines: 1,
