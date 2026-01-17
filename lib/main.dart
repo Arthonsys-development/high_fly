@@ -12,6 +12,7 @@ import 'config/constant/app_strings.dart';
 import 'config/routes.dart';
 import 'config/theme.dart';
 import 'config/network/api_client.dart';
+import 'config/network/base_url_config.dart';
 import 'module/providers/organization_provider.dart';
 import 'utils/flutter_web_error_handler.dart';
 import 'utils/notification_service.dart';
@@ -227,20 +228,9 @@ Future<void> initEnv() async{
     await dotenv.load(fileName: envFileName);
     debugPrint('🔥 Environment loaded successfully: $env');
     
-    final baseUrl = dotenv.env['BASE_URL'];
-    if (baseUrl != null && baseUrl.isNotEmpty) {
-      debugPrint('🔥 BASE_URL loaded: $baseUrl');
-    } else {
-      debugPrint('⚠️ BASE_URL is empty or null in env file');
-      // Set fallback based on environment
-      if (env == 'prod') {
-        dotenv.env['BASE_URL'] = 'https://dashboard.vistarakgroup.com/api/v1/';
-        debugPrint('🔥 Using production fallback BASE_URL: ${dotenv.env['BASE_URL']}');
-      } else {
-        dotenv.env['BASE_URL'] = 'http://223.184.0.44:83/api/v1/';
-        debugPrint('🔥 Using development fallback BASE_URL: ${dotenv.env['BASE_URL']}');
-      }
-    }
+    // Use BaseUrlConfig to get and log the base URL
+    final baseUrl = BaseUrlConfig.apiBaseUrl;
+    debugPrint('🔥 BASE_URL loaded via BaseUrlConfig: $baseUrl');
     
     // Log all env variables for debugging (be careful with sensitive data in production)
     if (kIsWeb) {
@@ -249,14 +239,10 @@ Future<void> initEnv() async{
   } catch (e) {
     debugPrint('❌ Failed to load environment file: $e');
     debugPrint('⚠️ Using fallback environment values');
-    // Fallback to default values
+    // Fallback to default values - BaseUrlConfig will handle the fallback
     dotenv.env['ENVIRONMENT'] = env;
-    if (env == 'prod') {
-      dotenv.env['BASE_URL'] = 'https://dashboard.vistarakgroup.com/api/v1/';
-    } else {
-      dotenv.env['BASE_URL'] = 'http://223.184.0.44:83/api/v1/';
-    }
-    debugPrint('🔥 Fallback BASE_URL set to: ${dotenv.env['BASE_URL']}');
+    final fallbackUrl = BaseUrlConfig.apiBaseUrl;
+    debugPrint('🔥 Fallback BASE_URL set to: $fallbackUrl');
   }
 }
 

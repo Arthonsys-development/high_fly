@@ -7,6 +7,7 @@ import 'package:highfly/data/models/booking_document_model.dart' as booking_docu
 import 'package:highfly/data/models/payment_model.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../providers/bookings_provider.dart';
+import '../../utils/responsive.dart';
 import 'webview_screen.dart';
 import 'booking_edit_screen.dart';
 import 'booking_document_management_screen.dart';
@@ -99,9 +100,15 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
     }
   }
 
+  // Returns true for desktop web UI, false for mobile UI (mobile browser or native app)
+  bool _isDesktopWeb(BuildContext context) {
+    return !Responsive.isMobile(context) && kIsWeb;
+  }
+
   @override
   Widget build(BuildContext context) {
     final booking = _currentBooking;
+    final isDesktopWeb = _isDesktopWeb(context);
 
     return Scaffold(
       appBar: PreferredSize(
@@ -130,11 +137,11 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-              padding: EdgeInsets.all(kIsWeb ? 32.0 : 16.0),
+              padding: EdgeInsets.all(isDesktopWeb ? 32.0 : 16.0),
               child: Center(
                 child: ConstrainedBox(
                   constraints: BoxConstraints(
-                    maxWidth: kIsWeb ? 1200 : double.infinity,
+                    maxWidth: isDesktopWeb ? 1200 : double.infinity,
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -161,13 +168,13 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
                 }
                 
                 return Container(
-                  padding: EdgeInsets.all(kIsWeb ? 20 : 16),
+                  padding: EdgeInsets.all(isDesktopWeb ? 20 : 16),
                   decoration: BoxDecoration(
                     color: statusColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(kIsWeb ? 16 : 12),
+                    borderRadius: BorderRadius.circular(isDesktopWeb ? 16 : 12),
                     border: Border.all(
                       color: statusColor,
-                      width: kIsWeb ? 1.5 : 1,
+                      width: isDesktopWeb ? 1.5 : 1,
                     ),
                   ),
                   child: Row(
@@ -179,30 +186,30 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
                           Text(
                             'Status',
                             style: TextStyle(
-                              fontSize: kIsWeb ? 15 : 14,
+                              fontSize: isDesktopWeb ? 15 : 14,
                               color: AppColors.lightGreyColor,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
-                          SizedBox(height: kIsWeb ? 6 : 4),
+                          SizedBox(height: isDesktopWeb ? 6 : 4),
                           Text(
                             _formatStatusDisplay(booking.statusDisplay),
                             style: TextStyle(
-                              fontSize: kIsWeb ? 20 : 18,
+                              fontSize: isDesktopWeb ? 20 : 18,
                               fontWeight: FontWeight.w600,
                               color: statusColor,
-                              letterSpacing: kIsWeb ? 0.3 : 0,
+                              letterSpacing: isDesktopWeb ? 0.3 : 0,
                             ),
                           ),
                         ],
                       ),
-                      Icon(statusIcon, color: statusColor, size: kIsWeb ? 36 : 32),
+                      Icon(statusIcon, color: statusColor, size: isDesktopWeb ? 36 : 32),
                     ],
                   ),
                 );
               },
             ),
-            SizedBox(height: kIsWeb ? 32 : 24),
+            SizedBox(height: isDesktopWeb ? 32 : 24),
 
             // Plot Information Section
             _buildSectionTitle('Plot Information'),
@@ -226,10 +233,10 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
              // _buildDetailRow('Booking Date', booking.bookingDate),
               _buildDetailRow('Booked At', booking.bookedAt),
             ]),
-            SizedBox(height: kIsWeb ? 32 : 24),
+            SizedBox(height: isDesktopWeb ? 32 : 24),
 
-            // Customer Information and Payment Information in a row for web
-            if (kIsWeb)
+            // Customer Information and Payment Information in a row for desktop web
+            if (isDesktopWeb)
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -300,7 +307,7 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
                   _buildDetailRow('Payment Details', booking.paymentDetails),
               ]),
             ],
-            SizedBox(height: kIsWeb ? 32 : 24),
+            SizedBox(height: isDesktopWeb ? 32 : 24),
 
             // Document Information Section
             _buildSectionTitle('Document Information'),
@@ -316,7 +323,7 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
               if (booking.otherDocuments != null && booking.otherDocuments!.isNotEmpty)
                 _buildDocumentRow(context, 'Other Documents', booking.otherDocuments!),
             ]),
-            SizedBox(height: kIsWeb ? 32 : 24),
+            SizedBox(height: isDesktopWeb ? 32 : 24),
 
             // Bank Details Section
             _buildSectionTitle('Bank Details'),
@@ -328,7 +335,7 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
               _buildDetailRow('Account Type', booking.accountType),
               _buildDetailRow('Bank Contact', booking.bankContactNumber),
             ]),
-            SizedBox(height: kIsWeb ? 32 : 24),
+            SizedBox(height: isDesktopWeb ? 32 : 24),
 
             // Remarks Section
             if (booking.remarks.isNotEmpty) ...[
@@ -336,7 +343,7 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
               _buildDetailCard([
                 _buildDetailRow('Notes', booking.remarks),
               ]),
-              SizedBox(height: kIsWeb ? 32 : 24),
+              SizedBox(height: isDesktopWeb ? 32 : 24),
             ],
 
             // Documents Section
@@ -368,7 +375,7 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
               _buildDocumentsGrid(booking.documents)
             else
               _buildNoDocumentsMessage(),
-            SizedBox(height: kIsWeb ? 32 : 24),
+            SizedBox(height: isDesktopWeb ? 32 : 24),
 
             // Cancellation Information (if cancelled)
             if (booking.cancelledAt != null && booking.cancelledAt!.isNotEmpty) ...[
@@ -380,7 +387,7 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
                 if (booking.cancellationReason != null && booking.cancellationReason!.isNotEmpty)
                   _buildDetailRow('Cancellation Reason', booking.cancellationReason!),
               ]),
-              SizedBox(height: kIsWeb ? 32 : 24),
+              SizedBox(height: isDesktopWeb ? 32 : 24),
             ],
 
             // Additional Information
@@ -402,35 +409,37 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
   }
 
   Widget _buildSectionTitle(String title) {
+    final isDesktopWeb = _isDesktopWeb(context);
     return Padding(
-      padding: EdgeInsets.only(bottom: kIsWeb ? 16.0 : 12.0),
+      padding: EdgeInsets.only(bottom: isDesktopWeb ? 16.0 : 12.0),
       child: Text(
         title,
         style: TextStyle(
-          fontSize: kIsWeb ? 22 : 20,
+          fontSize: isDesktopWeb ? 22 : 20,
           fontWeight: FontWeight.w600,
           color: AppColors.primaryTextColor,
-          letterSpacing: kIsWeb ? 0.5 : 0,
+          letterSpacing: isDesktopWeb ? 0.5 : 0,
         ),
       ),
     );
   }
 
   Widget _buildDetailCard(List<Widget> children) {
+    final isDesktopWeb = _isDesktopWeb(context);
     return Container(
-      padding: EdgeInsets.all(kIsWeb ? 24 : 16),
+      padding: EdgeInsets.all(isDesktopWeb ? 24 : 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(kIsWeb ? 16 : 12),
+        borderRadius: BorderRadius.circular(isDesktopWeb ? 16 : 12),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withValues(alpha: kIsWeb ? 0.08 : 0.1),
-            spreadRadius: kIsWeb ? 0 : 1,
-            blurRadius: kIsWeb ? 8 : 4,
-            offset: Offset(0, kIsWeb ? 4 : 2),
+            color: Colors.grey.withValues(alpha: isDesktopWeb ? 0.08 : 0.1),
+            spreadRadius: isDesktopWeb ? 0 : 1,
+            blurRadius: isDesktopWeb ? 8 : 4,
+            offset: Offset(0, isDesktopWeb ? 4 : 2),
           ),
         ],
-        border: kIsWeb ? Border.all(
+        border: isDesktopWeb ? Border.all(
           color: Colors.grey.withValues(alpha: 0.1),
           width: 1,
         ) : null,
@@ -443,17 +452,18 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
   }
 
   Widget _buildDetailRow(String label, String value, {bool isLink = false}) {
+    final isDesktopWeb = _isDesktopWeb(context);
     return Padding(
-      padding: EdgeInsets.only(bottom: kIsWeb ? 16.0 : 12.0),
+      padding: EdgeInsets.only(bottom: isDesktopWeb ? 16.0 : 12.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           SizedBox(
-            width: kIsWeb ? 180 : 140,
+            width: isDesktopWeb ? 180 : 140,
             child: Text(
               '$label:',
               style: TextStyle(
-                fontSize: kIsWeb ? 15 : 14,
+                fontSize: isDesktopWeb ? 15 : 14,
                 color: AppColors.lightGreyColor,
                 fontWeight: FontWeight.w500,
               ),
@@ -468,21 +478,21 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
                     child: Text(
                       value,
                       style: TextStyle(
-                        fontSize: kIsWeb ? 15 : 14,
+                        fontSize: isDesktopWeb ? 15 : 14,
                         color: Colors.blue,
                         fontWeight: FontWeight.w400,
                         decoration: TextDecoration.underline,
-                        height: kIsWeb ? 1.5 : 1.4,
+                        height: isDesktopWeb ? 1.5 : 1.4,
                       ),
                     ),
                   )
                 : Text(
                     value.isNotEmpty ? value : '-',
                     style: TextStyle(
-                      fontSize: kIsWeb ? 15 : 14,
+                      fontSize: isDesktopWeb ? 15 : 14,
                       color: AppColors.primaryTextColor,
                       fontWeight: FontWeight.w400,
-                      height: kIsWeb ? 1.5 : 1.4,
+                      height: isDesktopWeb ? 1.5 : 1.4,
                     ),
                   ),
           ),
@@ -492,6 +502,7 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
   }
 
   Widget _buildDocumentRow(BuildContext context, String label, String url) {
+    final isDesktopWeb = _isDesktopWeb(context);
     // Extract filename from URL
     String fileName = url.split('/').last;
     if (fileName.contains('?')) {
@@ -499,16 +510,16 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
     }
     
     return Padding(
-      padding: EdgeInsets.only(bottom: kIsWeb ? 16.0 : 12.0),
+      padding: EdgeInsets.only(bottom: isDesktopWeb ? 16.0 : 12.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           SizedBox(
-            width: kIsWeb ? 180 : 140,
+            width: isDesktopWeb ? 180 : 140,
             child: Text(
               '$label:',
               style: TextStyle(
-                fontSize: kIsWeb ? 15 : 14,
+                fontSize: isDesktopWeb ? 15 : 14,
                 color: AppColors.lightGreyColor,
                 fontWeight: FontWeight.w500,
               ),
@@ -522,18 +533,18 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
                   child: Text(
                     fileName,
                     style: TextStyle(
-                      fontSize: kIsWeb ? 15 : 14,
+                      fontSize: isDesktopWeb ? 15 : 14,
                       color: AppColors.primaryTextColor,
                       fontWeight: FontWeight.w400,
-                      height: kIsWeb ? 1.5 : 1.4,
+                      height: isDesktopWeb ? 1.5 : 1.4,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                SizedBox(width: kIsWeb ? 12 : 8),
+                SizedBox(width: isDesktopWeb ? 12 : 8),
                 SizedBox(
-                  width: kIsWeb ? 36 : 32,
-                  height: kIsWeb ? 36 : 32,
+                  width: isDesktopWeb ? 36 : 32,
+                  height: isDesktopWeb ? 36 : 32,
                   child: IconButton(
                     onPressed: () {
                       Navigator.push(
@@ -546,7 +557,7 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
                         ),
                       );
                     },
-                    icon: Icon(Icons.visibility, size: kIsWeb ? 22 : 20),
+                    icon: Icon(Icons.visibility, size: isDesktopWeb ? 22 : 20),
                     color: AppColors.primaryColor,
                     tooltip: 'View',
                     padding: EdgeInsets.zero,
@@ -562,20 +573,21 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
   }
 
   Widget _buildDocumentsGrid(List<booking_document_model.BookingDocument> documents) {
+    final isDesktopWeb = _isDesktopWeb(context);
     return Container(
-      padding: EdgeInsets.all(kIsWeb ? 24 : 16),
+      padding: EdgeInsets.all(isDesktopWeb ? 24 : 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(kIsWeb ? 16 : 12),
+        borderRadius: BorderRadius.circular(isDesktopWeb ? 16 : 12),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withValues(alpha: kIsWeb ? 0.08 : 0.1),
-            spreadRadius: kIsWeb ? 0 : 1,
-            blurRadius: kIsWeb ? 8 : 4,
-            offset: Offset(0, kIsWeb ? 4 : 2),
+            color: Colors.grey.withValues(alpha: isDesktopWeb ? 0.08 : 0.1),
+            spreadRadius: isDesktopWeb ? 0 : 1,
+            blurRadius: isDesktopWeb ? 8 : 4,
+            offset: Offset(0, isDesktopWeb ? 4 : 2),
           ),
         ],
-        border: kIsWeb ? Border.all(
+        border: isDesktopWeb ? Border.all(
           color: Colors.grey.withValues(alpha: 0.1),
           width: 1,
         ) : null,
@@ -584,10 +596,10 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: kIsWeb ? 4 : 2,
-          crossAxisSpacing: kIsWeb ? 16 : 12,
-          mainAxisSpacing: kIsWeb ? 16 : 12,
-          childAspectRatio: kIsWeb ? 0.85 : 0.9,
+          crossAxisCount: isDesktopWeb ? 4 : 2,
+          crossAxisSpacing: isDesktopWeb ? 16 : 12,
+          mainAxisSpacing: isDesktopWeb ? 16 : 12,
+          childAspectRatio: isDesktopWeb ? 0.85 : 0.9,
         ),
         itemCount: documents.length,
         itemBuilder: (context, index) {
@@ -598,40 +610,41 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
   }
 
   Widget _buildNoDocumentsMessage() {
+    final isDesktopWeb = _isDesktopWeb(context);
     return Container(
-      padding: EdgeInsets.all(kIsWeb ? 24 : 16),
+      padding: EdgeInsets.all(isDesktopWeb ? 24 : 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(kIsWeb ? 16 : 12),
+        borderRadius: BorderRadius.circular(isDesktopWeb ? 16 : 12),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withValues(alpha: kIsWeb ? 0.08 : 0.1),
-            spreadRadius: kIsWeb ? 0 : 1,
-            blurRadius: kIsWeb ? 8 : 4,
-            offset: Offset(0, kIsWeb ? 4 : 2),
+            color: Colors.grey.withValues(alpha: isDesktopWeb ? 0.08 : 0.1),
+            spreadRadius: isDesktopWeb ? 0 : 1,
+            blurRadius: isDesktopWeb ? 8 : 4,
+            offset: Offset(0, isDesktopWeb ? 4 : 2),
           ),
         ],
-        border: kIsWeb ? Border.all(
+        border: isDesktopWeb ? Border.all(
           color: Colors.grey.withValues(alpha: 0.1),
           width: 1,
         ) : null,
       ),
       child: Center(
         child: Padding(
-          padding: EdgeInsets.symmetric(vertical: kIsWeb ? 32 : 24),
+          padding: EdgeInsets.symmetric(vertical: isDesktopWeb ? 32 : 24),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
                 Icons.description_outlined,
-                size: kIsWeb ? 48 : 40,
+                size: isDesktopWeb ? 48 : 40,
                 color: Colors.grey[400],
               ),
-              SizedBox(height: kIsWeb ? 12 : 8),
+              SizedBox(height: isDesktopWeb ? 12 : 8),
               Text(
                 'No documents uploaded',
                 style: TextStyle(
-                  fontSize: kIsWeb ? 16 : 14,
+                  fontSize: isDesktopWeb ? 16 : 14,
                   color: Colors.grey[600],
                   fontWeight: FontWeight.w500,
                 ),
@@ -644,6 +657,7 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
   }
 
   Widget _buildDocumentThumbnail(booking_document_model.BookingDocument document) {
+    final isDesktopWeb = _isDesktopWeb(context);
     final isPdf = document.documentUrl.toLowerCase().endsWith('.pdf') ||
         document.filetype.toLowerCase() == 'pdf';
     final isImage = document.documentUrl.toLowerCase().endsWith('.jpg') ||
@@ -657,7 +671,7 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(kIsWeb ? 12 : 8),
+          borderRadius: BorderRadius.circular(isDesktopWeb ? 12 : 8),
           border: Border.all(
             color: Colors.grey.withValues(alpha: 0.2),
             width: 1,
@@ -678,7 +692,7 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
             Expanded(
               child: ClipRRect(
                 borderRadius: BorderRadius.vertical(
-                  top: Radius.circular(kIsWeb ? 12 : 8),
+                  top: Radius.circular(isDesktopWeb ? 12 : 8),
                 ),
                 child: Container(
                   color: Colors.grey.withValues(alpha: 0.1),
@@ -735,14 +749,14 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
                                   children: [
                                     Icon(
                                       Icons.picture_as_pdf,
-                                      size: kIsWeb ? 40 : 36,
+                                      size: isDesktopWeb ? 40 : 36,
                                       color: Colors.red[400],
                                     ),
-                                    SizedBox(height: kIsWeb ? 6 : 4),
+                                    SizedBox(height: isDesktopWeb ? 6 : 4),
                                     Text(
                                       'PDF',
                                       style: TextStyle(
-                                        fontSize: kIsWeb ? 11 : 10,
+                                        fontSize: isDesktopWeb ? 11 : 10,
                                         fontWeight: FontWeight.w600,
                                         color: Colors.red[700],
                                       ),
@@ -759,14 +773,14 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
                                   children: [
                                     Icon(
                                       Icons.insert_drive_file,
-                                      size: kIsWeb ? 40 : 36,
+                                      size: isDesktopWeb ? 40 : 36,
                                       color: Colors.grey[600],
                                     ),
-                                    SizedBox(height: kIsWeb ? 6 : 4),
+                                    SizedBox(height: isDesktopWeb ? 6 : 4),
                                     Text(
                                       'File',
                                       style: TextStyle(
-                                        fontSize: kIsWeb ? 11 : 10,
+                                        fontSize: isDesktopWeb ? 11 : 10,
                                         fontWeight: FontWeight.w600,
                                         color: Colors.grey[700],
                                       ),
@@ -780,7 +794,7 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
             ),
             // Document Info
             Padding(
-              padding: EdgeInsets.all(kIsWeb ? 10 : 8),
+              padding: EdgeInsets.all(isDesktopWeb ? 10 : 8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -792,7 +806,7 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
                             : isImage
                                 ? Icons.image
                                 : Icons.insert_drive_file,
-                        size: kIsWeb ? 14 : 12,
+                        size: isDesktopWeb ? 14 : 12,
                         color: isPdf
                             ? Colors.red
                             : isImage
@@ -806,7 +820,7 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
                               ? document.filetypeDisplay
                               : (isPdf ? 'PDF' : isImage ? 'Image' : 'Document'),
                           style: TextStyle(
-                            fontSize: kIsWeb ? 11 : 10,
+                            fontSize: isDesktopWeb ? 11 : 10,
                             fontWeight: FontWeight.w600,
                             color: AppColors.primaryTextColor,
                           ),
@@ -821,7 +835,7 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
                     Text(
                       document.description,
                       style: TextStyle(
-                        fontSize: kIsWeb ? 10 : 9,
+                        fontSize: isDesktopWeb ? 10 : 9,
                         color: AppColors.lightGreyColor,
                       ),
                       maxLines: 1,

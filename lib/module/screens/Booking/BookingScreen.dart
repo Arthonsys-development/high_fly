@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../config/constant/app_colors.dart';
+import '../../utils/responsive.dart';
 import '../../../data/models/project_model.dart' as local_model;
 import '../../../data/models/response_model/project_response_model.dart';
 import '../../../data/models/customer_model.dart';
@@ -132,10 +133,15 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
     });
   }
 
+  // Returns true for desktop web UI, false for mobile UI (mobile browser or native app)
+  bool _isDesktopWeb(BuildContext context) {
+    return !Responsive.isMobile(context) && kIsWeb;
+  }
 
   @override
   Widget build(BuildContext context) {
-    if (kIsWeb) {
+    final isDesktopWeb = _isDesktopWeb(context);
+    if (isDesktopWeb) {
       // Web-specific layout with centered content and max width
       return Scaffold(
         body: Center(
@@ -497,8 +503,9 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
       }
     }
 
-    // Wrap content for web with better styling
-    if (kIsWeb) {
+    // Wrap content for desktop web with better styling
+    final isDesktopWeb = _isDesktopWeb(context);
+    if (isDesktopWeb) {
       return SingleChildScrollView(
         controller: _scrollController,
         key: PageStorageKey('booking_step_$_currentStep'),
@@ -701,8 +708,9 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
       }
     }
 
-    // Wrap content for web with better styling
-    if (kIsWeb) {
+    // Wrap content for desktop web with better styling
+    final isDesktopWeb = _isDesktopWeb(context);
+    if (isDesktopWeb) {
       return SingleChildScrollView(
         controller: _scrollController,
         key: PageStorageKey('hold_step_$_currentHoldStep'),

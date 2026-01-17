@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../../data/models/response_model/profile_model.dart';
 import '../../data/repository/profile_api_repository.dart';
 import '../../config/constant/app_strings.dart';
+import '../../config/network/base_url_config.dart';
 
 // Profile state class
 class ProfileState {
@@ -98,12 +98,8 @@ class ProfileNotifier extends Notifier<ProfileState> {
       
       // Update profile photo if available
       if (profileData.profileImage != null && profileData.profileImage!.isNotEmpty) {
-        // Check if it's already a full URL or needs BASE_URL_IMAGE prefix
-        String profileImageUrl = profileData.profileImage!;
-        if (!profileImageUrl.startsWith('http')) {
-          // If it's a relative path, add the base URL
-          profileImageUrl = "${dotenv.env['BASE_URL_IMAGE']}$profileImageUrl";
-        }
+        // Use BaseUrlConfig to build the full image URL
+        final profileImageUrl = BaseUrlConfig.buildImageUrl(profileData.profileImage);
         await _secureStorage.write(
           key: SharedPreferenceStrings.profilePhoto,
           value: profileImageUrl

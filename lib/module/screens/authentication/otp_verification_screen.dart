@@ -15,6 +15,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 
 import '../../../config/constant/app_strings.dart';
 import '../../../config/constant/const_assets.dart';
+import '../../../config/network/base_url_config.dart';
 import '../../global/widgets/custom_text_field.dart';
 import '../../utils/app_fonts.dart';
 import 'package:highfly/data/repository/auth_api_repository_provider.dart';
@@ -22,7 +23,6 @@ import 'package:highfly/data/models/request_models/auth_request_model.dart';
 import 'package:highfly/data/repository/firebase_auth_repository.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../providers/analytics_provider.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../../providers/organization_provider.dart';
 import '../../widgets/organization_logo.dart';
 
@@ -401,7 +401,7 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
                 await _secureStorage.write(key: SharedPreferenceStrings.phoneNumber, value: phoneNumber);
               }
               if (profileImage.isNotEmpty) {
-                final profilePhotoUrl = "${dotenv.env['BASE_URL_IMAGE']}$profileImage";
+                final profilePhotoUrl = BaseUrlConfig.buildImageUrl(profileImage);
                 await _secureStorage.write(key: SharedPreferenceStrings.profilePhoto, value: profilePhotoUrl);
               }
               

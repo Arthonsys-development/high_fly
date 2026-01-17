@@ -1,5 +1,4 @@
 import 'package:flutter/cupertino.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:highfly/config/constant/app_strings.dart';
@@ -8,6 +7,7 @@ import '../../data/repository/firebase_auth_repository.dart';
 import '../../data/repository/auth_api_repository_provider.dart';
 import '../../data/models/request_models/auth_request_model.dart';
 import '../../data/repository/auth_api_repository.dart';
+import '../../config/network/base_url_config.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 // Add FCM provider import
 import '../providers/fcm_provider.dart';
@@ -217,7 +217,7 @@ class AuthController extends Notifier<AuthState> {
         await _secureStorage.write(key: SharedPreferenceStrings.firstName, value: fName);
         await _secureStorage.write(key: SharedPreferenceStrings.fullName, value: fullName);
         await _secureStorage.write(key: SharedPreferenceStrings.phoneNumber, value: phoneNumber);
-        await _secureStorage.write(key: SharedPreferenceStrings.profilePhoto, value: "${dotenv.env['BASE_URL_IMAGE']}$profileImage");
+        await _secureStorage.write(key: SharedPreferenceStrings.profilePhoto, value: BaseUrlConfig.buildImageUrl(profileImage));
 
         // Register device for notifications after successful sign-in
         await registerDeviceForNotifications();

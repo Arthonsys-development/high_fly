@@ -5,6 +5,7 @@ import 'package:highfly/config/constant/app_colors.dart';
 import 'package:highfly/data/models/response_model/project_response_model.dart';
 import '../../global/widgets/common_app_bar.dart';
 import '../bookings/webview_screen.dart';
+import '../../utils/responsive.dart';
 // Conditional import for web image widget
 import '../visitors/web_image_widget.dart' if (dart.library.io) '../visitors/web_image_widget_stub.dart';
 
@@ -15,7 +16,11 @@ class ProjectDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (kIsWeb) {
+    // Use Responsive.isMobile to detect mobile web browsers
+    final isMobile = Responsive.isMobile(context);
+    
+    if (!isMobile && kIsWeb) {
+      // Desktop web layout
       return Scaffold(
         appBar: PreferredSize(
           preferredSize: const Size.fromHeight(60),
@@ -40,6 +45,7 @@ class ProjectDetailScreen extends StatelessWidget {
       );
     }
 
+    // Mobile layout (for both native mobile and mobile web)
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(60),
@@ -214,31 +220,39 @@ class ProjectDetailScreen extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            // Project Image
+            // Project Image - Use WebImageWidget on web to avoid CORS issues
             if (project.projectImage.isNotEmpty)
-              Image.network(
-                project.projectImage,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    color: Colors.grey[200],
-                    child: const Center(
-                      child: Icon(Icons.image, size: 80, color: Colors.grey),
-                    ),
-                  );
-                },
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return Container(
-                    color: Colors.grey[200],
-                    child: const Center(
-                      child: CircularProgressIndicator(
-                        color: AppColors.primaryColor,
-                      ),
-                    ),
-                  );
-                },
-              )
+              kIsWeb
+                  ? WebImageWidget(
+                      imageUrl: project.projectImage,
+                      width: double.infinity,
+                      height: double.infinity,
+                      borderRadius: 16,
+                      fit: BoxFit.cover,
+                    )
+                  : Image.network(
+                      project.projectImage,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          color: Colors.grey[200],
+                          child: const Center(
+                            child: Icon(Icons.image, size: 80, color: Colors.grey),
+                          ),
+                        );
+                      },
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Container(
+                          color: Colors.grey[200],
+                          child: const Center(
+                            child: CircularProgressIndicator(
+                              color: AppColors.primaryColor,
+                            ),
+                          ),
+                        );
+                      },
+                    )
             else
               Container(
                 color: Colors.grey[200],
@@ -323,10 +337,10 @@ class ProjectDetailScreen extends StatelessWidget {
   }
 
   Widget _buildProjectDetails(BuildContext context) {
-    final isWeb = kIsWeb;
+    final isMobile = Responsive.isMobile(context);
     
     return Container(
-      padding: EdgeInsets.all(isWeb ? 32 : 20),
+      padding: EdgeInsets.all(isMobile ? 20 : 32),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -345,13 +359,13 @@ class ProjectDetailScreen extends StatelessWidget {
           Text(
             'Project Details',
             style: TextStyle(
-              fontSize: isWeb ? 24 : 20,
+              fontSize: isMobile ? 20 : 24,
               fontWeight: FontWeight.bold,
               color: AppColors.primaryTextColor,
             ),
           ),
           const SizedBox(height: 24),
-          if (isWeb)
+          if (!isMobile)
             // Web: Two-column layout
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -361,15 +375,15 @@ class ProjectDetailScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       if (project.description.isNotEmpty) ...[
-                        _buildDetailRow('Description', project.description),
+                        _buildDetailRow(context, 'Description', project.description),
                         const SizedBox(height: 20),
                       ],
                       if (project.startDate != null) ...[
-                        _buildDetailRow('Start Date', _formatDate(project.startDate!)),
+                        _buildDetailRow(context, 'Start Date', _formatDate(project.startDate!)),
                         const SizedBox(height: 16),
                       ],
                       if (project.endDate != null) ...[
-                        _buildDetailRow('End Date', _formatDate(project.endDate!)),
+                        _buildDetailRow(context, 'End Date', _formatDate(project.endDate!)),
                         const SizedBox(height: 16),
                       ],
                     ],
@@ -381,15 +395,15 @@ class ProjectDetailScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       if (project.totalPlotCount != null) ...[
-                        _buildDetailRow('Total Plots', project.totalPlotCount.toString()),
+                        _buildDetailRow(context, 'Total Plots', project.totalPlotCount.toString()),
                         const SizedBox(height: 16),
                       ],
                       if (project.availablePlotCount != null) ...[
-                        _buildDetailRow('Available Plots', project.availablePlotCount.toString()),
+                        _buildDetailRow(context, 'Available Plots', project.availablePlotCount.toString()),
                         const SizedBox(height: 16),
                       ],
                       if (project.createdAt != null) ...[
-                        _buildDetailRow('Created At', _formatDate(project.createdAt!)),
+                        _buildDetailRow(context, 'Created At', _formatDate(project.createdAt!)),
                         const SizedBox(height: 16),
                       ],
                     ],
@@ -402,30 +416,30 @@ class ProjectDetailScreen extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildDetailRow('Description', project.description.isNotEmpty ? project.description : 'No description available'),
+                _buildDetailRow(context, 'Description', project.description.isNotEmpty ? project.description : 'No description available'),
                 if (project.subAddress.isNotEmpty) ...[
                   const SizedBox(height: 16),
-                  _buildDetailRow('Sub Address', project.subAddress),
+                  _buildDetailRow(context, 'Sub Address', project.subAddress),
                 ],
                 if (project.totalPlotCount != null) ...[
                   const SizedBox(height: 16),
-                  _buildDetailRow('Total Plots', project.totalPlotCount.toString()),
+                  _buildDetailRow(context, 'Total Plots', project.totalPlotCount.toString()),
                 ],
                 if (project.availablePlotCount != null) ...[
                   const SizedBox(height: 16),
-                  _buildDetailRow('Available Plots', project.availablePlotCount.toString()),
+                  _buildDetailRow(context, 'Available Plots', project.availablePlotCount.toString()),
                 ],
                 if (project.startDate != null) ...[
                   const SizedBox(height: 16),
-                  _buildDetailRow('Start Date', _formatDate(project.startDate!)),
+                  _buildDetailRow(context, 'Start Date', _formatDate(project.startDate!)),
                 ],
                 if (project.endDate != null) ...[
                   const SizedBox(height: 16),
-                  _buildDetailRow('End Date', _formatDate(project.endDate!)),
+                  _buildDetailRow(context, 'End Date', _formatDate(project.endDate!)),
                 ],
                 if (project.createdAt != null) ...[
                   const SizedBox(height: 16),
-                  _buildDetailRow('Created At', _formatDate(project.createdAt!)),
+                  _buildDetailRow(context, 'Created At', _formatDate(project.createdAt!)),
                 ],
               ],
             ),
@@ -518,16 +532,17 @@ class ProjectDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildDetailRow(String label, String value) {
+  Widget _buildDetailRow(BuildContext context, String label, String value) {
+    final isMobile = Responsive.isMobile(context);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         SizedBox(
-          width: kIsWeb ? 180 : 140,
+          width: isMobile ? 140 : 180,
           child: Text(
             label,
             style: TextStyle(
-              fontSize: kIsWeb ? 15 : 14,
+              fontSize: isMobile ? 14 : 15,
               fontWeight: FontWeight.w600,
               color: AppColors.secondaryTextColor,
             ),
@@ -537,7 +552,7 @@ class ProjectDetailScreen extends StatelessWidget {
           child: Text(
             value,
             style: TextStyle(
-              fontSize: kIsWeb ? 15 : 14,
+              fontSize: isMobile ? 14 : 15,
               color: AppColors.primaryTextColor,
               height: 1.5,
             ),
@@ -548,10 +563,10 @@ class ProjectDetailScreen extends StatelessWidget {
   }
 
   Widget _buildLocationSection(BuildContext context) {
-    final isWeb = kIsWeb;
+    final isMobile = Responsive.isMobile(context);
     
     return Container(
-      padding: EdgeInsets.all(isWeb ? 24 : 20),
+      padding: EdgeInsets.all(isMobile ? 20 : 24),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -572,13 +587,13 @@ class ProjectDetailScreen extends StatelessWidget {
               Icon(
                 Icons.location_on,
                 color: AppColors.primaryColor,
-                size: isWeb ? 28 : 24,
+                size: isMobile ? 24 : 28,
               ),
               const SizedBox(width: 8),
               Text(
                 'Location',
                 style: TextStyle(
-                  fontSize: isWeb ? 22 : 20,
+                  fontSize: isMobile ? 20 : 22,
                   fontWeight: FontWeight.bold,
                   color: AppColors.primaryTextColor,
                 ),
@@ -590,7 +605,7 @@ class ProjectDetailScreen extends StatelessWidget {
             Text(
               project.address,
               style: TextStyle(
-                fontSize: isWeb ? 15 : 14,
+                fontSize: isMobile ? 14 : 15,
                 color: AppColors.primaryTextColor,
                 height: 1.6,
               ),
@@ -601,7 +616,7 @@ class ProjectDetailScreen extends StatelessWidget {
             Text(
               project.location,
               style: TextStyle(
-                fontSize: isWeb ? 15 : 14,
+                fontSize: isMobile ? 14 : 15,
                 color: AppColors.secondaryTextColor,
               ),
             ),
@@ -618,8 +633,8 @@ class ProjectDetailScreen extends StatelessWidget {
                   backgroundColor: AppColors.primaryColor,
                   foregroundColor: Colors.white,
                   padding: EdgeInsets.symmetric(
-                    horizontal: isWeb ? 24 : 20,
-                    vertical: isWeb ? 14 : 12,
+                    horizontal: isMobile ? 20 : 24,
+                    vertical: isMobile ? 12 : 14,
                   ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),

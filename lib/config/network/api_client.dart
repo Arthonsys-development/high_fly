@@ -1,9 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode;
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:highfly/config/network/tenant_keys.dart';
+import 'package:highfly/config/network/base_url_config.dart';
 import 'package:talker_dio_logger/talker_dio_logger_interceptor.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:highfly/config/routes.dart';
@@ -55,38 +55,9 @@ class ApiClient {
   }
 
   void _init() {
-    String baseUrl;
-    try {
-      // Check if dotenv is loaded and has BASE_URL
-      final baseUrlFromEnv = dotenv.env['BASE_URL'];
-      
-      if (baseUrlFromEnv != null && baseUrlFromEnv.isNotEmpty) {
-        baseUrl = baseUrlFromEnv;
-        debugPrint('API Client: Using base URL from env: $baseUrl');
-      } else {
-        // If BASE_URL is not set or empty, use fallback
-        debugPrint('API Client: BASE_URL not found in env or empty, using fallback');
-        final env = dotenv.env['ENVIRONMENT'] ?? 'dev';
-        baseUrl = env == 'prod' 
-          ? 'https://dashboard.vistarakgroup.com/api/v1/' 
-          : 'http://223.184.0.44:83/api/v1/';
-        debugPrint('API Client: Using fallback base URL: $baseUrl');
-      }
-    } catch (e) {
-      debugPrint('API Client: Error getting BASE_URL from environment: $e');
-      // Fallback URLs based on environment
-      final env = dotenv.env['ENVIRONMENT'] ?? 'dev';
-      baseUrl = env == 'prod' 
-        ? 'https://dashboard.vistarakgroup.com/api/v1/' 
-        : 'http://223.184.0.44:83/api/v1/';
-      debugPrint('API Client: Using fallback base URL: $baseUrl');
-    }
-    
-    // For web platform, if baseUrl is still empty, use production URL
-    if (kIsWeb && (baseUrl.isEmpty || baseUrl == '')) {
-      debugPrint('API Client: Web platform detected with empty baseUrl, using production URL');
-      baseUrl = 'https://dashboard.vistarakgroup.com/api/v1/';
-    }
+    // Use BaseUrlConfig to get the base URL
+    final baseUrl = BaseUrlConfig.apiBaseUrl;
+    debugPrint('API Client: Using base URL from BaseUrlConfig: $baseUrl');
     
     _dio = Dio(BaseOptions(
       baseUrl: baseUrl,
@@ -135,7 +106,7 @@ class ApiClient {
       },
       onResponse: (response, handler) { 
         if (kDebugMode) {
-          dev.log('API URL: $baseUrl');
+          dev.log('API URL: ${_dio.options.baseUrl}');
           dev.log('API response status: ${response.statusCode}');
           dev.log('API response data: ${response.data}');
         }
@@ -169,7 +140,7 @@ class ApiClient {
               type: DioExceptionType.connectionError,
               error: 'CORS Error: The server at ${e.requestOptions.uri.host} is not configured to allow requests from this origin. '
                      'Please configure CORS headers on the server or contact your backend team.',
-              message: 'CORS policy blocked the request. Server must allow cross-origin requests.$baseUrl',
+              message: 'CORS policy blocked the request. Server must allow cross-origin requests. ${_dio.options.baseUrl}',
             );
             return handler.next(corsError);
           }
@@ -204,18 +175,13 @@ class ApiClient {
   // This is useful for web deployments where env files might load asynchronously
   void updateBaseUrl() {
     try {
-      final baseUrlFromEnv = dotenv.env['BASE_URL'];
-      
-      if (baseUrlFromEnv != null && baseUrlFromEnv.isNotEmpty) {
-        final currentBaseUrl = _dio.options.baseUrl;
-        if (currentBaseUrl != baseUrlFromEnv) {
-          _dio.options.baseUrl = baseUrlFromEnv;
-          debugPrint('API Client: Updated base URL from $currentBaseUrl to $baseUrlFromEnv');
-        } else {
-          debugPrint('API Client: Base URL already set to $baseUrlFromEnv');
-        }
+      final newBaseUrl = BaseUrlConfig.apiBaseUrl;
+      final currentBaseUrl = _dio.options.baseUrl;
+      if (currentBaseUrl != newBaseUrl) {
+        _dio.options.baseUrl = newBaseUrl;
+        debugPrint('API Client: Updated base URL from $currentBaseUrl to $newBaseUrl');
       } else {
-        debugPrint('API Client: BASE_URL not found in env, keeping current base URL: ${_dio.options.baseUrl}');
+        debugPrint('API Client: Base URL already set to $newBaseUrl');
       }
     } catch (e) {
       debugPrint('API Client: Error updating base URL: $e');

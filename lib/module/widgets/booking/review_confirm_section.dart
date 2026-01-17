@@ -12,6 +12,7 @@ import '../../../data/repository/booking_api_repository.dart';
 import '../../../data/models/request_models/booking_request_model.dart';
 import '../../../data/models/request_models/hold_request_model.dart';
 import '../../providers/projects_provider.dart';
+import '../../utils/responsive.dart';
 import 'header_icon_widget.dart';
 import 'action_buttons.dart';
 import 'upload_documents_section.dart';
@@ -51,6 +52,11 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
   final BookingApiRepository _bookingRepository = BookingApiRepository();
   bool _isLoading = false;
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
+
+  // Returns true for desktop web UI, false for mobile UI (mobile browser or native app)
+  bool _isDesktopWeb(BuildContext context) {
+    return !Responsive.isMobile(context) && kIsWeb;
+  }
 
   Future<void> _handleBookingAction() async {
     if (_isLoading) return;
@@ -271,8 +277,9 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
 
   @override
   Widget build(BuildContext context) {
-    final spacing = kIsWeb ? 20.0 : 16.0;
-    final largeSpacing = kIsWeb ? 40.0 : 40.0;
+    final isDesktopWeb = _isDesktopWeb(context);
+    final spacing = isDesktopWeb ? 20.0 : 16.0;
+    final largeSpacing = isDesktopWeb ? 40.0 : 40.0;
     
     // Build all cards
     final customerCard = _buildInfoCard(
@@ -388,8 +395,8 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
     
     return SingleChildScrollView(
       padding: EdgeInsets.only(
-        top: kIsWeb ? 20 : 20,
-        bottom: kIsWeb ? 20 : 20,
+        top: isDesktopWeb ? 20 : 20,
+        bottom: isDesktopWeb ? 20 : 20,
       ),
       child: Column(
         children: [
@@ -404,8 +411,8 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
           
           SizedBox(height: largeSpacing),
           
-          // Web: Use Grid Layout with max width, Mobile: Stacked Layout
-          if (kIsWeb)
+          // Desktop Web: Use Grid Layout with max width, Mobile: Stacked Layout
+          if (isDesktopWeb)
             Center(
               child: Container(
                 constraints: const BoxConstraints(maxWidth: 1200),
@@ -435,7 +442,7 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
           SizedBox(height: largeSpacing),
           
           // Action buttons
-          if (kIsWeb)
+          if (isDesktopWeb)
             Center(
               child: Container(
                 constraints: const BoxConstraints(maxWidth: 1200),
@@ -550,23 +557,24 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
     required String title,
     required List<Widget> children,
   }) {
-    final iconSize = kIsWeb ? 24.0 : 22.0;
-    final padding = kIsWeb ? 24.0 : 20.0;
-    final titleSize = kIsWeb ? 17.0 : 16.0;
-    final iconSpacing = kIsWeb ? 12.0 : 12.0;
-    final contentSpacing = kIsWeb ? 20.0 : 16.0;
+    final isDesktopWeb = _isDesktopWeb(context);
+    final iconSize = isDesktopWeb ? 24.0 : 22.0;
+    final padding = isDesktopWeb ? 24.0 : 20.0;
+    final titleSize = isDesktopWeb ? 17.0 : 16.0;
+    final iconSpacing = isDesktopWeb ? 12.0 : 12.0;
+    final contentSpacing = isDesktopWeb ? 20.0 : 16.0;
 
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(padding),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(kIsWeb ? 12 : 12),
-        border: kIsWeb ? Border.all(
+        borderRadius: BorderRadius.circular(isDesktopWeb ? 12 : 12),
+        border: isDesktopWeb ? Border.all(
           color: const Color(0xFFE5E7EB),
           width: 1,
         ) : null,
-        boxShadow: kIsWeb
+        boxShadow: isDesktopWeb
             ? [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.04),
@@ -589,14 +597,14 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
           Row(
             children: [
               Container(
-                padding: EdgeInsets.all(kIsWeb ? 8.0 : 8.0),
+                padding: EdgeInsets.all(isDesktopWeb ? 8.0 : 8.0),
                 decoration: BoxDecoration(
                   color: (iconColor ?? AppColors.primaryColor).withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(kIsWeb ? 8 : 8),
+                  borderRadius: BorderRadius.circular(isDesktopWeb ? 8 : 8),
                 ),
                 child: SizedBox(
-                  width: iconSize - (kIsWeb ? 4.0 : 4.0),
-                  height: iconSize - (kIsWeb ? 4.0 : 4.0),
+                  width: iconSize - (isDesktopWeb ? 4.0 : 4.0),
+                  height: iconSize - (isDesktopWeb ? 4.0 : 4.0),
                   child: Image.asset(
                     icon,
                     color: iconColor ?? AppColors.primaryColor,
@@ -617,7 +625,7 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
             ],
           ),
           SizedBox(height: contentSpacing),
-          if (kIsWeb)
+          if (isDesktopWeb)
             Container(
               height: 1,
               color: const Color(0xFFF3F4F6),
@@ -630,9 +638,10 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
   }
 
   Widget _buildInfoRow(String label, String value) {
-    final labelSize = kIsWeb ? 14.0 : 14.0;
-    final valueSize = kIsWeb ? 14.5 : 14.0;
-    final bottomPadding = kIsWeb ? 14.0 : 8.0;
+    final isDesktopWeb = _isDesktopWeb(context);
+    final labelSize = isDesktopWeb ? 14.0 : 14.0;
+    final valueSize = isDesktopWeb ? 14.5 : 14.0;
+    final bottomPadding = isDesktopWeb ? 14.0 : 8.0;
 
     return Padding(
       padding: EdgeInsets.only(bottom: bottomPadding),
@@ -640,7 +649,7 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
-            flex: kIsWeb ? 3 : 2,
+            flex: isDesktopWeb ? 3 : 2,
             child: Text(
               '$label:',
               style: TextStyle(
@@ -651,7 +660,7 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
             ),
           ),
           Expanded(
-            flex: kIsWeb ? 5 : 3,
+            flex: isDesktopWeb ? 5 : 3,
             child: Text(
               value,
               style: TextStyle(
