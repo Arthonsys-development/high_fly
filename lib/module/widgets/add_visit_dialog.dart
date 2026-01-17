@@ -20,6 +20,7 @@ import '../../config/constant/app_strings.dart';
 import '../../config/routes.dart';
 import '../global/widgets/common_app_bar.dart';
 import '../providers/analytics_provider.dart';
+import '../utils/responsive.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class AddVisitDialog extends ConsumerStatefulWidget {
@@ -145,8 +146,14 @@ class _AddVisitDialogState extends ConsumerState<AddVisitDialog>
     super.dispose();
   }
 
+  // Returns true for desktop web UI, false for mobile UI (mobile browser or native app)
+  bool _isDesktopWeb(BuildContext context) {
+    return !Responsive.isMobile(context) && kIsWeb;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isDesktopWeb = _isDesktopWeb(context);
     debugPrint('AddVisitDialog build called, isPickingImage: $_isPickingImage, isInBackground: $_isInBackground');
     return PopScope(
       onPopInvokedWithResult: (bool didPop, Object? result) async {
@@ -184,7 +191,7 @@ class _AddVisitDialogState extends ConsumerState<AddVisitDialog>
           onTap: (){
             FocusScope.of(context).unfocus();
           },
-          child: kIsWeb 
+          child: isDesktopWeb 
             ? _buildWebLayout()
             : _buildMobileLayout(),
         ),
@@ -298,7 +305,7 @@ class _AddVisitDialogState extends ConsumerState<AddVisitDialog>
                                       const SizedBox(width: 6),
                                       Expanded(
                                         child: Text(
-                                          'You are more than 100 meters away from the project location.',
+                                          'You are more than 1 KM away from the project location.',
                                           style: TextStyle(
                                             fontSize: 12,
                                             color: Colors.orange[800],
@@ -425,7 +432,7 @@ class _AddVisitDialogState extends ConsumerState<AddVisitDialog>
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
-                            'You are more than 100 meters away from the project location.',
+                            'You are more than 1 KM away from the project location.',
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.orange[800],
@@ -618,7 +625,8 @@ class _AddVisitDialogState extends ConsumerState<AddVisitDialog>
   }
 
   Widget _buildVisitorPhotoSection() {
-    final photoSize = kIsWeb ? 140.0 : 100.0;
+    final isDesktopWeb = _isDesktopWeb(context);
+    final photoSize = isDesktopWeb ? 140.0 : 100.0;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -650,11 +658,11 @@ class _AddVisitDialogState extends ConsumerState<AddVisitDialog>
             decoration: BoxDecoration(
               border: Border.all(
                 color: AppColors.secondaryTextColor,
-                width: kIsWeb ? 2 : 1,
+                width: isDesktopWeb ? 2 : 1,
               ),
-              borderRadius: BorderRadius.circular(kIsWeb ? 12 : 8),
+              borderRadius: BorderRadius.circular(isDesktopWeb ? 12 : 8),
               color: Colors.grey[100],
-              boxShadow: kIsWeb ? [
+              boxShadow: isDesktopWeb ? [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 4,
@@ -664,7 +672,7 @@ class _AddVisitDialogState extends ConsumerState<AddVisitDialog>
             ),
             child: _pickedImage != null || _webImage != null
                 ? ClipRRect(
-                    borderRadius: BorderRadius.circular(kIsWeb ? 12 : 8),
+                    borderRadius: BorderRadius.circular(isDesktopWeb ? 12 : 8),
                     child: kIsWeb 
                         ? (_webImage != null
                             ? Image.memory(
@@ -689,13 +697,13 @@ class _AddVisitDialogState extends ConsumerState<AddVisitDialog>
                       Icon(
                         Icons.camera_alt_outlined,
                         color: AppColors.secondaryTextColor,
-                        size: kIsWeb ? 36 : 30,
+                        size: isDesktopWeb ? 36 : 30,
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        kIsWeb ? "Click to upload" : "Tap to upload",
+                        isDesktopWeb ? "Click to upload" : "Tap to upload",
                         style: TextStyle(
-                          fontSize: kIsWeb ? 13 : 12,
+                          fontSize: isDesktopWeb ? 13 : 12,
                           color: AppColors.secondaryTextColor,
                         ),
                       ),
@@ -711,14 +719,17 @@ class _AddVisitDialogState extends ConsumerState<AddVisitDialog>
   Future<void> _showImageSourceDialog() async {
     debugPrint('Showing image source dialog');
     
-    // On web, directly open gallery without showing dialog
-    if (kIsWeb) {
-      debugPrint('Web platform detected, directly opening gallery');
+    // On desktop web, directly open gallery without showing dialog
+    // On mobile web browsers, show dialog with Camera and Gallery options
+    final isDesktopWeb = _isDesktopWeb(context);
+    if (isDesktopWeb) {
+      debugPrint('Desktop web platform detected, directly opening gallery');
       Routes.isPickingImage = true;
       await _pickImageFromGallery();
       return;
     }
     
+    // For mobile browsers (web) and native mobile apps, show dialog with options
     return showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -1029,7 +1040,7 @@ class _AddVisitDialogState extends ConsumerState<AddVisitDialog>
     TextInputType? keyboardType,
     int? maxLength,
   }) {
-    final isWeb = kIsWeb;
+    final isDesktopWeb = _isDesktopWeb(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1038,7 +1049,7 @@ class _AddVisitDialogState extends ConsumerState<AddVisitDialog>
             Text(
               label,
               style: TextStyle(
-                fontSize: isWeb ? 15 : 14,
+                fontSize: isDesktopWeb ? 15 : 14,
                 fontWeight: FontWeight.w500,
                 color: Colors.black,
               ),
@@ -1053,7 +1064,7 @@ class _AddVisitDialogState extends ConsumerState<AddVisitDialog>
               ),
           ],
         ),
-        SizedBox(height: isWeb ? 8 : 4),
+        SizedBox(height: isDesktopWeb ? 8 : 4),
         TextFormField(
           controller: txtController,
           validator: validator,
@@ -1062,7 +1073,7 @@ class _AddVisitDialogState extends ConsumerState<AddVisitDialog>
           keyboardType: keyboardType,
           maxLength: maxLength,
           style: TextStyle(
-            fontSize: isWeb ? 15 : 14,
+            fontSize: isDesktopWeb ? 15 : 14,
             color: Colors.black,
           ),
           cursorColor: AppColors.primaryTextColor,
@@ -1071,39 +1082,39 @@ class _AddVisitDialogState extends ConsumerState<AddVisitDialog>
             fillColor: Colors.white,
             filled: true,
             contentPadding: EdgeInsets.symmetric(
-              horizontal: isWeb ? 16 : 12,
-              vertical: isWeb ? (maxLines > 1 ? 16 : 18) : (maxLines > 1 ? 12 : 14),
+              horizontal: isDesktopWeb ? 16 : 12,
+              vertical: isDesktopWeb ? (maxLines > 1 ? 16 : 18) : (maxLines > 1 ? 12 : 14),
             ),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(isWeb ? 10 : 8),
+              borderRadius: BorderRadius.circular(isDesktopWeb ? 10 : 8),
               borderSide: BorderSide(
                 color: AppColors.primaryTextColor,
-                width: isWeb ? 1 : 0.5,
+                width: isDesktopWeb ? 1 : 0.5,
               ),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(isWeb ? 10 : 8),
+              borderRadius: BorderRadius.circular(isDesktopWeb ? 10 : 8),
               borderSide: BorderSide(
-                color: isWeb ? Colors.grey[300]! : Colors.black26,
-                width: isWeb ? 1.5 : 1,
+                color: isDesktopWeb ? Colors.grey[300]! : Colors.black26,
+                width: isDesktopWeb ? 1.5 : 1,
               ),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(isWeb ? 10 : 8),
+              borderRadius: BorderRadius.circular(isDesktopWeb ? 10 : 8),
               borderSide: BorderSide(
                 color: AppColors.primaryColor,
-                width: isWeb ? 2 : 1,
+                width: isDesktopWeb ? 2 : 1,
               ),
             ),
             errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(isWeb ? 10 : 8),
+              borderRadius: BorderRadius.circular(isDesktopWeb ? 10 : 8),
               borderSide: const BorderSide(
                 color: Colors.red,
                 width: 1.2,
               ),
             ),
             focusedErrorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(isWeb ? 10 : 8),
+              borderRadius: BorderRadius.circular(isDesktopWeb ? 10 : 8),
               borderSide: const BorderSide(
                 color: Colors.red,
                 width: 1.5,
@@ -1208,7 +1219,7 @@ class _AddVisitDialogState extends ConsumerState<AddVisitDialog>
         userLng,
         widget.project.latitude,
         widget.project.longitude,
-        100.0, // 100 meters
+        1000.0, // 1 kilometers
       );
       
       debugPrint('isWithinDistance result: $isWithinDistance');

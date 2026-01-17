@@ -341,6 +341,19 @@ class _BookingDocumentManagementScreenState extends ConsumerState<BookingDocumen
       // On web, file.path might be null, so use file.name instead
       final filePath = kIsWeb ? file.name : (file.path ?? file.name);
       
+      // On web, validate that we have file bytes
+      if (kIsWeb && (file.bytes == null || file.bytes!.isEmpty)) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Unable to read file data. Please try selecting the file again.'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+        return;
+      }
+      
       setState(() {
         _selectedFilePath = filePath;
         _selectedXFile = null; // file_picker doesn't provide XFile

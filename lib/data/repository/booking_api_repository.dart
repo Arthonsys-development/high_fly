@@ -605,40 +605,50 @@ class BookingApiRepository {
       
       // Add file
       if (kIsWeb) {
-        // On web, use XFile bytes if provided, otherwise try URL
+        // On web, use file bytes (from XFile or file_picker), otherwise try URL
+        List<int>? bytes;
+        String? finalFileName;
+        
         if (xFile != null) {
           try {
-            final bytes = await xFile.readAsBytes();
-            final fileName = xFile.name.isNotEmpty ? xFile.name : filePath.split('/').last;
-            final fileExtension = fileName.split('.').last.toLowerCase();
-            
-            // Determine content type
-            String? contentType;
-            if (fileExtension == 'pdf') {
-              contentType = 'application/pdf';
-            } else if (['jpg', 'jpeg'].contains(fileExtension)) {
-              contentType = 'image/jpeg';
-            } else if (fileExtension == 'png') {
-              contentType = 'image/png';
-            }
-            
-            final multipartFile = MultipartFile.fromBytes(
-              bytes,
-              filename: fileName,
-              contentType: contentType != null 
-                  ? MediaType.parse(contentType) 
-                  : null,
-            );
-            
-            formData.files.add(MapEntry('document', multipartFile));
+            bytes = await xFile.readAsBytes();
+            finalFileName = xFile.name.isNotEmpty ? xFile.name : filePath.split('/').last;
           } catch (e) {
             throw Exception('Error reading file bytes: $e');
           }
+        } else if (fileBytes != null && fileBytes.isNotEmpty) {
+          bytes = fileBytes;
+          finalFileName = fileName ?? filePath.split('/').last;
         } else if (filePath.startsWith('http')) {
           // If it's a URL, add it as a string field
           formData.fields.add(MapEntry('document', filePath));
+          bytes = null; // Skip file processing
         } else {
-          throw Exception('Web file upload requires XFile object or URL');
+          throw Exception('Web file upload requires XFile, file bytes, or URL. Please try selecting the file again.');
+        }
+        
+        if (bytes != null && finalFileName != null) {
+          final fileExtension = finalFileName.split('.').last.toLowerCase();
+          
+          // Determine content type
+          String? contentType;
+          if (fileExtension == 'pdf') {
+            contentType = 'application/pdf';
+          } else if (['jpg', 'jpeg'].contains(fileExtension)) {
+            contentType = 'image/jpeg';
+          } else if (fileExtension == 'png') {
+            contentType = 'image/png';
+          }
+          
+          final multipartFile = MultipartFile.fromBytes(
+            bytes,
+            filename: finalFileName,
+            contentType: contentType != null 
+                ? MediaType.parse(contentType) 
+                : null,
+          );
+          
+          formData.files.add(MapEntry('document', multipartFile));
         }
       } else {
         // On mobile, use File API

@@ -1539,12 +1539,13 @@ class _VisitorsScreenState extends ConsumerState<VisitorsScreen>
     return Container(
       height: 56,
       width: 56,
+      alignment: Alignment.centerLeft,
       decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: Colors.grey.withValues(alpha: 0.2),
-          width: 2,
-        ),
+       // shape: BoxShape.circle,
+        // border: Border.all(
+        //   color: Colors.grey.withValues(alpha: 0.2),
+        //   width: 2,
+        // ),
         color: Colors.grey[50],
         boxShadow: [
           BoxShadow(
@@ -1554,11 +1555,10 @@ class _VisitorsScreenState extends ConsumerState<VisitorsScreen>
           ),
         ],
       ),
-      child: ClipOval(
+      
         child: photoUrl != null && photoUrl.isNotEmpty
-            ? Center(
-                child: _buildWebCompatibleImage(photoUrl, 56, 56),
-              )
+            ?  _buildWebCompatibleImage(photoUrl, 56, 56)
+              
             : Center(
                 child: Image.asset(
                   ImageAssets.highFlyLogo,
@@ -1568,7 +1568,7 @@ class _VisitorsScreenState extends ConsumerState<VisitorsScreen>
                   alignment: Alignment.center,
                 ),
               ),
-      ),
+      
     );
   }
 
@@ -1578,6 +1578,7 @@ class _VisitorsScreenState extends ConsumerState<VisitorsScreen>
       imageUrl: imageUrl,
       width: width,
       height: height,
+      borderRadius: 1,
     );
   }
 

@@ -607,101 +607,117 @@ class _HoldDetailScreenState extends ConsumerState<HoldDetailScreen> {
                 borderRadius: BorderRadius.vertical(
                   top: Radius.circular(isDesktopWeb ? 12 : 8),
                 ),
-                child: Container(
-                  color: Colors.grey.withValues(alpha: 0.1),
-                  child: isImage
-                      ? kIsWeb
-                          ? WebImageWidget(
-                              imageUrl: document.documentUrl,
-                              width: double.infinity,
-                              height: double.infinity,
-                              fit: BoxFit.cover,
-                            )
-                          : Image.network(
-                              document.documentUrl,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Container(
-                                  color: Colors.grey[200],
-                                  child: Center(
-                                    child: Icon(
-                                      Icons.image_not_supported,
-                                      size: 32,
-                                      color: Colors.grey[400],
+                child: Stack(
+                  children: [
+                    Container(
+                      color: Colors.grey.withValues(alpha: 0.1),
+                      child: isImage
+                          ? kIsWeb
+                              ? WebImageWidget(
+                                  imageUrl: document.documentUrl,
+                                  width: double.infinity,
+                                  height: double.infinity,
+                                  fit: BoxFit.cover,
+                                  borderRadius: 1,
+                                )
+                              : Image.network(
+                                  document.documentUrl,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Container(
+                                      color: Colors.grey[200],
+                                      child: Center(
+                                        child: Icon(
+                                          Icons.image_not_supported,
+                                          size: 32,
+                                          color: Colors.grey[400],
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  loadingBuilder: (context, child, loadingProgress) {
+                                    if (loadingProgress == null) return child;
+                                    return Container(
+                                      color: Colors.grey[200],
+                                      child: Center(
+                                    child: SizedBox(
+                                      width: 24,
+                                      height: 24,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: AppColors.primaryColor,
+                                        value: loadingProgress.expectedTotalBytes != null
+                                            ? loadingProgress.cumulativeBytesLoaded /
+                                                loadingProgress.expectedTotalBytes!
+                                            : null,
+                                      ),
                                     ),
                                   ),
                                 );
                               },
-                              loadingBuilder: (context, child, loadingProgress) {
-                                if (loadingProgress == null) return child;
-                                return Container(
+                            )
+                          : isPdf
+                              ? Container(
+                                  color: Colors.red[50],
+                                  child: Center(
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.picture_as_pdf,
+                                          size: isDesktopWeb ? 40 : 36,
+                                          color: Colors.red[400],
+                                        ),
+                                        SizedBox(height: isDesktopWeb ? 6 : 4),
+                                        Text(
+                                          'PDF',
+                                          style: TextStyle(
+                                            fontSize: isDesktopWeb ? 11 : 10,
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.red[700],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                )
+                              : Container(
                                   color: Colors.grey[200],
                                   child: Center(
-                                child: SizedBox(
-                                  width: 24,
-                                  height: 24,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: AppColors.primaryColor,
-                                    value: loadingProgress.expectedTotalBytes != null
-                                        ? loadingProgress.cumulativeBytesLoaded /
-                                            loadingProgress.expectedTotalBytes!
-                                        : null,
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.insert_drive_file,
+                                          size: isDesktopWeb ? 40 : 36,
+                                          color: Colors.grey[600],
+                                        ),
+                                        SizedBox(height: isDesktopWeb ? 6 : 4),
+                                        Text(
+                                          'File',
+                                          style: TextStyle(
+                                            fontSize: isDesktopWeb ? 11 : 10,
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.grey[700],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
-                              ),
-                            );
-                          },
-                        )
-                      : isPdf
-                          ? Container(
-                              color: Colors.red[50],
-                              child: Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.picture_as_pdf,
-                                      size: isDesktopWeb ? 40 : 36,
-                                      color: Colors.red[400],
-                                    ),
-                                    SizedBox(height: isDesktopWeb ? 6 : 4),
-                                    Text(
-                                      'PDF',
-                                      style: TextStyle(
-                                        fontSize: isDesktopWeb ? 11 : 10,
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.red[700],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            )
-                          : Container(
-                              color: Colors.grey[200],
-                              child: Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.insert_drive_file,
-                                      size: isDesktopWeb ? 40 : 36,
-                                      color: Colors.grey[600],
-                                    ),
-                                    SizedBox(height: isDesktopWeb ? 6 : 4),
-                                    Text(
-                                      'File',
-                                      style: TextStyle(
-                                        fontSize: isDesktopWeb ? 11 : 10,
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.grey[700],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
+                    ),
+                    // Transparent overlay to capture taps on web images
+                    if (isImage && kIsWeb)
+                      Positioned.fill(
+                        child: GestureDetector(
+                          onTap: () => _openDocument(document.documentUrl),
+                          behavior: HitTestBehavior.opaque,
+                          child: Container(
+                            color: Colors.transparent,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
             ),
@@ -784,8 +800,11 @@ class _HoldDetailScreenState extends ConsumerState<HoldDetailScreen> {
           url.toLowerCase().endsWith('.png') ||
           url.toLowerCase().endsWith('.gif');
       
-      if (kIsWeb) {
-        // On web, open in new tab
+      // Check if it's a mobile browser (web but mobile screen size)
+      final isMobileBrowser = kIsWeb && Responsive.isMobile(context);
+      
+      if (kIsWeb && !isMobileBrowser) {
+        // On desktop web, open in new tab
         if (await canLaunchUrl(uri)) {
           await launchUrl(uri, mode: LaunchMode.externalApplication);
         } else {
@@ -796,7 +815,7 @@ class _HoldDetailScreenState extends ConsumerState<HoldDetailScreen> {
           );
         }
       } else {
-        // On mobile
+        // On mobile browser or native mobile app
         if (isImage) {
           // Show full-screen image viewer for images
           Navigator.push(
@@ -873,6 +892,7 @@ class _FullScreenImagePage extends StatelessWidget {
                       width: MediaQuery.of(context).size.width,
                       height: MediaQuery.of(context).size.height,
                       fit: BoxFit.contain,
+                      borderRadius: 1,
                     )
                   : Image.network(
                       imageUrl,

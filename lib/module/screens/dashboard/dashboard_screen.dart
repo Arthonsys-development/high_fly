@@ -507,6 +507,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 color: AppColors.primaryColor,
                 isDesktop: false,
               ),
+              const SizedBox(width: 5),
               _statsCard(
                 context,
                 title: "Active Projects",
