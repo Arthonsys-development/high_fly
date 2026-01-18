@@ -1,5 +1,8 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:http_parser/http_parser.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:highfly/config/network/api_client.dart';
 import 'package:highfly/config/network/api_constants.dart';
 import 'package:highfly/data/models/response_model/profile_model.dart';
@@ -129,15 +132,44 @@ class ProfileApiRepository {
   }
 
   // Upload profile photo
-  Future<ProfileResponseData> uploadProfilePhoto(String imagePath) async {
+  Future<ProfileResponseData> uploadProfilePhoto(XFile image) async {
     try {
       debugPrint('📸 ProfileApiRepository: Uploading profile photo...');
       
+      MultipartFile multipartFile;
+      
+      if (kIsWeb) {
+        // On web, use bytes instead of file path
+        final bytes = await image.readAsBytes();
+        final fileName = image.name.isNotEmpty ? image.name : 'profile_image.jpg';
+        final fileExtension = fileName.split('.').last.toLowerCase();
+        
+        // Determine content type
+        String? contentType;
+        if (['jpg', 'jpeg'].contains(fileExtension)) {
+          contentType = 'image/jpeg';
+        } else if (fileExtension == 'png') {
+          contentType = 'image/png';
+        }
+        
+        multipartFile = MultipartFile.fromBytes(
+          bytes,
+          filename: fileName,
+          contentType: contentType != null 
+              ? MediaType.parse(contentType) 
+              : null,
+        );
+      } else {
+        // On mobile, use file path
+        final fileName = image.name.isNotEmpty ? image.name : 'profile_image.jpg';
+        multipartFile = await MultipartFile.fromFile(
+          image.path,
+          filename: fileName,
+        );
+      }
+      
       final formData = FormData.fromMap({
-        'profile_image': await MultipartFile.fromFile(
-          imagePath,
-          filename: 'profile_image.jpg',
-        ),
+        'profile_image': multipartFile,
       });
 
       // Try different possible endpoints for photo upload

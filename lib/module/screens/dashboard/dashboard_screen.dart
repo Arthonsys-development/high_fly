@@ -1247,14 +1247,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 child: kIsWeb
                     ? WebImageWidget(
                         imageUrl: project.projectImage,
-                        width: MediaQuery.of(context).size.width,
-                        height: 150,
-                        borderRadius: 5,
-                        fit: BoxFit.cover,
+                        width: MediaQuery.of(context).size.width - 65 - 32, // Screen width - container margins (15*2) - container padding (16*2)
+                        height: 200,
+                        borderRadius: 20,
+                        fit: Responsive.isLargeMobile(context) ? BoxFit.contain : BoxFit.cover,
                       )
                     : Image.network(
                         project.projectImage, // sample image url
-                        width: MediaQuery.of(context).size.width,
+                        width: double.infinity, // Fill available width within parent container
                         height: 150,
                         fit: BoxFit.cover,
                         loadingBuilder: (context, child, loadingProgress) {

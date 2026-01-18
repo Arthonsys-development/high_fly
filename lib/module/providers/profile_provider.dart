@@ -293,8 +293,8 @@ class ProfileNotifier extends Notifier<ProfileState> {
       if (image != null) {
         state = state.copyWith(isLoading: true, error: null);
         
-        // Upload the image to the backend (use image.path to get the file path)
-        await _profileApiRepository.uploadProfilePhoto(image.path);
+        // Upload the image to the backend (pass XFile directly for cross-platform support)
+        await _profileApiRepository.uploadProfilePhoto(image);
         debugPrint('✅ ProfileNotifier: Profile image updated successfully');
         // Allow loadProfile to proceed and fetch the freshest data, including CDN URLs
         state = state.copyWith(isLoading: false);
@@ -321,8 +321,8 @@ class ProfileNotifier extends Notifier<ProfileState> {
       if (image != null) {
         state = state.copyWith(isLoading: true, error: null);
 
-        // Upload the image to the backend (use image.path to get the file path)
-        await _profileApiRepository.uploadProfilePhoto(image.path);
+        // Upload the image to the backend (pass XFile directly for cross-platform support)
+        await _profileApiRepository.uploadProfilePhoto(image);
         debugPrint('✅ ProfileNotifier: Profile image updated successfully (from ${source.name})');
         state = state.copyWith(isLoading: false);
         await loadProfile();

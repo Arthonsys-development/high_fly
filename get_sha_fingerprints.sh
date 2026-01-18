@@ -36,11 +36,21 @@ echo ""
 
 # Get SHA-1 for debug keystore
 echo "SHA-1:"
-keytool -list -v -keystore "$DEBUG_KEYSTORE" -storepass "$DEBUG_KEYSTORE_PASSWORD" -alias "$DEBUG_KEY_ALIAS" 2>/dev/null | grep -A 1 "SHA1:" | head -2 | tail -1 | sed 's/^[[:space:]]*//' || echo "   Error getting SHA-1"
+DEBUG_SHA1=$(keytool -list -v -keystore "$DEBUG_KEYSTORE" -storepass "$DEBUG_KEYSTORE_PASSWORD" -alias "$DEBUG_KEY_ALIAS" 2>/dev/null | grep "SHA1:" | sed 's/.*SHA1: //' | tr -d ' ')
+if [ -n "$DEBUG_SHA1" ]; then
+    echo "   $DEBUG_SHA1"
+else
+    echo "   Error getting SHA-1"
+fi
 
 echo ""
 echo "SHA-256:"
-keytool -list -v -keystore "$DEBUG_KEYSTORE" -storepass "$DEBUG_KEYSTORE_PASSWORD" -alias "$DEBUG_KEY_ALIAS" 2>/dev/null | grep -A 1 "SHA256:" | head -2 | tail -1 | sed 's/^[[:space:]]*//' || echo "   Error getting SHA-256"
+DEBUG_SHA256=$(keytool -list -v -keystore "$DEBUG_KEYSTORE" -storepass "$DEBUG_KEYSTORE_PASSWORD" -alias "$DEBUG_KEY_ALIAS" 2>/dev/null | grep "SHA256:" | sed 's/.*SHA256: //' | tr -d ' ')
+if [ -n "$DEBUG_SHA256" ]; then
+    echo "   $DEBUG_SHA256"
+else
+    echo "   Error getting SHA-256"
+fi
 
 echo ""
 echo "=================================================="
@@ -50,7 +60,21 @@ echo ""
 RELEASE_KEYSTORE=""
 if [ -f "android/key.properties" ]; then
     echo "📦 Checking for release keystore configuration..."
-    RELEASE_KEYSTORE=$(grep "storeFile" android/key.properties | cut -d'=' -f2 | tr -d ' ' || echo "")
+    RELEASE_KEYSTORE_PATH=$(grep "storeFile" android/key.properties | cut -d'=' -f2 | tr -d ' ' || echo "")
+    
+    # Convert Windows-style backslashes to forward slashes and resolve relative path
+    RELEASE_KEYSTORE_PATH=$(echo "$RELEASE_KEYSTORE_PATH" | tr '\\' '/' | sed 's|//|/|g')
+    
+    # If path is relative, resolve it relative to android/app directory
+    if [[ "$RELEASE_KEYSTORE_PATH" != /* ]]; then
+        RELEASE_KEYSTORE="android/app/$RELEASE_KEYSTORE_PATH"
+    else
+        RELEASE_KEYSTORE="$RELEASE_KEYSTORE_PATH"
+    fi
+    
+    # Clean up any double slashes
+    RELEASE_KEYSTORE=$(echo "$RELEASE_KEYSTORE" | sed 's|//|/|g')
+    
     if [ -n "$RELEASE_KEYSTORE" ] && [ -f "$RELEASE_KEYSTORE" ]; then
         echo "✅ Release keystore found: $RELEASE_KEYSTORE"
         echo ""
@@ -64,18 +88,29 @@ if [ -f "android/key.properties" ]; then
         
         if [ -n "$STORE_PASSWORD" ] && [ -n "$KEY_ALIAS" ]; then
             echo "SHA-1:"
-            keytool -list -v -keystore "$RELEASE_KEYSTORE" -storepass "$STORE_PASSWORD" -alias "$KEY_ALIAS" 2>/dev/null | grep -A 1 "SHA1:" | head -2 | tail -1 | sed 's/^[[:space:]]*//' || echo "   Error getting SHA-1"
+            RELEASE_SHA1=$(keytool -list -v -keystore "$RELEASE_KEYSTORE" -storepass "$STORE_PASSWORD" -alias "$KEY_ALIAS" 2>/dev/null | grep "SHA1:" | sed 's/.*SHA1: //' | tr -d ' ')
+            if [ -n "$RELEASE_SHA1" ]; then
+                echo "   $RELEASE_SHA1"
+            else
+                echo "   Error getting SHA-1"
+            fi
             
             echo ""
             echo "SHA-256:"
-            keytool -list -v -keystore "$RELEASE_KEYSTORE" -storepass "$STORE_PASSWORD" -alias "$KEY_ALIAS" 2>/dev/null | grep -A 1 "SHA256:" | head -2 | tail -1 | sed 's/^[[:space:]]*//' || echo "   Error getting SHA-256"
+            RELEASE_SHA256=$(keytool -list -v -keystore "$RELEASE_KEYSTORE" -storepass "$STORE_PASSWORD" -alias "$KEY_ALIAS" 2>/dev/null | grep "SHA256:" | sed 's/.*SHA256: //' | tr -d ' ')
+            if [ -n "$RELEASE_SHA256" ]; then
+                echo "   $RELEASE_SHA256"
+            else
+                echo "   Error getting SHA-256"
+            fi
         else
             echo "⚠️  Release keystore password/alias not found in key.properties"
             echo "   To get release fingerprints, run manually:"
             echo "   keytool -list -v -keystore <your-release-keystore> -alias <your-alias>"
         fi
     else
-        echo "⚠️  Release keystore not configured or not found"
+        echo "⚠️  Release keystore not found at: $RELEASE_KEYSTORE"
+        echo "   Expected path: $RELEASE_KEYSTORE"
     fi
 else
     echo "ℹ️  No release keystore configuration found (android/key.properties)"

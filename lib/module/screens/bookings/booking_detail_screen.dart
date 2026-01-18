@@ -705,6 +705,7 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
                                   width: double.infinity,
                                   height: double.infinity,
                                   fit: BoxFit.cover,
+                                  borderRadius: 1,
                                 )
                               : Image.network(
                                   document.documentUrl,
@@ -978,6 +979,7 @@ class _FullScreenImagePage extends StatelessWidget {
                       width: MediaQuery.of(context).size.width,
                       height: MediaQuery.of(context).size.height,
                       fit: BoxFit.contain,
+                      borderRadius: 1,
                     )
                   : Image.network(
                       imageUrl,
