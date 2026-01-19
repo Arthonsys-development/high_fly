@@ -479,7 +479,7 @@ class _UploadDocumentsSectionState extends State<UploadDocumentsSection> {
         
         // Info text
         Text(
-          'You can upload multiple documents (PDF, JPG, JPEG, PNG). Maximum file size: 10MB per file.',
+          'Upload Aadhar Card, Pan Card, Form 16A, Bank Statement, etc. You can upload multiple documents (PDF, JPG, JPEG, PNG). Maximum file size: 10MB per file.',
           style: TextStyle(
             fontSize: kIsWeb ? 14 : 12,
             color: AppColors.darkGreyColor,

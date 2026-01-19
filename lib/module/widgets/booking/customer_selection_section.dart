@@ -115,15 +115,13 @@ class _CustomerSelectionSectionState extends ConsumerState<CustomerSelectionSect
               titleText: 'Phone Number',
               controller: _phoneController,
               hintText: 'Enter phone number',
-              isMandatory: true,
+              isMandatory: false,
               borderRadius: 6,
               maxLength: 10,
               keyboardType: TextInputType.phone,
               validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Please enter phone number';
-                }
-                if (value.trim().length < 10) {
+                // Field is optional, but if provided, validate length
+                if (value != null && value.trim().isNotEmpty && value.trim().length < 10) {
                   return 'Please enter a valid phone number';
                 }
                 return null;
@@ -157,9 +155,8 @@ class _CustomerSelectionSectionState extends ConsumerState<CustomerSelectionSect
   }
 
   bool _canProceed() {
-    return _nameController.text.trim().isNotEmpty && 
-           _phoneController.text.trim().isNotEmpty &&
-           !_isLoading;
+    // Customer Name is mandatory
+    return _nameController.text.trim().isNotEmpty && !_isLoading;
   }
 
   Future<void> _handleCreateCustomer() async {
@@ -172,10 +169,17 @@ class _CustomerSelectionSectionState extends ConsumerState<CustomerSelectionSect
     });
 
     try {
+      // Customer Name is mandatory, so it should not be empty
+      // Use default value for Phone Number if empty
+      final customerName = _nameController.text.trim();
+      final phoneNumber = _phoneController.text.trim().isEmpty 
+          ? '0000000000' 
+          : _phoneController.text.trim();
+      
       final customerRepository = ref.read(customerApiRepositoryProvider);
       final result = await customerRepository.createCustomer(
-        _nameController.text.trim(),
-        _phoneController.text.trim(),
+        customerName,
+        phoneNumber,
       );
 
       if (result['success'] == true && result['data'] != null) {

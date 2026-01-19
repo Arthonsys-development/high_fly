@@ -159,7 +159,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                         titleText: 'Payment Method',
                         controller: _paymentMethodController,
                         hintText: 'Select Payment Method',
-                        isMandatory: false,
+                        isMandatory: true,
                         borderRadius: 8,
                         enabled: false,
                         suffixIcon: const Icon(
@@ -407,7 +407,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                     titleText: 'Payment Method',
                     controller: _paymentMethodController,
                     hintText: 'Select Payment Method',
-                    isMandatory: false,
+                    isMandatory: true,
                     borderRadius: 6,
                     enabled: false,
                     suffixIcon: const Icon(
@@ -633,8 +633,8 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
   }
 
   bool _canProceed() {
-    // All fields are optional, so the user can always proceed
-    return true;
+    // Payment Method is mandatory
+    return _paymentDetails.paymentMethodKey.isNotEmpty;
   }
 
   void _showPaymentMethodDialog() {
