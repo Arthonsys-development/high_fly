@@ -23,7 +23,7 @@ dependencies {
     implementation("com.google.android.gms:play-services-auth:21.0.0")
 
     // Core library desugaring for flutter_local_notifications
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 
     // Add the dependencies for any other desired Firebase products
     // https://firebase.google.com/docs/android/setup#available-libraries
