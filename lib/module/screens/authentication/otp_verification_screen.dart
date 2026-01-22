@@ -71,16 +71,46 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
   // Secure storage for cleanup
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
 
+  // Timer for resend button
+  Timer? _resendTimer;
+  int _resendCountdown = 60; // 60 seconds countdown
+  bool _canResend = false; // Initially false, will become true after countdown
+
   @override
   void initState() {
     super.initState();
     _verificationId = widget.verificationId;
+    // Start timer when OTP is first received
+    _startResendTimer();
   }
 
   @override
   void dispose() {
     _otpController.dispose();
+    _resendTimer?.cancel();
     super.dispose();
+  }
+
+  // Start the 60-second countdown timer
+  void _startResendTimer() {
+    setState(() {
+      _canResend = false;
+      _resendCountdown = 60;
+    });
+
+    _resendTimer?.cancel(); // Cancel any existing timer
+    _resendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_resendCountdown > 0) {
+        setState(() {
+          _resendCountdown--;
+        });
+      } else {
+        setState(() {
+          _canResend = true;
+        });
+        timer.cancel();
+      }
+    });
   }
 
   void _showErrorSnackBar(String message) {
@@ -197,6 +227,8 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
                 _errorMessage = null; // Clear any previous errors
               });
               _showSuccessSnackBar('OTP sent again!');
+              // Start fresh 60-second timer
+              _startResendTimer();
             }
           }
         },
@@ -628,11 +660,15 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
                     ),
                   ),
                   GestureDetector(
-                    onTap: (_isResending || _isLoading) ? null : _resendOTP,
+                    onTap: (_isResending || _isLoading || !_canResend) ? null : _resendOTP,
                     child: Text(
-                      _isResending ? 'Sending...' : 'Resend',
+                      _isResending 
+                        ? 'Sending...' 
+                        : _canResend 
+                          ? 'Resend' 
+                          : 'Resend in ${_resendCountdown}s',
                       style: TextStyle(
-                        color: (_isResending || _isLoading) ? Colors.grey : AppColors.primaryColor,
+                        color: (_isResending || _isLoading || !_canResend) ? Colors.grey : AppColors.primaryColor,
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                       ),
@@ -801,11 +837,15 @@ class _OtpVerificationScreenState extends ConsumerState<OtpVerificationScreen> {
                       ),
                     ),
                     GestureDetector(
-                      onTap: (_isResending || _isLoading) ? null : _resendOTP,
+                      onTap: (_isResending || _isLoading || !_canResend) ? null : _resendOTP,
                       child: Text(
-                        _isResending ? 'Sending...' : 'Resend',
+                        _isResending 
+                          ? 'Sending...' 
+                          : _canResend 
+                            ? 'Resend' 
+                            : 'Resend in ${_resendCountdown}s',
                         style: TextStyle(
-                          color: (_isResending || _isLoading) ? Colors.grey : AppColors.primaryColor,
+                          color: (_isResending || _isLoading || !_canResend) ? Colors.grey : AppColors.primaryColor,
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                         ),
