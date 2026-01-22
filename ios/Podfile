@@ -1,5 +1,5 @@
 # Uncomment this line to define a global platform for your project
-platform :ios, '13.0'
+platform :ios, '15.0'
 
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
@@ -29,11 +29,13 @@ flutter_ios_podfile_setup
 
 target 'Runner' do
   use_frameworks!
+  # Note: use_frameworks! is required for reCAPTCHA Enterprise SDK
 
   # Add Firebase dependencies explicitly
   pod 'Firebase/Auth'
   pod 'Firebase/Core'
   
+  # Flutter plugins (including recaptcha_enterprise_flutter) are installed here
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
   target 'RunnerTests' do
     inherit! :search_paths
@@ -43,5 +45,14 @@ end
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
+    target.build_configurations.each do |config|
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
+      # iOS 15.0 minimum is required for reCAPTCHA Enterprise SDK
+      
+      # Ensure RecaptchaInterop and RecaptchaEnterprise are properly linked
+      if target.name == 'RecaptchaInterop' || target.name.include?('Recaptcha')
+        config.build_settings['DEFINES_MODULE'] = 'YES'
+      end
+    end
   end
 end

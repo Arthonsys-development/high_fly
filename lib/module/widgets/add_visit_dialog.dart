@@ -782,20 +782,55 @@ class _AddVisitDialogState extends ConsumerState<AddVisitDialog>
       // Check and request camera permission on mobile
       if (!kIsWeb) {
         try {
-          final status = await Permission.camera.request();
-          if (status != PermissionStatus.granted) {
-            debugPrint('Camera permission denied');
+          // First check current permission status
+          PermissionStatus status = await Permission.camera.status;
+          debugPrint('Current camera permission status: $status');
+          
+          // If permission is not granted or limited, request it
+          if (status != PermissionStatus.granted && status != PermissionStatus.limited) {
+            debugPrint('Camera permission not granted, requesting permission...');
+            status = await Permission.camera.request();
+            debugPrint('Camera permission status after request: $status');
+          }
+          
+          // Handle the permission result - allow both granted and limited
+          if (status != PermissionStatus.granted && status != PermissionStatus.limited) {
+            debugPrint('Camera permission denied. Status: $status');
             if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Camera permission is required to take photos', style: TextStyle(color: Colors.white)),
-                  backgroundColor: Colors.red,
-                ),
-              );
-              
-              // Open app settings if permanently denied
+              // Show dialog asking user if they want to open settings (only if permanently denied)
               if (status == PermissionStatus.permanentlyDenied) {
-                await openAppSettings();
+                final shouldOpenSettings = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Camera Permission Required'),
+                    content: const Text(
+                      'Camera permission is required to take photos. Would you like to open Settings to enable it?',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(false),
+                        child: const Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(true),
+                        child: const Text('Open Settings'),
+                      ),
+                    ],
+                  ),
+                );
+                
+                if (shouldOpenSettings == true) {
+                  await openAppSettings();
+                }
+              } else {
+                // Permission denied but not permanently - show message
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Camera permission is required to take photos. Please grant permission when prompted.', style: TextStyle(color: Colors.white)),
+                    backgroundColor: Colors.orange,
+                    duration: Duration(seconds: 3),
+                  ),
+                );
               }
             }
             setState(() {
@@ -806,20 +841,54 @@ class _AddVisitDialogState extends ConsumerState<AddVisitDialog>
             debugPrint('Reset isPickingImage flag to false (permission denied)');
             return;
           }
+          
+          debugPrint('Camera permission granted or limited, proceeding with image picker');
         } catch (permissionError) {
           debugPrint('Error requesting camera permission: $permissionError');
-          // On some devices, we might still be able to pick an image even without explicit permission
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Error requesting camera permission: ${permissionError.toString()}', style: const TextStyle(color: Colors.white)),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          setState(() {
+            _isPickingImage = false;
+            _imagePickStartTime = null;
+          });
+          Routes.isPickingImage = false;
+          return;
         }
       }
       
       debugPrint('Calling image picker for camera');
-      final XFile? pickedImage = await _picker.pickImage(
-        source: ImageSource.camera,
-        imageQuality: 80,
-        maxWidth: 1920,
-        maxHeight: 1920,
-      );
-      debugPrint('Image picker returned: ${pickedImage != null ? 'image captured' : 'no image'}');
+      XFile? pickedImage;
+      try {
+        pickedImage = await _picker.pickImage(
+          source: ImageSource.camera,
+          imageQuality: 80,
+          maxWidth: 1920,
+          maxHeight: 1920,
+        );
+        debugPrint('Image picker returned: ${pickedImage != null ? 'image captured' : 'no image'}');
+      } catch (e) {
+        debugPrint('Error opening camera: $e');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to open camera: ${e.toString()}', style: const TextStyle(color: Colors.white)),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        setState(() {
+          _isPickingImage = false;
+          _imagePickStartTime = null;
+        });
+        Routes.isPickingImage = false;
+        return;
+      }
       
       // Reset picking flag
       if (mounted) {
@@ -920,14 +989,38 @@ class _AddVisitDialogState extends ConsumerState<AddVisitDialog>
             if (status != PermissionStatus.granted) {
               debugPrint('Gallery permission denied');
               if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Gallery permission is required to select photos', style: TextStyle(color: Colors.white)),
-                    backgroundColor: Colors.red,
-                  ),
-                );
+                // Show dialog asking user if they want to open settings
                 if (status == PermissionStatus.permanentlyDenied) {
-                  await openAppSettings();
+                  final shouldOpenSettings = await showDialog<bool>(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('Gallery Permission Required'),
+                      content: const Text(
+                        'Gallery permission is required to select photos. Would you like to open Settings to enable it?',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(false),
+                          child: const Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(true),
+                          child: const Text('Open Settings'),
+                        ),
+                      ],
+                    ),
+                  );
+                  
+                  if (shouldOpenSettings == true) {
+                    await openAppSettings();
+                  }
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Gallery permission is required to select photos', style: TextStyle(color: Colors.white)),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
                 }
               }
               setState(() {
@@ -1443,8 +1536,10 @@ class _AddVisitDialogState extends ConsumerState<AddVisitDialog>
       if (status.isGranted) {
         return true;
       } else if (status.isPermanentlyDenied) {
-        // Open app settings if permanently denied
-        await openAppSettings();
+        // Show dialog asking user if they want to open settings
+        // Note: We can't show dialog here without context, so just return false
+        // The calling code should handle showing a message to the user
+        debugPrint('Location permission permanently denied - user needs to enable in settings');
         return false;
       } else {
         // Request permission

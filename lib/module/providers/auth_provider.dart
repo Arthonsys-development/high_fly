@@ -2,7 +2,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:highfly/config/constant/app_strings.dart';
-import 'package:permission_handler/permission_handler.dart';
 import '../../data/repository/firebase_auth_repository.dart';
 import '../../data/repository/auth_api_repository_provider.dart';
 import '../../data/models/request_models/auth_request_model.dart';
@@ -117,8 +116,10 @@ class AuthController extends Notifier<AuthState> {
           // Register token with backend
           await fcmService.registerToken(token);
         }
-      }else{
-        openAppSettings();
+      } else {
+        // Permission not granted - just log it, don't interrupt user flow
+        // User can enable notifications later from app settings if they want
+        debugPrint('Notification permission not granted - user can enable later from settings');
       }
     } catch (e) {
       // Don't fail if notification registration fails

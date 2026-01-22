@@ -41,6 +41,20 @@ final GoRouter router = GoRouter(
     debugPrint('Redirect check called for path: $location');
     debugPrint('isPickingImage flag: ${Routes.isPickingImage}');
 
+    // Handle Firebase Auth deep links - these are handled internally by Firebase Auth
+    // Redirect to sign in screen to ensure we're on a valid route, then Firebase will handle the deep link
+    // The navigation to OTP screen will happen via onCodeSent callback
+    if (location.contains('firebaseauth/link') || 
+        location.contains('firebaseauth') ||
+        location.contains('deep_link_id') ||
+        (state.uri.scheme.isNotEmpty && state.uri.scheme.contains('app-'))) {
+      debugPrint('Firebase Auth deep link detected, redirecting to sign in screen');
+      debugPrint('Firebase Auth will process the deep link and trigger onCodeSent callback');
+      // Redirect to sign in screen - Firebase Auth will handle the deep link internally
+      // and the onCodeSent callback will navigate to OTP screen
+      return Routes.signIn;
+    }
+
     if (Routes.isPickingImage) {
       debugPrint('Preventing redirect during image picking');
       return null;
@@ -173,6 +187,17 @@ final GoRouter router = GoRouter(
         final project = state.extra as Project;
         debugPrint('Building ProjectDetailScreen with project: ${project.name}');
         return ProjectDetailScreen(project: project);
+      },
+    ),
+    // Catch-all route for Firebase Auth deep links
+    // This prevents the error page from showing when Firebase redirects after reCAPTCHA
+    GoRoute(
+      path: '/firebaseauth/:path*',
+      builder: (context, state) {
+        debugPrint('Firebase Auth deep link intercepted, allowing Firebase to handle it');
+        // Return the sign in screen as a fallback, but Firebase Auth will handle the deep link
+        // The actual navigation to OTP will happen via onCodeSent callback
+        return const SignInScreen();
       },
     ),
   ],

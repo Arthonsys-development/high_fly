@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>aps-environment</key>
+	<string>development</string>
+	<!-- App Attest capability - Enable in Apple Developer Portal for production use -->
+	<!-- Uncomment below when App Attest is enabled in your provisioning profile -->
+	<!--
+	<key>com.apple.developer.appattest</key>
+	<true/>
+	<key>com.apple.developer.appattest.environment</key>
+	<string>production</string>
+	-->
+</dict>
+</plist>
