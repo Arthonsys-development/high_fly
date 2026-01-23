@@ -604,14 +604,16 @@ class _OrganizationHeader extends ConsumerWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          SizedBox(
-            height: logoHeight,
-            child: Center(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: OrganizationLogo(
-                  height: logoHeight - 8,
-                  fit: BoxFit.contain,
+          Flexible(
+            child: SizedBox(
+              height: logoHeight,
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: OrganizationLogo(
+                    height: logoHeight - 8,
+                    fit: BoxFit.contain,
+                  ),
                 ),
               ),
             ),
