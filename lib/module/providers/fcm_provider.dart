@@ -27,26 +27,46 @@ class FcmService {
     }
 
     try {
-      // Check current permission status
-      var status = await Permission.notification.status;
-      
-      if (status.isGranted) {
-        return true;
-      }
-
-      // Request permission
-      status = await Permission.notification.request();
-      
-      if (status.isGranted) {
-        return true;
-      } else if (status.isPermanentlyDenied) {
-        // Open app settings if permission is permanently denied
-        await openAppSettings();
-        return false;
+      // For iOS, use Firebase Messaging's requestPermission which shows native dialog
+      if (defaultTargetPlatform == TargetPlatform.iOS) {
+        final settings = await FirebaseMessaging.instance.requestPermission(
+          alert: true,
+          badge: true,
+          sound: true,
+          provisional: false,
+        );
+        
+        // Check if permission is granted
+        if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+          debugPrint('✅ iOS notification permission granted');
+          return true;
+        } else if (settings.authorizationStatus == AuthorizationStatus.provisional) {
+          debugPrint('⚠️ iOS notification permission granted provisionally');
+          return true;
+        } else {
+          debugPrint('❌ iOS notification permission denied: ${settings.authorizationStatus}');
+          return false;
+        }
       } else {
-        return false;
+        // For Android, use permission_handler
+        var status = await Permission.notification.status;
+        
+        if (status.isGranted) {
+          return true;
+        }
+
+        // Request permission
+        status = await Permission.notification.request();
+        
+        if (status.isGranted) {
+          return true;
+        } else {
+          debugPrint('❌ Android notification permission denied');
+          return false;
+        }
       }
     } catch (e) {
+      debugPrint('❌ Error requesting notification permission: $e');
       return false;
     }
   }
@@ -58,8 +78,16 @@ class FcmService {
     }
 
     try {
-      final status = await Permission.notification.status;
-      return status.isGranted;
+      // For iOS, use Firebase Messaging's permission status
+      if (defaultTargetPlatform == TargetPlatform.iOS) {
+        final settings = await FirebaseMessaging.instance.getNotificationSettings();
+        return settings.authorizationStatus == AuthorizationStatus.authorized ||
+               settings.authorizationStatus == AuthorizationStatus.provisional;
+      } else {
+        // For Android, use permission_handler
+        final status = await Permission.notification.status;
+        return status.isGranted;
+      }
     } catch (e) {
       return false;
     }
@@ -76,23 +104,14 @@ class FcmService {
       // Check if we have notification permission
       final hasPermission = await checkNotificationPermission();
       if (!hasPermission) {
-        // Try to request permission
+        // Try to request permission (this will show the native iOS dialog)
         final permissionGranted = await requestNotificationPermission();
         if (!permissionGranted) {
           return null;
         }
       }
 
-      // Request permission for notifications (iOS specific)
-      if (defaultTargetPlatform == TargetPlatform.iOS) {
-        await FirebaseMessaging.instance.requestPermission(
-          alert: true,
-          badge: true,
-          sound: true,
-        );
-      }
-
-      // Get the FCM token
+      // Get the FCM token (permission is already granted at this point)
       final String? token = await FirebaseMessaging.instance.getToken();
       return token;
     } catch (e) {

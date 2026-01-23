@@ -564,7 +564,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                   ),
                   const SizedBox(height: 20),
                 ],
-                
+                /*
                 // Salary Slip field (only visible if Salaried Individual is checked)
                 if (_paymentDetails.isSalariedIndividual) ...[
                   PdfUploadWidget(
@@ -596,7 +596,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                   ),
                   SizedBox(height: spacing),
                 ],
-                
+                */
                 // Additional Notes field
                 CustomTextField(
                   titleText: 'Additional Notes',

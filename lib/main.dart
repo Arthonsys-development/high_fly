@@ -223,9 +223,10 @@ Future<void> main() async {
     // Continue with default environment
   }
 
-  // Initialize reCAPTCHA Enterprise client (Android and iOS only)
-  // Initialize early to minimize latency as recommended by Google
-  if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
+  // Initialize reCAPTCHA Enterprise client (Android only)
+  // Note: For iOS, Firebase Auth handles reCAPTCHA internally for phone authentication
+  // Initializing a separate reCAPTCHA client on iOS causes conflicts with Firebase Auth
+  if (!kIsWeb && Platform.isAndroid) {
     try {
       recaptchaClient = await initializeRecaptchaClient();
       if (recaptchaClient != null) {
@@ -237,7 +238,13 @@ Future<void> main() async {
       recaptchaClient = null;
     }
   } else {
-    debugPrint('🛡️ reCAPTCHA Enterprise skipped (web platform or unsupported platform)');
+    if (kIsWeb) {
+      debugPrint('🛡️ reCAPTCHA Enterprise skipped (web platform)');
+    } else if (Platform.isIOS) {
+      debugPrint('🛡️ reCAPTCHA Enterprise skipped (iOS - Firebase Auth handles reCAPTCHA internally)');
+    } else {
+      debugPrint('🛡️ reCAPTCHA Enterprise skipped (unsupported platform)');
+    }
   }
 
   runApp(ProviderScope(

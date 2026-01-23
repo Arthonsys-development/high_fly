@@ -55,36 +55,6 @@ class _UploadDocumentsSectionState extends State<UploadDocumentsSection> {
     }
   }
 
-  Future<void> _requestPermission() async {
-    // Web doesn't require file picker permissions
-    if (kIsWeb) {
-      return;
-    }
-    
-    // For Android 13+ (API 33+), we don't need storage permission for file picker
-    if (defaultTargetPlatform == TargetPlatform.android) {
-      return;
-    }
-    
-    // For iOS, we need to check photos permission
-    if (defaultTargetPlatform == TargetPlatform.iOS) {
-      var status = await Permission.photos.status;
-      if (status.isGranted) {
-        return;
-      }
-      
-      if (status.isPermanentlyDenied) {
-        await openAppSettings();
-        return;
-      }
-      
-      status = await Permission.photos.request();
-      if (!status.isGranted) {
-        throw Exception('Photos permission denied');
-      }
-    }
-  }
-
   /// Show upload source selection dialog
   Future<void> _showUploadSourceDialog() async {
     return showDialog(
@@ -136,28 +106,122 @@ class _UploadDocumentsSectionState extends State<UploadDocumentsSection> {
   /// Pick image from camera
   Future<void> _pickImageFromCamera() async {
     try {
-      // Check and request camera permission on mobile
-      if (!kIsWeb) {
-        try {
-          final status = await Permission.camera.request();
-          if (!status.isGranted) {
+      debugPrint('📷 UploadDocumentsSection: Starting camera image pick');
+      
+      // On iOS, image_picker automatically handles camera permissions
+      // Let it request permissions internally, then catch any errors
+      XFile? pickedImage;
+      try {
+        pickedImage = await _imagePicker.pickImage(
+          source: ImageSource.camera,
+          imageQuality: 85,
+        );
+        debugPrint('📷 UploadDocumentsSection: Image picker returned: ${pickedImage != null ? 'image captured' : 'no image'}');
+      } catch (e) {
+        debugPrint('❌ UploadDocumentsSection: Error opening camera: $e');
+        
+        // Check if it's a permission error
+        final errorString = e.toString().toLowerCase();
+        if (errorString.contains('permission') || 
+            errorString.contains('camera') ||
+            errorString.contains('denied')) {
+          
+          if (!kIsWeb && mounted) {
+            // Check permission status and handle accordingly
+            try {
+              var status = await Permission.camera.status;
+              
+              if (status.isPermanentlyDenied) {
+                // Permission is permanently denied, offer to open settings
+                final shouldOpenSettings = await showDialog<bool>(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: const Text('Camera Permission Required'),
+                      content: const Text(
+                        'Camera permission is required to take photos. Would you like to open Settings to enable it?',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(false),
+                          child: const Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(true),
+                          child: const Text('Open Settings'),
+                        ),
+                      ],
+                    );
+                  },
+                );
+                
+                if (shouldOpenSettings == true) {
+                  await openAppSettings();
+                }
+              } else if (!status.isGranted) {
+                // Try to request permission
+                status = await Permission.camera.request();
+                if (!status.isGranted) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Camera permission is required to take photos'),
+                        backgroundColor: Colors.red,
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                  }
+                } else {
+                  // Permission granted, try again
+                  try {
+                    pickedImage = await _imagePicker.pickImage(
+                      source: ImageSource.camera,
+                      imageQuality: 85,
+                    );
+                  } catch (retryError) {
+                    debugPrint('❌ UploadDocumentsSection: Error on retry: $retryError');
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Failed to open camera: ${retryError.toString()}'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                    return;
+                  }
+                }
+              }
+            } catch (permissionError) {
+              debugPrint('❌ UploadDocumentsSection: Error checking permission: $permissionError');
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Camera permission is required to take photos'),
+                    backgroundColor: Colors.red,
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              }
+            }
+          } else {
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Text('Camera permission is required to take photos'),
+                const SnackBar(
+                  content: Text('Camera permission is required to take photos'),
                   backgroundColor: Colors.red,
-                  duration: const Duration(seconds: 2),
+                  duration: Duration(seconds: 2),
                 ),
               );
             }
-            return;
           }
-        } catch (permissionError) {
-          debugPrint('Error requesting camera permission: $permissionError');
+          return;
+        } else {
+          // Some other error occurred
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Error requesting camera permission: $permissionError'),
+                content: Text('Failed to open camera: ${e.toString()}'),
                 backgroundColor: Colors.red,
               ),
             );
@@ -166,14 +230,11 @@ class _UploadDocumentsSectionState extends State<UploadDocumentsSection> {
         }
       }
 
-      final XFile? pickedImage = await _imagePicker.pickImage(
-        source: ImageSource.camera,
-        imageQuality: 85,
-      );
-
-      if (pickedImage != null) {
+      final image = pickedImage;
+      if (image != null) {
+        
         // Check file size (10MB limit)
-        final fileSize = await pickedImage.length();
+        final fileSize = await image.length();
         if (fileSize > 10 * 1024 * 1024) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -190,15 +251,15 @@ class _UploadDocumentsSectionState extends State<UploadDocumentsSection> {
         // Read bytes on web
         List<int>? bytes;
         if (kIsWeb) {
-          bytes = await pickedImage.readAsBytes();
+          bytes = await image.readAsBytes();
           debugPrint('📷 UploadDocumentsSection: Camera image selected, bytes: ${bytes.length}');
         }
 
         setState(() {
-          _documentPaths.add(pickedImage.path);
+          _documentPaths.add(image.path);
           _documentFiles.add(DocumentFileData(
-            path: pickedImage.path,
-            name: pickedImage.name.isNotEmpty ? pickedImage.name : pickedImage.path.split('/').last,
+            path: image.path,
+            name: image.name.isNotEmpty ? image.name : image.path.split('/').last,
             bytes: bytes,
           ));
         });
@@ -219,17 +280,134 @@ class _UploadDocumentsSectionState extends State<UploadDocumentsSection> {
   /// Pick image from gallery
   Future<void> _pickImageFromGallery() async {
     try {
-      // Request gallery permission
-      await _requestPermission();
+      debugPrint('🖼️ UploadDocumentsSection: Starting gallery image pick');
+      
+      // On iOS, image_picker automatically handles photos permissions
+      // Let it request permissions internally, then catch any errors
+      XFile? pickedImage;
+      try {
+        pickedImage = await _imagePicker.pickImage(
+          source: ImageSource.gallery,
+          imageQuality: 85,
+        );
+        debugPrint('🖼️ UploadDocumentsSection: Image picker returned: ${pickedImage != null ? 'image selected' : 'no image'}');
+      } catch (e) {
+        debugPrint('❌ UploadDocumentsSection: Error opening gallery: $e');
+        
+        // Check if it's a permission error
+        final errorString = e.toString().toLowerCase();
+        if (errorString.contains('permission') || 
+            errorString.contains('photos') ||
+            errorString.contains('denied')) {
+          
+          if (!kIsWeb && mounted) {
+            // Check permission status and handle accordingly
+            try {
+              var status = await Permission.photos.status;
+              
+              if (status.isPermanentlyDenied) {
+                // Permission is permanently denied, offer to open settings
+                final shouldOpenSettings = await showDialog<bool>(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: const Text('Photos Permission Required'),
+                      content: const Text(
+                        'Photos permission is required to select images from gallery. Would you like to open Settings to enable it?',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(false),
+                          child: const Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(true),
+                          child: const Text('Open Settings'),
+                        ),
+                      ],
+                    );
+                  },
+                );
+                
+                if (shouldOpenSettings == true) {
+                  await openAppSettings();
+                }
+              } else if (!status.isGranted) {
+                // Try to request permission
+                status = await Permission.photos.request();
+                if (!status.isGranted) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Photos permission is required to select images'),
+                        backgroundColor: Colors.red,
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                  }
+                } else {
+                  // Permission granted, try again
+                  try {
+                    pickedImage = await _imagePicker.pickImage(
+                      source: ImageSource.gallery,
+                      imageQuality: 85,
+                    );
+                  } catch (retryError) {
+                    debugPrint('❌ UploadDocumentsSection: Error on retry: $retryError');
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Failed to open gallery: ${retryError.toString()}'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                    return;
+                  }
+                }
+              }
+            } catch (permissionError) {
+              debugPrint('❌ UploadDocumentsSection: Error checking permission: $permissionError');
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Photos permission is required to select images'),
+                    backgroundColor: Colors.red,
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              }
+            }
+          } else {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Photos permission is required to select images'),
+                  backgroundColor: Colors.red,
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            }
+          }
+          return;
+        } else {
+          // Some other error occurred
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Failed to open gallery: ${e.toString()}'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          return;
+        }
+      }
 
-      final XFile? pickedImage = await _imagePicker.pickImage(
-        source: ImageSource.gallery,
-        imageQuality: 85,
-      );
-
-      if (pickedImage != null) {
+      final image = pickedImage;
+      if (image != null) {
         // Check file size (10MB limit)
-        final fileSize = await pickedImage.length();
+        final fileSize = await image.length();
         if (fileSize > 10 * 1024 * 1024) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -246,15 +424,15 @@ class _UploadDocumentsSectionState extends State<UploadDocumentsSection> {
         // Read bytes on web
         List<int>? bytes;
         if (kIsWeb) {
-          bytes = await pickedImage.readAsBytes();
+          bytes = await image.readAsBytes();
           debugPrint('🖼️ UploadDocumentsSection: Gallery image selected, bytes: ${bytes.length}');
         }
 
         setState(() {
-          _documentPaths.add(pickedImage.path);
+          _documentPaths.add(image.path);
           _documentFiles.add(DocumentFileData(
-            path: pickedImage.path,
-            name: pickedImage.name.isNotEmpty ? pickedImage.name : pickedImage.path.split('/').last,
+            path: image.path,
+            name: image.name.isNotEmpty ? image.name : image.path.split('/').last,
             bytes: bytes,
           ));
         });
@@ -275,16 +453,135 @@ class _UploadDocumentsSectionState extends State<UploadDocumentsSection> {
   /// Pick documents (PDF and other files)
   Future<void> _pickDocuments() async {
     try {
-      await _requestPermission();
-
-      // Pick multiple files - allow PDF, images
-      // On web, we need file data (bytes) for upload
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
-        allowMultiple: true,
-        withData: kIsWeb, // Read file bytes on web
-      );
+      debugPrint('📁 UploadDocumentsSection: Starting document pick');
+      
+      // On iOS, file_picker may need photos permission for image files
+      // Let it handle permissions, then catch any errors
+      FilePickerResult? result;
+      try {
+        // Pick multiple files - allow PDF, images
+        // On web, we need file data (bytes) for upload
+        result = await FilePicker.platform.pickFiles(
+          type: FileType.custom,
+          allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
+          allowMultiple: true,
+          withData: kIsWeb, // Read file bytes on web
+        );
+        debugPrint('📁 UploadDocumentsSection: File picker returned: ${result != null ? '${result.files.length} files' : 'no files'}');
+      } catch (e) {
+        debugPrint('❌ UploadDocumentsSection: Error opening file picker: $e');
+        
+        // Check if it's a permission error
+        final errorString = e.toString().toLowerCase();
+        if (errorString.contains('permission') || 
+            errorString.contains('photos') ||
+            errorString.contains('denied')) {
+          
+          if (!kIsWeb && mounted && defaultTargetPlatform == TargetPlatform.iOS) {
+            // Check permission status and handle accordingly
+            try {
+              var status = await Permission.photos.status;
+              
+              if (status.isPermanentlyDenied) {
+                // Permission is permanently denied, offer to open settings
+                final shouldOpenSettings = await showDialog<bool>(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: const Text('Photos Permission Required'),
+                      content: const Text(
+                        'Photos permission is required to select files. Would you like to open Settings to enable it?',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(false),
+                          child: const Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(true),
+                          child: const Text('Open Settings'),
+                        ),
+                      ],
+                    );
+                  },
+                );
+                
+                if (shouldOpenSettings == true) {
+                  await openAppSettings();
+                }
+              } else if (!status.isGranted) {
+                // Try to request permission
+                status = await Permission.photos.request();
+                if (!status.isGranted) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Photos permission is required to select files'),
+                        backgroundColor: Colors.red,
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                  }
+                } else {
+                  // Permission granted, try again
+                  try {
+                    result = await FilePicker.platform.pickFiles(
+                      type: FileType.custom,
+                      allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
+                      allowMultiple: true,
+                      withData: kIsWeb,
+                    );
+                  } catch (retryError) {
+                    debugPrint('❌ UploadDocumentsSection: Error on retry: $retryError');
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Failed to open file picker: ${retryError.toString()}'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                    return;
+                  }
+                }
+              }
+            } catch (permissionError) {
+              debugPrint('❌ UploadDocumentsSection: Error checking permission: $permissionError');
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Photos permission is required to select files'),
+                    backgroundColor: Colors.red,
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              }
+            }
+          } else {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Permission is required to select files'),
+                  backgroundColor: Colors.red,
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            }
+          }
+          return;
+        } else {
+          // Some other error occurred
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Failed to open file picker: ${e.toString()}'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          return;
+        }
+      }
 
       if (result == null || result.files.isEmpty) {
         return;

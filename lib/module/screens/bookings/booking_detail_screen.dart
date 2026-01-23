@@ -310,20 +310,20 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
             SizedBox(height: isDesktopWeb ? 32 : 24),
 
             // Document Information Section
-            _buildSectionTitle('Document Information'),
-            _buildDetailCard([
-              _buildDetailRow('PAN Card', booking.panCard),
-              _buildDetailRow('Aadhar Card', booking.aadharCard),
-              if (booking.salaryIndividual && booking.salarySlip != null && booking.salarySlip!.isNotEmpty)
-                _buildDocumentRow(context, 'Salary Slip', booking.salarySlip!),
-              if (booking.salaryIndividual && booking.form16a != null && booking.form16a!.isNotEmpty)
-                _buildDocumentRow(context, 'Form 16A', booking.form16a!),
-              if (booking.bankStatement != null && booking.bankStatement!.isNotEmpty)
-                _buildDocumentRow(context, 'Bank Statement', booking.bankStatement!),
-              if (booking.otherDocuments != null && booking.otherDocuments!.isNotEmpty)
-                _buildDocumentRow(context, 'Other Documents', booking.otherDocuments!),
-            ]),
-            SizedBox(height: isDesktopWeb ? 32 : 24),
+            // _buildSectionTitle('Document Information'),
+            // _buildDetailCard([
+            //   _buildDetailRow('PAN Card', booking.panCard),
+            //   _buildDetailRow('Aadhar Card', booking.aadharCard),
+            //   if (booking.salaryIndividual && booking.salarySlip != null && booking.salarySlip!.isNotEmpty)
+            //     _buildDocumentRow(context, 'Salary Slip', booking.salarySlip!),
+            //   if (booking.salaryIndividual && booking.form16a != null && booking.form16a!.isNotEmpty)
+            //     _buildDocumentRow(context, 'Form 16A', booking.form16a!),
+            //   if (booking.bankStatement != null && booking.bankStatement!.isNotEmpty)
+            //     _buildDocumentRow(context, 'Bank Statement', booking.bankStatement!),
+            //   if (booking.otherDocuments != null && booking.otherDocuments!.isNotEmpty)
+            //     _buildDocumentRow(context, 'Other Documents', booking.otherDocuments!),
+            // ]),
+            // SizedBox(height: isDesktopWeb ? 32 : 24),
 
             // Bank Details Section
             _buildSectionTitle('Bank Details'),
