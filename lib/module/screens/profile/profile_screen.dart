@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../global/widgets/profile_picture.dart';
 import '../../global/widgets/profile_text_field.dart';
 import '../../global/widgets/custom_button.dart';
 import '../../providers/profile_provider.dart';
+import '../../providers/organization_provider.dart';
 import '../../../config/constant/app_colors.dart';
+import '../../../config/routes.dart';
 import '../../utils/app_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../data/models/response_model/profile_model.dart';
@@ -25,7 +30,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   
   // Error messages for individual fields
   String? _fullNameError;
-  String? _emailError;
   String? _teamLeaderNameError;
   
   // Track previous profile to avoid unnecessary controller updates
@@ -83,23 +87,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   void _parseFieldErrors(String? error) {
     if (error == null) {
       _fullNameError = null;
-      _emailError = null;
       _teamLeaderNameError = null;
       return;
     }
     
     // Reset errors
     _fullNameError = null;
-    _emailError = null;
     _teamLeaderNameError = null;
     
     // Parse validation errors
     if (error.contains('full_name')) {
       _fullNameError = 'Please enter a valid full name';
-    }
-    
-    if (error.contains('email')) {
-      _emailError = 'Please enter a valid email address';
     }
     
     if (error.contains('team_leader_name')) {
@@ -110,6 +108,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final profileState = ref.watch(profileProvider);
+    final showDeleteAccount =
+        ref.watch(organizationProvider).asData?.value?.showSignup == true;
     
     // Update controllers when profile state changes (only when not editing)
     if (!profileState.isEditing) {
@@ -127,7 +127,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         // Clear field errors when entering edit mode
         setState(() {
           _fullNameError = null;
-          _emailError = null;
           _teamLeaderNameError = null;
         });
       }
@@ -171,12 +170,96 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             SizedBox(height: kIsWeb ? 40 : 32),
                             _buildActionButtons(profileState),
                           ],
+                          if (showDeleteAccount) ...[
+                            SizedBox(height: kIsWeb ? 40 : 32),
+                            CustomButton(
+                              width: kIsWeb ? 220 : double.infinity,
+                              text: 'Delete Account',
+                              onPressed: _showDeleteAccountConfirmationDialog,
+                              backgroundColor: Colors.red,
+                              textColor: Colors.white,
+                              height: kIsWeb ? 52 : 48,
+                              borderRadius: kIsWeb ? 8 : 4,
+                            ),
+                          ],
                         ],
                       ),
                     ),
                   ),
                 ),
     );
+  }
+
+  Future<void> _showDeleteAccountConfirmationDialog() async {
+    // For now: no delete API. This acts as a "delete account" UX but logs out only.
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Text(
+            'Delete Account?',
+            style: AppFonts.getFont(
+              weight: AppFonts.semiBold,
+              fontSize: 18,
+              color: Colors.red,
+            ),
+          ),
+          content: Text(
+            'Are you sure you want to delete your account?',
+            style: AppFonts.getFont(
+              weight: AppFonts.regular,
+              fontSize: 14,
+              color: const Color.fromARGB(255, 255, 255, 255),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: Text(
+                'Cancel',
+                style: AppFonts.getFont(
+                  weight: AppFonts.medium,
+                  fontSize: 14,
+                  color: const Color.fromARGB(255, 222, 222, 222),
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: Text(
+                'Delete',
+                style: AppFonts.getFont(
+                  weight: AppFonts.semiBold,
+                  fontSize: 14,
+                  color: Colors.red,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed == true) {
+      await _logoutUser();
+    }
+  }
+
+  Future<void> _logoutUser() async {
+    try {
+      await FirebaseAuth.instance.signOut();
+    } catch (_) {
+      // Ignore and continue cleanup/navigation
+    }
+    try {
+      const secureStorage = FlutterSecureStorage();
+      await secureStorage.deleteAll();
+    } catch (_) {
+      // Ignore and continue navigation
+    }
+
+    if (!mounted) return;
+    context.go(Routes.signIn);
   }
 
   Widget _buildProfileSettingsHeader() {

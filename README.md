@@ -2,6 +2,8 @@
 
 A comprehensive real estate management Flutter application that enables property visits, bookings, and visitor management for real estate professionals.
 
+**Version**: 1.0.1+4
+
 ## 📱 About
 
 Vistarak is a cross-platform mobile and web application built with Flutter that streamlines real estate operations including property visits, booking management, hold bookings, and visitor tracking. The app provides a seamless experience for real estate agents and customers to manage property-related activities.
@@ -29,11 +31,14 @@ Vistarak is a cross-platform mobile and web application built with Flutter that 
 - **Profile Management**: User profile with photo upload and details
 
 ### Additional Features
-- **Push Notifications**: Firebase Cloud Messaging (FCM) integration
+- **Push Notifications**: Firebase Cloud Messaging (FCM) integration with foreground/background handling
 - **Analytics**: Firebase Analytics for user behavior tracking
-- **Location Services**: Geolocation for visit tracking
-- **Image Picker**: Capture and upload images for visits
-- **Multi-platform Support**: Android, iOS, and Web
+- **Location Services**: Geolocation for visit tracking with permission handling
+- **Image Picker**: Capture and upload images for visits and documents
+- **Document Management**: Upload and manage documents for bookings and holds
+- **reCAPTCHA Enterprise**: Bot protection for Android authentication
+- **Multi-platform Support**: Android, iOS, and Web with platform-specific optimizations
+- **Environment Configuration**: Support for dev and prod environments
 
 ## 🛠️ Tech Stack
 
@@ -42,32 +47,37 @@ Vistarak is a cross-platform mobile and web application built with Flutter that 
 - **Dart**: SDK `^3.8.1`
 
 ### State Management & Navigation
-- **flutter_riverpod**: `^3.0.0` - State management
-- **go_router**: `^16.2.2` - Declarative routing and navigation
+- **flutter_riverpod**: `^3.2.0` - State management
+- **go_router**: `^17.0.1` - Declarative routing and navigation
 
 ### Networking
 - **dio**: `^5.9.0` - HTTP client for API calls
-- **talker_dio_logger**: `^5.0.1` - Network request logging
+- **talker_dio_logger**: `^5.1.12` - Network request logging
+- **http_parser**: `^4.1.2` - HTTP message parsing
+- **universal_html**: `^2.3.0` - HTML parsing for web
 
 ### Firebase Services
-- **firebase_core**: `^3.8.0` - Firebase initialization
-- **firebase_auth**: `^5.3.3` - Authentication
-- **firebase_messaging**: `^15.1.5` - Push notifications
-- **firebase_analytics**: `^11.3.3` - Analytics
+- **firebase_core**: `^4.4.0` - Firebase initialization
+- **firebase_auth**: `^6.1.4` - Authentication with phone OTP
+- **firebase_messaging**: `^16.1.1` - Push notifications
+- **firebase_analytics**: `^12.1.1` - Analytics tracking
 
-### Storage & Security
-- **flutter_secure_storage**: `^9.2.4` - Secure token storage
+### Security & Authentication
+- **flutter_secure_storage**: `^10.0.0` - Secure token storage
+- **recaptcha_enterprise_flutter**: `^18.8.2` - reCAPTCHA Enterprise for Android
 - **flutter_dotenv**: `^6.0.0` - Environment configuration
 
 ### UI & Utilities
 - **intl**: `^0.20.2` - Internationalization and date formatting
 - **dotted_border**: `^3.1.0` - UI components
-- **image_picker**: `^1.0.4` - Image selection
-- **file_picker**: `^8.0.0+1` - File selection
-- **geolocator**: `^13.0.1` - Location services
-- **permission_handler**: `^11.3.1` - Runtime permissions
-- **webview_flutter**: `^4.9.0` - WebView support
-- **url_launcher**: `^6.3.1` - URL launching
+- **image_picker**: `^1.2.1` - Image selection and capture
+- **file_picker**: `^10.3.8` - File selection
+- **geolocator**: `^14.0.2` - Location services
+- **permission_handler**: `^12.0.1` - Runtime permissions
+- **webview_flutter**: `^4.13.1` - WebView support
+- **url_launcher**: `^6.3.2` - URL launching
+- **app_settings**: `^7.0.0` - Open device settings
+- **flutter_local_notifications**: `^19.5.0` - Local notifications
 
 ### Development Tools
 - **flutter_lints**: `^5.0.0` - Linting rules
@@ -111,9 +121,16 @@ Vistarak is a cross-platform mobile and web application built with Flutter that 
 
 4. **Firebase Setup**
    
-   - **Android**: Place `google-services.json` in `android/app/`
-   - **iOS**: Configure Firebase in `ios/Runner/Info.plist` and run `pod install`
-   - **Web**: Firebase configuration is handled in `web/index.html`
+   - **Android**: 
+     - Place `google-services.json` in `android/app/`
+     - Configure reCAPTCHA Enterprise for phone authentication (see `FIREBASE_AUTH_SETUP.md`)
+   - **iOS**: 
+     - Configure Firebase in `ios/Runner/Info.plist`
+     - Run `pod install` in the `ios/` directory
+     - Firebase Auth handles reCAPTCHA internally on iOS
+   - **Web**: 
+     - Firebase configuration is handled in `web/index.html`
+     - See `firebase_web_setup.md` for detailed setup
 
 5. **Run the application**
    ```bash
@@ -154,9 +171,15 @@ lib/
 
 ### Android
 ```bash
+# Build APK
 flutter build apk --release --dart-define=env=prod
-# or for app bundle
+
+# Build App Bundle (for Play Store)
 flutter build appbundle --release --dart-define=env=prod
+
+# Or use the provided scripts
+./build_prod_apk.sh
+./build_prod_bundle.sh
 ```
 
 ### iOS
@@ -167,7 +190,19 @@ flutter build ios --release --dart-define=env=prod
 ### Web
 ```bash
 flutter build web --release --dart-define=env=prod
+
+# Or use the provided script
+./build_web.sh
 ```
+
+### Deployment Scripts
+The project includes several deployment scripts:
+- `build_prod_apk.sh` - Build production APK
+- `build_prod_bundle.sh` - Build production app bundle
+- `build_web.sh` - Build web application
+- `deploy_firebase.sh` - Deploy to Firebase Hosting
+- `deploy_web.sh` - Deploy web application
+- `clean_rebuild.sh` - Clean and rebuild the project
 
 ## 🧪 Testing
 
@@ -201,7 +236,9 @@ flutter test test/profile_screen_test.dart
 
 ### Web
 - Firebase configuration in `web/index.html`
-- CORS configuration may be required for API calls
+- CORS configuration may be required for API calls (see `CORS_WEB_FIX.md`)
+- Web-specific error handling implemented
+- Terms and conditions page available at `/terms_and_conditions.html`
 
 ## 🔐 Environment Configuration
 
@@ -221,8 +258,53 @@ Additional documentation files:
 - `FIREBASE_AUTH_SETUP.md` - Firebase authentication setup guide
 - `FCM_IMPLEMENTATION.md` - Firebase Cloud Messaging implementation
 - `NOTIFICATION_PERMISSIONS.md` - Notification permissions guide
+- `NOTIFICATION_FIX_GUIDE.md` - Notification troubleshooting guide
 - `TESTING_GUIDE.md` - Testing guidelines
 - `IOS_PHONE_AUTH_FIX.md` - iOS phone authentication fixes
+- `FIREBASE_IOS_FIX.md` - iOS Firebase configuration fixes
+- `FIREBASE_IOS_FIX_SUMMARY.md` - iOS Firebase fix summary
+- `FIREBASE_CONFIG_FIX.md` - Firebase configuration troubleshooting
+- `FIREBASE_HOSTING.md` - Firebase Hosting deployment guide
+- `DEPLOYMENT_GUIDE.md` - General deployment instructions
+- `CORS_WEB_FIX.md` - CORS issues resolution for web
+- `CUSTOM_DOMAIN_SETUP.md` - Custom domain configuration
+- `DEBUG_FIREBASE.md` - Firebase debugging guide
+- `firebase_web_setup.md` - Firebase web setup instructions
+- `TERMS_AND_CONDITIONS.md` - Application terms and conditions
+
+## 🚀 Quick Start Scripts
+
+### Development
+```bash
+# Run in development mode
+flutter run --dart-define=env=dev
+
+# Run on specific device
+flutter run -d <device-id> --dart-define=env=dev
+```
+
+### Production
+```bash
+# Run in production mode
+flutter run --dart-define=env=prod
+
+# Build for production
+./build_prod_apk.sh      # Android APK
+./build_prod_bundle.sh   # Android Bundle
+./build_web.sh           # Web
+```
+
+### Utilities
+```bash
+# Clean and rebuild
+./clean_rebuild.sh
+
+# Update Flutter
+./update_flutter.sh
+
+# Get SHA fingerprints (for Firebase)
+./get_sha_fingerprints.sh
+```
 
 ## 🤝 Contributing
 

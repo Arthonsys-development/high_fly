@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:highfly/config/constant/app_colors.dart';
 import 'package:highfly/config/routes.dart';
 import 'package:highfly/module/global/widgets/custom_button.dart';
+import 'package:highfly/module/utils/app_fonts.dart';
 import 'package:highfly/module/utils/responsive.dart';
 import 'package:highfly/module/providers/auth_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -95,6 +96,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
   Widget _buildMobileLayout({
     required String heading,
     required String subheading,
+    required bool showSignup,
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -153,19 +155,20 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
               SizedBox(height: 30),
               submitButton(),
               SizedBox(height: 30),
-              // GestureDetector(
-              //   onTap: () {
-              //     context.push(Routes.signUp);
-              //   },
-              //   child: Text(
-              //     'Need an account? Sign Up',
-              //     style: AppFonts.getFont(
-              //       weight: FontWeight.w500,
-              //       fontSize: 16,
-              //       color: AppColors.secondaryTextColor,
-              //     ),
-              //   ),
-              // ),
+              if (showSignup)
+                GestureDetector(
+                  onTap: () {
+                    context.push(Routes.signUp);
+                  },
+                  child: Text(
+                    'Need an account? Sign Up',
+                    style: AppFonts.getFont(
+                      weight: FontWeight.w500,
+                      fontSize: 16,
+                      color: AppColors.secondaryTextColor,
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
@@ -176,6 +179,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
   Widget _buildTabletDesktopLayout({
     required String heading,
     required String subheading,
+    required bool showSignup,
   }) {
     return Center(
       child: SingleChildScrollView(
@@ -243,20 +247,22 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
 
                 SizedBox(height: 40),
                 submitButton(),
-                // SizedBox(height: 30),
-                // GestureDetector(
-                //   onTap: () {
-                //     context.push(Routes.signUp);
-                //   },
-                //   child: Text(
-                //     'Need an account? Sign Up',
-                //     style: AppFonts.getFont(
-                //       weight: FontWeight.w500,
-                //       fontSize: 16,
-                //       color: AppColors.secondaryTextColor,
-                //     ),
-                //   ),
-                // ),
+                if (showSignup) ...[
+                  SizedBox(height: 30),
+                  GestureDetector(
+                    onTap: () {
+                      context.push(Routes.signUp);
+                    },
+                    child: Text(
+                      'Need an account? Sign Up',
+                      style: AppFonts.getFont(
+                        weight: FontWeight.w500,
+                        fontSize: 16,
+                        color: AppColors.secondaryTextColor,
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -268,11 +274,13 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
   @override
   Widget build(BuildContext context) {
     final organizationState = ref.watch(organizationProvider);
+    final organization = organizationState.asData?.value;
     final organizationName =
-        organizationState.asData?.value?.name ?? GlobalStrings.appName;
+        organization?.name ?? GlobalStrings.appName;
     final heading = "";//'${organizationName.toUpperCase()} VISITS';
     final subheading =
         'Sign in to access your $organizationName real estate management dashboard';
+    final showSignup = organization?.showSignup ?? false;
 
     // Listen to auth state changes for errors and navigation
     ref.listen<AuthState>(authControllerProvider, (previous, next) {
@@ -327,14 +335,17 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                 mobile: _buildMobileLayout(
                   heading: heading,
                   subheading: subheading,
+                  showSignup: showSignup,
                 ),
                 tablet: _buildTabletDesktopLayout(
                   heading: heading,
                   subheading: subheading,
+                  showSignup: showSignup,
                 ),
                 desktop: _buildTabletDesktopLayout(
                   heading: heading,
                   subheading: subheading,
+                  showSignup: showSignup,
                 ),
               ),
       ),

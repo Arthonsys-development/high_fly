@@ -34,6 +34,7 @@ class Organization {
   final int? maxProjects;
   final int? agentCount;
   final DateTime? createdAt;
+  final bool? showSignup;
 
   const Organization({
     this.id,
@@ -52,6 +53,7 @@ class Organization {
     this.maxProjects,
     this.agentCount,
     this.createdAt,
+    this.showSignup,
   });
 
   factory Organization.fromJson(Map<String, dynamic> json) {
@@ -72,6 +74,7 @@ class Organization {
       maxProjects: json['max_projects'] as int?,
       agentCount: json['agent_count'] as int?,
       createdAt: _parseDateTime(json['created_at']),
+      showSignup: json['show_signup'] as bool?,
     );
   }
 
@@ -92,6 +95,7 @@ class Organization {
     int? maxProjects,
     int? agentCount,
     DateTime? createdAt,
+    bool? showSignup,
   }) {
     return Organization(
       id: id ?? this.id,
@@ -110,6 +114,7 @@ class Organization {
       maxProjects: maxProjects ?? this.maxProjects,
       agentCount: agentCount ?? this.agentCount,
       createdAt: createdAt ?? this.createdAt,
+      showSignup: showSignup ?? this.showSignup,
     );
   }
 
