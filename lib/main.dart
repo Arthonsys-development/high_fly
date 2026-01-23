@@ -16,9 +16,17 @@ import 'config/network/base_url_config.dart';
 import 'module/providers/organization_provider.dart';
 import 'utils/flutter_web_error_handler.dart';
 import 'utils/notification_service.dart';
+import 'dart:io' show Platform;
+
+// Conditional import for reCAPTCHA helper (only on mobile platforms)
+import 'utils/recaptcha_helper.dart' if (dart.library.html) 'utils/recaptcha_helper_stub.dart';
 
 final scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 final navigatorKey = GlobalKey<NavigatorState>();
+
+// Global reCAPTCHA Enterprise client
+// Imported dynamically to avoid build issues on unsupported platforms
+dynamic recaptchaClient;
 
 // Background message handler - MUST be a top-level function
 @pragma('vm:entry-point')
@@ -213,6 +221,23 @@ Future<void> main() async {
   } catch (e) {
     debugPrint('🔥 App: Environment initialization error: $e');
     // Continue with default environment
+  }
+
+  // Initialize reCAPTCHA Enterprise client (Android and iOS only)
+  // Initialize early to minimize latency as recommended by Google
+  if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
+    try {
+      recaptchaClient = await initializeRecaptchaClient();
+      if (recaptchaClient != null) {
+        debugPrint('✅ reCAPTCHA Enterprise client ready');
+      }
+    } catch (e) {
+      debugPrint('❌ reCAPTCHA Enterprise initialization error: $e');
+      debugPrint('⚠️ App will continue without reCAPTCHA Enterprise');
+      recaptchaClient = null;
+    }
+  } else {
+    debugPrint('🛡️ reCAPTCHA Enterprise skipped (web platform or unsupported platform)');
   }
 
   runApp(ProviderScope(

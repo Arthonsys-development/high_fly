@@ -779,90 +779,9 @@ class _AddVisitDialogState extends ConsumerState<AddVisitDialog>
       
       // Image source dialog is already closed by the onTap handler
       
-      // Check and request camera permission on mobile
-      if (!kIsWeb) {
-        try {
-          // First check current permission status
-          PermissionStatus status = await Permission.camera.status;
-          debugPrint('Current camera permission status: $status');
-          
-          // If permission is not granted or limited, request it
-          if (status != PermissionStatus.granted && status != PermissionStatus.limited) {
-            debugPrint('Camera permission not granted, requesting permission...');
-            status = await Permission.camera.request();
-            debugPrint('Camera permission status after request: $status');
-          }
-          
-          // Handle the permission result - allow both granted and limited
-          if (status != PermissionStatus.granted && status != PermissionStatus.limited) {
-            debugPrint('Camera permission denied. Status: $status');
-            if (mounted) {
-              // Show dialog asking user if they want to open settings (only if permanently denied)
-              if (status == PermissionStatus.permanentlyDenied) {
-                final shouldOpenSettings = await showDialog<bool>(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    title: const Text('Camera Permission Required'),
-                    content: const Text(
-                      'Camera permission is required to take photos. Would you like to open Settings to enable it?',
-                    ),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pop(false),
-                        child: const Text('Cancel'),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pop(true),
-                        child: const Text('Open Settings'),
-                      ),
-                    ],
-                  ),
-                );
-                
-                if (shouldOpenSettings == true) {
-                  await openAppSettings();
-                }
-              } else {
-                // Permission denied but not permanently - show message
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Camera permission is required to take photos. Please grant permission when prompted.', style: TextStyle(color: Colors.white)),
-                    backgroundColor: Colors.orange,
-                    duration: Duration(seconds: 3),
-                  ),
-                );
-              }
-            }
-            setState(() {
-              _isPickingImage = false;
-              _imagePickStartTime = null;
-            });
-            Routes.isPickingImage = false;
-            debugPrint('Reset isPickingImage flag to false (permission denied)');
-            return;
-          }
-          
-          debugPrint('Camera permission granted or limited, proceeding with image picker');
-        } catch (permissionError) {
-          debugPrint('Error requesting camera permission: $permissionError');
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Error requesting camera permission: ${permissionError.toString()}', style: const TextStyle(color: Colors.white)),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-          setState(() {
-            _isPickingImage = false;
-            _imagePickStartTime = null;
-          });
-          Routes.isPickingImage = false;
-          return;
-        }
-      }
-      
       debugPrint('Calling image picker for camera');
+      // Call image picker directly - it will handle permissions internally (like Profile screen)
+      // The image_picker plugin automatically requests permissions when needed
       XFile? pickedImage;
       try {
         pickedImage = await _picker.pickImage(
@@ -875,12 +794,56 @@ class _AddVisitDialogState extends ConsumerState<AddVisitDialog>
       } catch (e) {
         debugPrint('Error opening camera: $e');
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Failed to open camera: ${e.toString()}', style: const TextStyle(color: Colors.white)),
-              backgroundColor: Colors.red,
-            ),
-          );
+          // Check if it's a permission error
+          if (e.toString().contains('permission') || e.toString().contains('Permission')) {
+            // Request permission explicitly if image picker failed due to permission
+            if (!kIsWeb) {
+              try {
+                final status = await Permission.camera.request();
+                if (status == PermissionStatus.permanentlyDenied) {
+                  final shouldOpenSettings = await showDialog<bool>(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('Camera Permission Required'),
+                      content: const Text(
+                        'Camera permission is required to take photos. Would you like to open Settings to enable it?',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(false),
+                          child: const Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(true),
+                          child: const Text('Open Settings'),
+                        ),
+                      ],
+                    ),
+                  );
+                  
+                  if (shouldOpenSettings == true) {
+                    await openAppSettings();
+                  }
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Camera permission is required. Please grant permission when prompted.', style: TextStyle(color: Colors.white)),
+                      backgroundColor: Colors.orange,
+                    ),
+                  );
+                }
+              } catch (permissionError) {
+                debugPrint('Error requesting camera permission: $permissionError');
+              }
+            }
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Failed to open camera: ${e.toString()}', style: const TextStyle(color: Colors.white)),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
         }
         setState(() {
           _isPickingImage = false;
@@ -1510,42 +1473,46 @@ class _AddVisitDialogState extends ConsumerState<AddVisitDialog>
   }
   
   /// Check if location permission is granted
+  /// Uses Geolocator for consistency with actual location retrieval
   Future<bool> _checkLocationPermission() async {
     try {
-      // For web platform, check using geolocator
-      if (kIsWeb) {
-        debugPrint('Checking location permission for web...');
-        var permission = await Geolocator.checkPermission();
-        debugPrint('Initial permission status: $permission');
-        
-        // If denied, try to request permission
-        if (permission == LocationPermission.denied) {
-          debugPrint('Permission denied, requesting...');
-          permission = await Geolocator.requestPermission();
-          debugPrint('Permission after request: $permission');
+      // Use Geolocator for both web and mobile for consistency
+      debugPrint('Checking location permission using Geolocator...');
+      
+      // Check if location services are enabled (mobile only)
+      if (!kIsWeb) {
+        bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+        if (!serviceEnabled) {
+          debugPrint('Location services are disabled');
+          return false;
         }
-        
-        final isGranted = permission == LocationPermission.whileInUse || 
-                          permission == LocationPermission.always;
-        debugPrint('Location permission granted: $isGranted');
-        return isGranted;
       }
       
-      // For mobile platforms, use permission_handler
-      final status = await Permission.locationWhenInUse.status;
-      if (status.isGranted) {
-        return true;
-      } else if (status.isPermanentlyDenied) {
-        // Show dialog asking user if they want to open settings
-        // Note: We can't show dialog here without context, so just return false
-        // The calling code should handle showing a message to the user
-        debugPrint('Location permission permanently denied - user needs to enable in settings');
-        return false;
-      } else {
-        // Request permission
-        final requestedStatus = await Permission.locationWhenInUse.request();
-        return requestedStatus.isGranted;
+      // Check permission status
+      LocationPermission permission = await Geolocator.checkPermission();
+      debugPrint('Location permission status: $permission');
+      
+      // If denied, try to request permission
+      if (permission == LocationPermission.denied) {
+        debugPrint('Location permission denied, requesting...');
+        permission = await Geolocator.requestPermission();
+        debugPrint('Location permission status after request: $permission');
       }
+      
+      // Check if permission is granted (whileInUse or always)
+      // Note: Geolocator doesn't have a separate limited permission enum
+      // Limited permissions on iOS are handled as whileInUse
+      final isGranted = permission == LocationPermission.whileInUse || 
+                        permission == LocationPermission.always;
+      
+      debugPrint('Location permission granted: $isGranted (permission: $permission)');
+      
+      if (permission == LocationPermission.deniedForever) {
+        debugPrint('Location permission permanently denied');
+        return false;
+      }
+      
+      return isGranted;
     } catch (e) {
       debugPrint('Error checking location permission: $e');
       // On web, if permission check fails, we'll still try to proceed
