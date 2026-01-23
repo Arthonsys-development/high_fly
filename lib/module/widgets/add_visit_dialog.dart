@@ -1045,7 +1045,7 @@ class _AddVisitDialogState extends ConsumerState<AddVisitDialog>
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('No image selected'),
+              content: Text('No image selected', style: TextStyle(color: Colors.white),),
               backgroundColor:  AppColors.primaryColor,
             ),
           );
@@ -1374,7 +1374,7 @@ class _AddVisitDialogState extends ConsumerState<AddVisitDialog>
             userLng,
             widget.project.latitude,
             widget.project.longitude,
-            100.0,
+            1000.0,
           );
           isAtProjectLocation = (within == true);
         }

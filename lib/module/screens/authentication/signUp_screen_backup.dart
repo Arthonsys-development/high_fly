@@ -135,7 +135,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('No image selected'),
+              content: Text('No image selected', style: TextStyle(color: Colors.white),),
               backgroundColor:  AppColors.primaryColor,
             ),
           );
