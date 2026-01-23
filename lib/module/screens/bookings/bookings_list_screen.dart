@@ -316,10 +316,22 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
                             return Theme(
                               data: Theme.of(context).copyWith(
                                 colorScheme: ColorScheme.light(
-                                  primary: AppColors.primaryColor,
+                                  primary: AppColors.primaryColor, // header & OK button
                                   onPrimary: Colors.white,
                                   surface: Colors.white,
-                                  onSurface: AppColors.primaryTextColor,
+                                  onSurface: Colors.black, // ✅ dialog text
+                                ),
+
+                                // ✅ THIS fixes the typed date text color
+                                textTheme: const TextTheme(
+                                  bodyLarge: TextStyle(color: Colors.black),
+                                  bodyMedium: TextStyle(color: Colors.black),
+                                ),
+
+                                // ✅ Input field (Enter Date) text & hint color
+                                inputDecorationTheme: const InputDecorationTheme(
+                                  hintStyle: TextStyle(color: Colors.black54),
+                                  labelStyle: TextStyle(color: Colors.black),
                                 ),
                               ),
                               child: child!,
