@@ -174,27 +174,122 @@ class _HoldDocumentManagementScreenState extends ConsumerState<HoldDocumentManag
   /// Pick image from camera
   Future<void> _pickImageFromCamera() async {
     try {
-      // Check and request camera permission on mobile
-      if (!kIsWeb) {
-        try {
-          final status = await Permission.camera.request();
-          if (!status.isGranted) {
+      debugPrint('📷 HoldDocumentManagement: Starting camera image pick');
+      
+      // On iOS, image_picker automatically handles camera permissions
+      // Let it request permissions internally, then catch any errors
+      XFile? pickedImage;
+      try {
+        pickedImage = await _imagePicker.pickImage(
+          source: ImageSource.camera,
+          imageQuality: 85,
+        );
+        debugPrint('📷 HoldDocumentManagement: Image picker returned: ${pickedImage != null ? 'image captured' : 'no image'}');
+      } catch (e) {
+        debugPrint('❌ HoldDocumentManagement: Error opening camera: $e');
+        
+        // Check if it's a permission error
+        final errorString = e.toString().toLowerCase();
+        if (errorString.contains('permission') || 
+            errorString.contains('camera') ||
+            errorString.contains('denied')) {
+          
+          if (!kIsWeb && mounted) {
+            // Check permission status and handle accordingly
+            try {
+              var status = await Permission.camera.status;
+              
+              if (status.isPermanentlyDenied) {
+                // Permission is permanently denied, offer to open settings
+                final shouldOpenSettings = await showDialog<bool>(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: const Text('Camera Permission Required'),
+                      content: const Text(
+                        'Camera permission is required to take photos. Would you like to open Settings to enable it?',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(false),
+                          child: const Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(true),
+                          child: const Text('Open Settings'),
+                        ),
+                      ],
+                    );
+                  },
+                );
+                
+                if (shouldOpenSettings == true) {
+                  await openAppSettings();
+                }
+              } else if (!status.isGranted) {
+                // Try to request permission
+                status = await Permission.camera.request();
+                if (!status.isGranted) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Camera permission is required to take photos'),
+                        backgroundColor: Colors.red,
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                  }
+                } else {
+                  // Permission granted, try again
+                  try {
+                    pickedImage = await _imagePicker.pickImage(
+                      source: ImageSource.camera,
+                      imageQuality: 85,
+                    );
+                  } catch (retryError) {
+                    debugPrint('❌ HoldDocumentManagement: Error on retry: $retryError');
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Failed to open camera: ${retryError.toString()}'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                    return;
+                  }
+                }
+              }
+            } catch (permissionError) {
+              debugPrint('❌ HoldDocumentManagement: Error checking permission: $permissionError');
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Camera permission is required to take photos'),
+                    backgroundColor: Colors.red,
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              }
+            }
+          } else {
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Camera permission is required to take photos'),
                   backgroundColor: Colors.red,
+                  duration: Duration(seconds: 2),
                 ),
               );
             }
-            return;
           }
-        } catch (permissionError) {
-          debugPrint('Error requesting camera permission: $permissionError');
+          return;
+        } else {
+          // Some other error occurred
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Error requesting camera permission: $permissionError'),
+                content: Text('Failed to open camera: ${e.toString()}'),
                 backgroundColor: Colors.red,
               ),
             );
@@ -203,14 +298,10 @@ class _HoldDocumentManagementScreenState extends ConsumerState<HoldDocumentManag
         }
       }
 
-      final XFile? pickedImage = await _imagePicker.pickImage(
-        source: ImageSource.camera,
-        imageQuality: 85,
-      );
-
-      if (pickedImage != null) {
+      final image = pickedImage;
+      if (image != null) {
         // Check file size (10MB limit)
-        final fileSize = await pickedImage.length();
+        final fileSize = await image.length();
         if (fileSize > 10 * 1024 * 1024) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -224,9 +315,9 @@ class _HoldDocumentManagementScreenState extends ConsumerState<HoldDocumentManag
         }
 
         setState(() {
-          _selectedFilePath = pickedImage.path;
-          _selectedXFile = pickedImage;
-          _selectedFileType = _detectFileType(pickedImage.path);
+          _selectedFilePath = image.path;
+          _selectedXFile = image;
+          _selectedFileType = _detectFileType(image.path);
         });
         
         // Upload directly
