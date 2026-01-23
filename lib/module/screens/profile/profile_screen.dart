@@ -274,7 +274,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         // Team Leader Name Field
         ProfileTextField(
           titleText: 'Team Leader Name',
-          isMandatory: state.profile?.teamLeaderName?.isNotEmpty ?? false,
+          isMandatory: /*state.profile?.teamLeaderName?.isNotEmpty ??*/ false,
           controller: _teamLeaderNameController,
           enabled: state.isEditing,
           maxLength: 30,
@@ -304,7 +304,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         // ID Number Field (Read-only)
         ProfileTextField(
           titleText: 'ID Number',
-          isMandatory: state.profile?.idNumber?.isNotEmpty ?? false,
+          isMandatory: /*state.profile?.idNumber?.isNotEmpty ??*/ false,
           controller: TextEditingController(text: state.profile?.idNumber ?? ''),
           enabled: false,
           isReadOnly: true,
