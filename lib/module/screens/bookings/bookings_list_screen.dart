@@ -631,7 +631,7 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
                         ),
                       ),
                     ],
-                    if (cancelledCount > 0) ...[
+    if (cancelledCount > 0) ...[
                       const SizedBox(width: 20),
                       Expanded(
                         child: _buildStatsCard(
