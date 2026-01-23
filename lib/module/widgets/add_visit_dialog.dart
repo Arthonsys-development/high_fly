@@ -839,7 +839,7 @@ class _AddVisitDialogState extends ConsumerState<AddVisitDialog>
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Failed to open camera: ${e.toString()}', style: const TextStyle(color: Colors.white)),
+                content: Text('Camera access denied', style: const TextStyle(color: Colors.white)),
                 backgroundColor: Colors.red,
               ),
             );

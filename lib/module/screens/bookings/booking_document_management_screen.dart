@@ -253,7 +253,7 @@ class _BookingDocumentManagementScreenState extends ConsumerState<BookingDocumen
                     if (mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text('Failed to open camera: ${retryError.toString()}'),
+                          content: Text('Camera access denied'),
                           backgroundColor: Colors.red,
                         ),
                       );
@@ -291,7 +291,7 @@ class _BookingDocumentManagementScreenState extends ConsumerState<BookingDocumen
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Failed to open camera: ${e.toString()}'),
+                content: Text('Camera access denied'),
                 backgroundColor: Colors.red,
               ),
             );
@@ -543,7 +543,7 @@ class _BookingDocumentManagementScreenState extends ConsumerState<BookingDocumen
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error uploading document: $e'),
+            content: Text(e.toString().replaceAll(RegExp(r'^Exception: '), '')),
             backgroundColor: Colors.red,
           ),
         );

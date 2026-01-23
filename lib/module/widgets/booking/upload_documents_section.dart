@@ -183,7 +183,7 @@ class _UploadDocumentsSectionState extends State<UploadDocumentsSection> {
                     if (mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text('Failed to open camera: ${retryError.toString()}'),
+                          content: Text('Camera access denied'),
                           backgroundColor: Colors.red,
                         ),
                       );
@@ -221,7 +221,7 @@ class _UploadDocumentsSectionState extends State<UploadDocumentsSection> {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Failed to open camera: ${e.toString()}'),
+                content: Text('Camera access denied'),
                 backgroundColor: Colors.red,
               ),
             );
@@ -357,7 +357,7 @@ class _UploadDocumentsSectionState extends State<UploadDocumentsSection> {
                     if (mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text('Failed to open gallery: ${retryError.toString()}'),
+                          content: Text('Gallery access denied'),
                           backgroundColor: Colors.red,
                         ),
                       );
@@ -395,7 +395,7 @@ class _UploadDocumentsSectionState extends State<UploadDocumentsSection> {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Failed to open gallery: ${e.toString()}'),
+                content: Text('Gallery access denied'),
                 backgroundColor: Colors.red,
               ),
             );
@@ -536,7 +536,7 @@ class _UploadDocumentsSectionState extends State<UploadDocumentsSection> {
                     if (mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text('Failed to open file picker: ${retryError.toString()}'),
+                          content: Text('File picker access denied'),
                           backgroundColor: Colors.red,
                         ),
                       );
@@ -574,7 +574,7 @@ class _UploadDocumentsSectionState extends State<UploadDocumentsSection> {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Failed to open file picker: ${e.toString()}'),
+                content: Text('File picker access denied'),
                 backgroundColor: Colors.red,
               ),
             );
