@@ -51,7 +51,7 @@ android {
         minSdk = 24  // Minimum SDK 24 is required for reCAPTCHA Enterprise
         targetSdk = 36
         versionCode = 5
-        versionName = "1.0.2"
+        versionName = "1.0.1"
         multiDexEnabled = true
     }
 
