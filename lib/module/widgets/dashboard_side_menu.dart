@@ -31,7 +31,7 @@ class DashboardSideMenu extends StatefulWidget {
 }
 
 class _DashboardSideMenuState extends State<DashboardSideMenu> {
-  final List<MenuItem> menuItems = [
+  List<MenuItem> menuItems = [
     MenuItem(
       icon: Icons.business,
       title: 'Project',
@@ -69,10 +69,24 @@ class _DashboardSideMenuState extends State<DashboardSideMenu> {
     // ),
   ];
 
+  bool _isGuest = false;
+
   @override
   void initState() {
-
     super.initState();
+    _checkGuestStatus();
+  }
+
+  Future<void> _checkGuestStatus() async {
+    final storage = const FlutterSecureStorage();
+    final isGuest = await storage.read(key: SharedPreferenceStrings.isGuest);
+    setState(() {
+      _isGuest = isGuest == 'true';
+      if (_isGuest) {
+        // Remove Profile menu item for guest users
+        menuItems = menuItems.where((item) => item.index != 5).toList();
+      }
+    });
   }
 
   @override
@@ -821,81 +835,97 @@ class MobileSideMenuDrawer extends ConsumerWidget {
   }
 
   Widget _buildUserProfile(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        onMenuItemSelected(5);
-        Navigator.of(context).pop();
-      },
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color:  AppColors.primaryColor.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color:  AppColors.primaryColor.withValues(alpha: 0.2),
-            width: 1,
-          ),
-        ),
-        child: FutureBuilder<Map<String, String?>>(
-          future: _getUserData(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
+    return FutureBuilder<bool>(
+      future: _isGuestUser(),
+      builder: (context, guestSnapshot) {
+        // If guest user, don't show the profile section
+        if (guestSnapshot.data == true) {
+          return const SizedBox.shrink();
+        }
 
-            if (snapshot.hasError || !snapshot.hasData) {
-              return _buildDefaultUserProfile(context);
-            }
-
-            final userData = snapshot.data!;
-            final userName = userData['name'] ?? 'Guest User';
-            final profilePhoto = userData['photo'];
-
-            return Row(
-              children: [
-                // User profile image or default icon
-                _buildProfileAvatar(
-                  photoUrl: profilePhoto,
-                  radius: 24,
-                  iconSize: 20,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        userName,
-                        style: const TextStyle(
-                          color: AppColors.primaryTextColor,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'View Profile',
-                        style: TextStyle(
-                          color:  AppColors.primaryColor.withValues(alpha: 0.8),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(
-                  Icons.arrow_forward_ios,
-                  size: 16,
-                  color:  AppColors.primaryColor.withValues(alpha: 0.6),
-                ),
-              ],
-            );
+        return GestureDetector(
+          onTap: () {
+            onMenuItemSelected(5);
+            Navigator.of(context).pop();
           },
-        ),
-      ),
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color:  AppColors.primaryColor.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color:  AppColors.primaryColor.withValues(alpha: 0.2),
+                width: 1,
+              ),
+            ),
+            child: FutureBuilder<Map<String, String?>>(
+              future: _getUserData(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (snapshot.hasError || !snapshot.hasData) {
+                  return _buildDefaultUserProfile(context);
+                }
+
+                final userData = snapshot.data!;
+                final userName = userData['name'] ?? 'Guest User';
+                final profilePhoto = userData['photo'];
+
+                return Row(
+                  children: [
+                    // User profile image or default icon
+                    _buildProfileAvatar(
+                      photoUrl: profilePhoto,
+                      radius: 24,
+                      iconSize: 20,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            userName,
+                            style: const TextStyle(
+                              color: AppColors.primaryTextColor,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'View Profile',
+                            style: TextStyle(
+                              color:  AppColors.primaryColor.withValues(alpha: 0.8),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      Icons.arrow_forward_ios,
+                      size: 16,
+                      color:  AppColors.primaryColor.withValues(alpha: 0.6),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        );
+      },
     );
+  }
+
+  Future<bool> _isGuestUser() async {
+    final storage = const FlutterSecureStorage();
+    final isGuest = await storage.read(key: SharedPreferenceStrings.isGuest);
+    return isGuest == 'true';
   }
 
   Widget _buildProfileAvatar({
@@ -954,67 +984,77 @@ class MobileSideMenuDrawer extends ConsumerWidget {
   }
 
   Widget _buildDefaultUserProfile(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        // Navigator.of(context).pop(); // Close drawer first
-        // context.go(Routes.profileScreen);
-        onMenuItemSelected(5);
-        Navigator.of(context).pop(); // Close drawer
-      },
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color:  AppColors.primaryColor.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color:  AppColors.primaryColor.withValues(alpha: 0.2),
-            width: 1,
+    return FutureBuilder<bool>(
+      future: _isGuestUser(),
+      builder: (context, guestSnapshot) {
+        // If guest user, don't show the profile section
+        if (guestSnapshot.data == true) {
+          return const SizedBox.shrink();
+        }
+
+        return GestureDetector(
+          onTap: () {
+            // Navigator.of(context).pop(); // Close drawer first
+            // context.go(Routes.profileScreen);
+            onMenuItemSelected(5);
+            Navigator.of(context).pop(); // Close drawer
+          },
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color:  AppColors.primaryColor.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color:  AppColors.primaryColor.withValues(alpha: 0.2),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 24,
+                  backgroundColor:  AppColors.primaryColor.withValues(alpha: 0.2),
+                  child: const Icon(
+                    Icons.person,
+                    color:  AppColors.primaryColor,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Guest User',
+                        style: TextStyle(
+                          color: AppColors.primaryTextColor,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'View Profile',
+                        style: TextStyle(
+                          color:  AppColors.primaryColor.withValues(alpha: 0.8),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios,
+                  size: 16,
+                  color:  AppColors.primaryColor.withValues(alpha: 0.6),
+                ),
+              ],
+            ),
           ),
-        ),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 24,
-              backgroundColor:  AppColors.primaryColor.withValues(alpha: 0.2),
-              child: const Icon(
-                Icons.person,
-                color:  AppColors.primaryColor,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Guest User',
-                    style: TextStyle(
-                      color: AppColors.primaryTextColor,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'View Profile',
-                    style: TextStyle(
-                      color:  AppColors.primaryColor.withValues(alpha: 0.8),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Icon(
-              Icons.arrow_forward_ios,
-              size: 16,
-              color:  AppColors.primaryColor.withValues(alpha: 0.6),
-            ),
-          ],
-        ),
-      ),
+        );
+      },
     );
   }
 

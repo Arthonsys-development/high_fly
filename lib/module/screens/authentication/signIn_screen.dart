@@ -30,6 +30,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
   String? _pendingPhoneNumber; // Track phone number for navigation
   bool _hasNavigated = false; // Prevent multiple navigations
   bool _isVerifyingPhone = false;
+  bool _isGuestLoading = false; // Track guest login loading state
 
   @override
   void dispose() {
@@ -154,8 +155,12 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
 
               SizedBox(height: 30),
               submitButton(),
-              SizedBox(height: 30),
-              if (showSignup)
+              if (showSignup) ...[
+                SizedBox(height: 30),
+                _buildOrDivider(),
+                SizedBox(height: 20),
+                _buildGuestLoginButton(),
+                SizedBox(height: 20),
                 GestureDetector(
                   onTap: () {
                     context.push(Routes.signUp);
@@ -169,6 +174,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                     ),
                   ),
                 ),
+              ],
             ],
           ),
         ),
@@ -249,6 +255,10 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                 submitButton(),
                 if (showSignup) ...[
                   SizedBox(height: 30),
+                  _buildOrDivider(),
+                  SizedBox(height: 20),
+                  _buildGuestLoginButton(),
+                  SizedBox(height: 20),
                   GestureDetector(
                     onTap: () {
                       context.push(Routes.signUp);
@@ -352,6 +362,100 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
     );
   }
 
+
+  // OR Divider
+  Widget _buildOrDivider() {
+    return Row(
+      children: [
+        Expanded(
+          child: Divider(
+            color: Colors.grey[400],
+            thickness: 1,
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Text(
+            'OR',
+            style: AppFonts.getFont(
+              weight: FontWeight.w500,
+              fontSize: 14,
+              color: AppColors.secondaryTextColor,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Divider(
+            color: Colors.grey[400],
+            thickness: 1,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Guest Login Button
+  Widget _buildGuestLoginButton() {
+    final authState = ref.watch(authControllerProvider);
+    final isProcessing = authState.isLoading || _isVerifyingPhone || _isGuestLoading;
+
+    return CustomButton(
+      onPressed: isProcessing ? null : _handleGuestLogin,
+      text: _isGuestLoading ? 'Signing in as Guest...' : 'Continue as Guest',
+      height: 52,
+      fontSize: 18,
+      backgroundColor: Colors.grey[700],
+      leadingWidget: _isGuestLoading
+          ? const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              ),
+            )
+          : const Icon(Icons.person_outline, color: Colors.white),
+    );
+  }
+
+  // Handle guest login
+  Future<void> _handleGuestLogin() async {
+    setState(() {
+      _isGuestLoading = true;
+    });
+
+    try {
+      debugPrint('🎭 Starting guest login flow...');
+      final success = await ref.read(authControllerProvider.notifier).signInAsGuest();
+      
+      if (success && mounted) {
+        debugPrint('🎭 Guest login successful, navigating to dashboard...');
+        _showSuccessSnackBar('Signed in as Guest');
+        
+        // Navigate to dashboard
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (mounted) {
+            context.go(Routes.dashboardScreen);
+          }
+        });
+      } else if (mounted) {
+        debugPrint('🎭 Guest login failed');
+        final errorMessage = ref.read(authControllerProvider).error ?? 'Guest login failed';
+        _showErrorSnackBar(errorMessage);
+      }
+    } catch (e) {
+      debugPrint('🎭 Exception during guest login: $e');
+      if (mounted) {
+        _showErrorSnackBar('Failed to sign in as guest. Please try again.');
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isGuestLoading = false;
+        });
+      }
+    }
+  }
 
   Widget submitButton() {
     final authState = ref.watch(authControllerProvider);

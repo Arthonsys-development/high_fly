@@ -402,6 +402,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
               borderRadius: 6,
               contentSpace: 8,
               maxLength: 13,
+              isMandatory: false,
             ),
             const SizedBox(height: 20),
             CustomTextField(

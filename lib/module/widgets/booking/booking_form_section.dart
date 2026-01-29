@@ -4,12 +4,15 @@ import 'package:highfly/config/constant/const_assets.dart';
 import 'package:highfly/data/repository/auth_api_repository.dart';
 import '../../../data/models/project_model.dart' as local_model;
 import '../../../config/constant/app_colors.dart';
+import '../../../config/constant/app_strings.dart';
 import '../../global/widgets/custom_text_field.dart';
 import 'header_icon_widget.dart';
 import 'plot_details_card.dart';
 import 'action_buttons.dart';
 import 'project_selection_dialog.dart';
 import 'plot_selection_dialog.dart';
+import '../guest_alert_helper.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class BookingFormSection extends StatefulWidget {
   final String title;
@@ -46,6 +49,7 @@ class _BookingFormSectionState extends State<BookingFormSection> {
   final TextEditingController _plotController = TextEditingController();
   List<local_model.Plot> _availablePlots = [];
   bool _isLoadingPlots = false;
+  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
 
   @override
   void initState() {
@@ -304,7 +308,7 @@ class _BookingFormSectionState extends State<BookingFormSection> {
           // Action buttons
           ActionButtons(
             onPrevious: widget.onPrevious,
-            onNext: _canProceed() ? () => widget.onNext?.call(_selectedProject, _selectedPlot) : null,
+            onNext: _canProceed() ? _handleNext : null,
             isPreviousEnabled: widget.onPrevious != null,
             isNextEnabled: _canProceed(),
             nextButtonText: widget.nextButtonText,
@@ -320,6 +324,25 @@ class _BookingFormSectionState extends State<BookingFormSection> {
     // Can proceed only if project is selected and plot is selected (when plot field is visible)
     if (_selectedProject == null) return false;
     return _selectedPlot != null;
+  }
+
+  /// Handle next button tap with guest user check
+  Future<void> _handleNext() async {
+    // Check if user is a guest
+    final isGuest = await _secureStorage.read(key: SharedPreferenceStrings.isGuest);
+    if (isGuest == 'true') {
+      debugPrint('Guest user attempting to proceed with booking/hold - showing alert');
+      if (mounted) {
+        GuestAlertHelper.showGuestAlert(
+          context,
+          message: 'Guest users cannot book or hold plots. Please sign in with your phone number to access all features.',
+        );
+      }
+      return;
+    }
+
+    // Proceed with the callback if user is not a guest
+    widget.onNext?.call(_selectedProject, _selectedPlot);
   }
 
   void _showProjectSelectionDialog() {
