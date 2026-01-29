@@ -48,9 +48,9 @@ android {
 
     defaultConfig {
         applicationId = "vistarak.apps"
-        minSdk = 24  // Minimum SDK 24 is required for reCAPTCHA Enterprise
+        minSdk = 24
         targetSdk = 36
-        versionCode = 5
+        versionCode = 4
         versionName = "1.0.1"
         multiDexEnabled = true
     }
