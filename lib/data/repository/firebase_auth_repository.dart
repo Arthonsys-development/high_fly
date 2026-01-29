@@ -366,4 +366,35 @@ class FirebaseAuthRepository {
       return null;
     }
   }
+
+  // Sign in anonymously (Guest Login)
+  Future<UserCredential?> signInAnonymously() async {
+    try {
+      // Ensure Firebase is initialized
+      final isInitialized = await _ensureFirebaseInitialized();
+      if (!isInitialized) {
+        throw 'Firebase initialization failed. Please check your configuration.';
+      }
+      
+      debugPrint('🔥 Firebase Auth: Starting anonymous sign-in (Guest Login)');
+      final userCredential = await _firebaseAuth.signInAnonymously();
+      debugPrint('🔥 Firebase Auth: Anonymous sign-in successful, UID: ${userCredential.user?.uid}');
+      return userCredential;
+    } on FirebaseAuthException catch (e) {
+      debugPrint('🔥 Firebase Auth: Anonymous sign-in failed with code: ${e.code}');
+      debugPrint('🔥 Firebase Auth: Error message: ${e.message}');
+      String errorMessage;
+      switch (e.code) {
+        case 'operation-not-allowed':
+          errorMessage = 'Anonymous authentication is not enabled. Please enable it in Firebase Console.';
+          break;
+        default:
+          errorMessage = 'Guest login failed: ${e.message}';
+      }
+      throw errorMessage;
+    } catch (e) {
+      debugPrint('🔥 Firebase Auth: Exception during anonymous sign-in: $e');
+      throw 'Failed to sign in as guest: ${e.toString()}';
+    }
+  }
 }

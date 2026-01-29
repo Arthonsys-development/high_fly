@@ -48,6 +48,15 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   // Firebase auth repository
   final FirebaseAuthRepository _firebaseAuthRepository = FirebaseAuthRepository();
 
+  /// Generate a unique RERA number if not provided by user
+  String _generateReraNumber() {
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final phoneNumber = _phoneNumberController.text.trim();
+    // Create RERA number with format: RERA-{last4digitsPhone}-{timestamp}
+    final phoneDigits = phoneNumber.length >= 4 ? phoneNumber.substring(phoneNumber.length - 4) : phoneNumber.padLeft(4, '0');
+    return 'RERA-$phoneDigits-$timestamp';
+  }
+
   @override
   void initState() {
     super.initState();
@@ -511,7 +520,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
               borderRadius: 6,
               contentSpace: 8,
               maxLength: 30,
-              isMandatory: true,
+              isMandatory: false,
             ),
             SizedBox(height: 20),
             CustomTextField(
@@ -773,7 +782,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     // Validate form fields before sending OTP
     final fullName = _fullNameController.text.trim();
     final phoneNumber = "+91${_phoneNumberController.text.trim()}";
-    final reraNumber = _reraNumberController.text.trim();
+    var reraNumber = _reraNumberController.text.trim();
     final teamLeaderName = _teamLeaderNameController.text.trim();
     
     // Validate required fields
@@ -797,14 +806,10 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
       return;
     }
     
+    // Generate RERA number if not provided
     if (reraNumber.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter your RERA number'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
+      reraNumber = _generateReraNumber();
+      debugPrint('🔥 Generated RERA Number: $reraNumber');
     }
 
     if (teamLeaderName.isEmpty) {

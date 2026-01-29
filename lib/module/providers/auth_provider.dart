@@ -75,6 +75,7 @@ class AuthController extends Notifier<AuthState> {
     SharedPreferenceStrings.fullName,
     SharedPreferenceStrings.phoneNumber,
     SharedPreferenceStrings.profilePhoto,
+    SharedPreferenceStrings.isGuest,
     'access_token',
     'user_data',
   ];
@@ -278,6 +279,133 @@ class AuthController extends Notifier<AuthState> {
   // Reset state
   void reset() {
     state = AuthState();
+  }
+
+  // Check if current user is a guest
+  Future<bool> isGuestUser() async {
+    try {
+      final isGuestStr = await _secureStorage.read(key: SharedPreferenceStrings.isGuest);
+      return isGuestStr == 'true';
+    } catch (e) {
+      debugPrint('Error checking guest status: $e');
+      return false;
+    }
+  }
+
+  // Guest Login (Anonymous Sign-in)
+  Future<bool> signInAsGuest() async {
+    state = state.copyWith(isLoading: true, error: null);
+
+    try {
+      debugPrint('🔑 Starting guest login (anonymous sign-in)...');
+      
+      // Sign in anonymously with Firebase
+      final userCredential = await _authRepository.signInAnonymously();
+      
+      if (userCredential == null || userCredential.user == null) {
+        throw 'Failed to sign in as guest';
+      }
+      
+      debugPrint('🔑 Guest login successful, getting ID token...');
+      
+      // Get Firebase ID token
+      final String? idToken = await _authRepository.getIdToken();
+      
+      if (idToken == null) {
+        throw 'Failed to get Firebase ID token';
+      }
+      
+      debugPrint('🔑 ID token obtained, verifying with backend...');
+      
+      // Verify login token with backend API (use default guest phone number)
+      const guestPhoneNumber = '+919998880060'; // Default phone number for guest users
+      final loginTokenRequest = LoginTokenRequest(
+        idToken: idToken,
+        phoneNumber: guestPhoneNumber,
+      );
+      debugPrint('🔑 Sending verify-token request with guest phone number: $guestPhoneNumber');
+      final result = await _authApiRepository.verifyToken(loginTokenRequest);
+      
+      final tokenVerificationSucceeded = result['success'] == true;
+      if (!tokenVerificationSucceeded) {
+        final message = result['message']?.toString() ?? 'Guest login verification failed';
+        await _cleanupFailedLogin();
+        throw message;
+      }
+      
+      final data = result['data'];
+      if (data is! Map) {
+        await _cleanupFailedLogin();
+        throw 'Invalid response received from login API';
+      }
+
+      debugPrint('🔑 Backend verification successful, saving guest user data...');
+
+      // Save access token to secure storage
+      final accessToken = data['access_token']?.toString() ?? '';
+      final agent = data['agent'];
+      
+      // For guest users, agent data might be minimal or null
+      String id = '';
+      String fullName = 'Guest User';
+      String phoneNumber = '';
+      String profileImage = '';
+      
+      if (agent is Map) {
+        id = agent['id']?.toString() ?? '';
+        fullName = agent['full_name']?.toString() ?? 'Guest User';
+        final user = agent['user'];
+        phoneNumber = (user is Map ? user['phone_number'] : null)?.toString() ?? '';
+        profileImage = (user is Map ? user['profile_image'] : null)?.toString() ?? '';
+      }
+
+      // Save guest user data with isGuest flag
+      await _secureStorage.write(key: SharedPreferenceStrings.isGuest, value: 'true');
+      await _secureStorage.write(key: SharedPreferenceStrings.accessToken, value: accessToken);
+      await _secureStorage.write(key: SharedPreferenceStrings.id, value: id);
+      await _secureStorage.write(key: SharedPreferenceStrings.fullName, value: fullName);
+      await _secureStorage.write(key: SharedPreferenceStrings.phoneNumber, value: phoneNumber);
+      await _secureStorage.write(key: SharedPreferenceStrings.profilePhoto, value: BaseUrlConfig.buildImageUrl(profileImage));
+
+      debugPrint('🔑 Guest user data saved successfully');
+
+      // Register device for notifications (optional for guest users)
+      await registerDeviceForNotifications();
+
+      // Log analytics event for guest login
+      try {
+        final analyticsService = ref.read(analyticsProvider);
+        await analyticsService.logLogin(method: 'anonymous_guest');
+        // Set user ID for analytics
+        if (id.isNotEmpty) {
+          await analyticsService.setUserId(id);
+        }
+      } catch (e) {
+        debugPrint('Error logging guest login analytics: $e');
+      }
+
+      // Load user profile after successful login (might be minimal for guest)
+      try {
+        debugPrint('🔄 AuthProvider: Loading guest profile...');
+        final profileNotifier = ref.read(profileProvider.notifier);
+        await profileNotifier.loadProfile();
+        debugPrint('✅ AuthProvider: Guest profile loaded successfully');
+      } catch (e) {
+        debugPrint('⚠️ AuthProvider: Failed to load guest profile - $e');
+        // Don't fail the login if profile loading fails
+      }
+
+      state = state.copyWith(isLoading: false);
+      return true;
+    } catch (e) {
+      debugPrint('❌ Guest login failed: $e');
+      await _cleanupFailedLogin();
+      state = state.copyWith(
+        isLoading: false,
+        error: e.toString(),
+      );
+      return false;
+    }
   }
 }
 
