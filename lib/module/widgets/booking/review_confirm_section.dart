@@ -313,7 +313,7 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
         ),
         _buildInfoRow(
           'Area',
-          '${widget.bookingSummary.selectedPlot?.area ?? '-'} sq ft',
+          '${widget.bookingSummary.selectedPlot?.area ?? '-'} sq mtr',
         ),
         _buildInfoRow(
           'Price',

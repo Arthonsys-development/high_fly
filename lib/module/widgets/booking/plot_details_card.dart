@@ -67,11 +67,11 @@ class PlotDetailsCard extends StatelessWidget {
                 child: _buildDetailColumn([
                   _DetailItem('Project:', selectedProjectName ?? ''),
                   _DetailItem('Dimensions:', plot.dimensions),
-                  _DetailItem('Area:', '${plot.area.toInt()} sq ft'),
+                  _DetailItem('Area:', '${plot.area.toInt()} sq mtr'),
                   if (hasSaleableSize)
                     _DetailItem(
                       'Saleable Size:',
-                      '${saleableSizeValue.toStringAsFixed(0)} sq ft',
+                      '${saleableSizeValue.toStringAsFixed(0)} sq mtr',
                     ),
                   _DetailItem(
                     showPlcBreakup ? 'Price (with PLC):' : 'Price:',
