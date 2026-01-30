@@ -17,6 +17,62 @@ class OrganizationResponse {
   }
 }
 
+class AppVersionInfo {
+  final String? version;
+  final bool? isMandatoryUpdate;
+  final String? message;
+
+  const AppVersionInfo({
+    this.version,
+    this.isMandatoryUpdate,
+    this.message,
+  });
+
+  factory AppVersionInfo.fromJson(Map<String, dynamic> json) {
+    return AppVersionInfo(
+      version: json['version'] as String?,
+      isMandatoryUpdate: json['is_mandatory_update'] as bool?,
+      message: json['message'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'version': version,
+      'is_mandatory_update': isMandatoryUpdate,
+      'message': message,
+    };
+  }
+}
+
+class AppUpdate {
+  final AppVersionInfo? ios;
+  final AppVersionInfo? android;
+
+  const AppUpdate({
+    this.ios,
+    this.android,
+  });
+
+  factory AppUpdate.fromJson(Map<String, dynamic> json) {
+    return AppUpdate(
+      ios: json['ios'] != null
+          ? AppVersionInfo.fromJson(json['ios'] as Map<String, dynamic>)
+          : null,
+      android: json['android'] != null
+          ? AppVersionInfo.fromJson(json['android'] as Map<String, dynamic>)
+          : null,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'ios': ios?.toJson(),
+      'android': android?.toJson(),
+    };
+  }
+}
+
 class Organization {
   final String? id;
   final String? name;
@@ -35,6 +91,7 @@ class Organization {
   final int? agentCount;
   final DateTime? createdAt;
   final bool? showSignup;
+  final AppUpdate? appUpdate;
 
   const Organization({
     this.id,
@@ -54,6 +111,7 @@ class Organization {
     this.agentCount,
     this.createdAt,
     this.showSignup,
+    this.appUpdate,
   });
 
   factory Organization.fromJson(Map<String, dynamic> json) {
@@ -75,6 +133,9 @@ class Organization {
       agentCount: json['agent_count'] as int?,
       createdAt: _parseDateTime(json['created_at']),
       showSignup: json['show_signup'] as bool?,
+      appUpdate: json['app_update'] != null
+          ? AppUpdate.fromJson(json['app_update'] as Map<String, dynamic>)
+          : null,
     );
   }
 
@@ -96,6 +157,7 @@ class Organization {
     int? agentCount,
     DateTime? createdAt,
     bool? showSignup,
+    AppUpdate? appUpdate,
   }) {
     return Organization(
       id: id ?? this.id,
@@ -115,6 +177,7 @@ class Organization {
       agentCount: agentCount ?? this.agentCount,
       createdAt: createdAt ?? this.createdAt,
       showSignup: showSignup ?? this.showSignup,
+      appUpdate: appUpdate ?? this.appUpdate,
     );
   }
 

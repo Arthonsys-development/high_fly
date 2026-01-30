@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:highfly/config/constant/app_strings.dart';
 import 'package:highfly/module/providers/organization_provider.dart';
 import 'package:highfly/module/widgets/organization_logo.dart';
+import 'package:highfly/utils/app_update_service.dart';
 
 import '../../../config/routes.dart';
 
@@ -35,6 +36,11 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
         await _forceLogoutDueToOrganizationStatus();
         return;
       }
+
+      // Check for app updates
+      if (organization != null && mounted) {
+        await _checkForAppUpdate(organization);
+      }
     } catch (error) {
       debugPrint('SplashScreen: Failed to load organization: $error');
     } finally {
@@ -43,6 +49,56 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
         return;
       }
       context.go(Routes.signIn);
+    }
+  }
+
+  Future<void> _checkForAppUpdate(organization) async {
+    try {
+      final (isUpdateAvailable, isMandatory, message) =
+          await AppUpdateService.checkForUpdate(organization);
+
+      if (isUpdateAvailable && mounted) {
+        final shouldUpdate = await AppUpdateService.showUpdateDialog(
+          context: context,
+          isMandatory: isMandatory,
+          message: message,
+        );
+
+        if (shouldUpdate) {
+          await AppUpdateService.openAppStore();
+          // If mandatory, don't proceed with navigation
+          if (isMandatory) {
+            // Keep the user on this screen
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Please update the app to continue'),
+                  duration: Duration(seconds: 3),
+                ),
+              );
+            }
+            // Prevent navigation by throwing an exception
+            throw Exception('Mandatory update required');
+          }
+        } else if (isMandatory) {
+          // User tried to dismiss mandatory update - keep them on splash
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Update is required to use the app'),
+                duration: Duration(seconds: 3),
+              ),
+            );
+          }
+          throw Exception('Mandatory update required');
+        }
+      }
+    } catch (error) {
+      debugPrint('SplashScreen: Error checking for updates: $error');
+      // If it's a mandatory update exception, rethrow it
+      if (error.toString().contains('Mandatory update required')) {
+        rethrow;
+      }
     }
   }
 
