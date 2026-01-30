@@ -181,12 +181,12 @@ class Plot {
   double get effectivePrice => priceWithPlc ?? price;
 
   String get displayText =>
-      '$plotNumber - ${area.toInt()} sq ft - ₹${effectivePrice.toInt()}';
+      '$plotNumber - ${area.toInt()} - ₹${effectivePrice.toInt()}';
   String get displayTextOnPopup {
     final dimensionLabel = dimensions.isNotEmpty
         ? dimensions
-        : '${area.toInt()} sq ft';
-    return '$dimensionLabel - ${area.toInt()} sq ft - ₹${effectivePrice.toInt()}';
+        : '${area.toInt()}';
+    return '$dimensionLabel - ${area.toInt()} - ₹${effectivePrice.toInt()}';
   }
 
   static double? _parseDouble(dynamic value) {

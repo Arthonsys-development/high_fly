@@ -220,7 +220,7 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
               if (booking.plotSize != null && booking.plotSize!.isNotEmpty)
                 _buildDetailRow('Plot Size', booking.plotSize!),
               if (booking.plotArea != null && booking.plotArea!.isNotEmpty)
-                _buildDetailRow('Plot Area', '${booking.plotArea} sq ft'),
+                _buildDetailRow('Plot Area', '${booking.plotArea} sq mtr'),
               if (booking.plotPrice != null && booking.plotPrice!.isNotEmpty)
                 _buildDetailRow('Plot Price', '₹${booking.plotPrice}'),
               if (booking.plotFacing != null && booking.plotFacing!.isNotEmpty)

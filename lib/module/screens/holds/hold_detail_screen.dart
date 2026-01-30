@@ -217,7 +217,7 @@ class _HoldDetailScreenState extends ConsumerState<HoldDetailScreen> {
                     if (hold.plotSize != null && hold.plotSize!.isNotEmpty)
                       _buildDetailRow('Plot Size', hold.plotSize!),
                     if (hold.plotArea != null && hold.plotArea!.isNotEmpty)
-                      _buildDetailRow('Plot Area', '${hold.plotArea} sq ft'),
+                      _buildDetailRow('Plot Area', '${hold.plotArea} sq mtr'),
                     if (hold.plotPrice != null && hold.plotPrice!.isNotEmpty)
                       _buildDetailRow('Plot Price', '₹${hold.plotPrice}'),
                     if (hold.plotFacing != null && hold.plotFacing!.isNotEmpty)
