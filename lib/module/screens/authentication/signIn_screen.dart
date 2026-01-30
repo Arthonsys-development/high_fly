@@ -8,6 +8,9 @@ import 'package:highfly/module/utils/app_fonts.dart';
 import 'package:highfly/module/utils/responsive.dart';
 import 'package:highfly/module/providers/auth_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 import '../../../config/constant/app_strings.dart';
 import '../../../config/constant/const_assets.dart';
@@ -16,6 +19,7 @@ import '../../providers/organization_provider.dart';
 import '../../widgets/organization_logo.dart';
 import 'otp_verification_screen.dart';
 import '../../../data/repository/auth_api_repository_provider.dart';
+import '../../../data/models/response_model/organization_response_model.dart';
 
 class SignInScreen extends ConsumerStatefulWidget {
   const SignInScreen({super.key});
@@ -31,6 +35,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
   bool _hasNavigated = false; // Prevent multiple navigations
   bool _isVerifyingPhone = false;
   bool _isGuestLoading = false; // Track guest login loading state
+  String? _currentAppVersion; // Store current app version
 
   @override
   void dispose() {
@@ -43,12 +48,28 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
     super.initState();
     // Check if user is already signed in
     _checkAuthState();
+    // Get current app version
+    _getCurrentAppVersion();
     // Reset auth state after first frame to avoid modifying provider during build
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         ref.read(authControllerProvider.notifier).reset();
       }
     });
+  }
+
+  /// Get current app version
+  Future<void> _getCurrentAppVersion() async {
+    try {
+      final packageInfo = await PackageInfo.fromPlatform();
+      if (mounted) {
+        setState(() {
+          _currentAppVersion = packageInfo.version;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error getting app version: $e');
+    }
   }
 
   void _checkAuthState() {
@@ -91,6 +112,66 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
     //   return 'Please enter a valid phone number (e.g., 1234567890)';
     // }
     return null; // Add explicit return
+  }
+
+  /// Convert version string to number (e.g., "1.0.3" → 103)
+  int _versionToNumber(String version) {
+    try {
+      final parts = version.split('.');
+      if (parts.length >= 3) {
+        final major = int.parse(parts[0]);
+        final minor = int.parse(parts[1]);
+        final patch = int.parse(parts[2]);
+        return (major * 100) + (minor * 10) + patch;
+      }
+      return 0;
+    } catch (e) {
+      debugPrint('Error converting version to number: $e');
+      return 0;
+    }
+  }
+
+  /// Check if signup should be shown based on version and API flag
+  bool _shouldShowSignup(Organization? organization) {
+    // First check if showSignup is true in API
+    final apiShowSignup = organization?.showSignup ?? false;
+    
+    if (!apiShowSignup) {
+      return false; // If API says don't show, respect that
+    }
+
+    // If no app version info from API, show signup (default behavior)
+    if (organization?.appUpdate == null || _currentAppVersion == null) {
+      return true;
+    }
+
+    // Get API version based on platform
+    String? apiVersion;
+    if (kIsWeb) {
+      return true; // For web, always show if API flag is true
+    } else if (Platform.isIOS) {
+      apiVersion = organization?.appUpdate?.ios?.version;
+    } else if (Platform.isAndroid) {
+      apiVersion = organization?.appUpdate?.android?.version;
+    }
+
+    // If no API version for this platform, show signup
+    if (apiVersion == null) {
+      return true;
+    }
+
+    // Convert versions to numbers and compare
+    final currentVersionNumber = _versionToNumber(_currentAppVersion!);
+    final apiVersionNumber = _versionToNumber(apiVersion);
+
+    debugPrint('📱 Signup Visibility Check:');
+    debugPrint('  API showSignup flag: $apiShowSignup');
+    debugPrint('  Current Version: $_currentAppVersion ($currentVersionNumber)');
+    debugPrint('  API Version: $apiVersion ($apiVersionNumber)');
+    debugPrint('  Current > API: ${currentVersionNumber > apiVersionNumber}');
+
+    // Show signup if current version is greater than API version AND showSignup is true
+    return currentVersionNumber > apiVersionNumber && apiShowSignup;
   }
 
 
@@ -290,7 +371,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
     final heading = "";//'${organizationName.toUpperCase()} VISITS';
     final subheading =
         'Sign in to access your $organizationName real estate management dashboard';
-    final showSignup = organization?.showSignup ?? false;
+    final showSignup = _shouldShowSignup(organization);
 
     // Listen to auth state changes for errors and navigation
     ref.listen<AuthState>(authControllerProvider, (previous, next) {
