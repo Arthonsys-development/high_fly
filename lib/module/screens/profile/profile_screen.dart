@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../global/widgets/profile_picture.dart';
 import '../../global/widgets/profile_text_field.dart';
@@ -35,6 +36,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   // Track previous profile to avoid unnecessary controller updates
   ProfileResponseData? _previousProfile;
   bool _isInitialLoad = true;
+  
+  // App version info
+  String _appVersion = '';
 
   @override
   void initState() {
@@ -47,6 +51,23 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(profileProvider.notifier).loadProfile();
     });
+    
+    // Load app version
+    _loadAppVersion();
+  }
+  
+  Future<void> _loadAppVersion() async {
+    try {
+      final packageInfo = await PackageInfo.fromPlatform();
+      setState(() {
+        _appVersion = 'v${packageInfo.version} (${packageInfo.buildNumber})';
+      });
+    } catch (e) {
+      // If we can't get version, just leave it empty
+      setState(() {
+        _appVersion = '';
+      });
+    }
   }
 
   @override
@@ -182,6 +203,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               borderRadius: kIsWeb ? 8 : 4,
                             ),
                           ],
+                          // App Version
+                          if (_appVersion.isNotEmpty) ...[
+                            SizedBox(height: kIsWeb ? 40 : 32),
+                            _buildAppVersion(),
+                          ],
                         ],
                       ),
                     ),
@@ -285,6 +311,44 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildAppVersion() {
+    return Center(
+      child: Container(
+        padding: EdgeInsets.symmetric(
+          horizontal: kIsWeb ? 24 : 16,
+          vertical: kIsWeb ? 16 : 12,
+        ),
+        decoration: BoxDecoration(
+          color: AppColors.primaryColor.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(kIsWeb ? 12 : 8),
+          border: Border.all(
+            color: AppColors.primaryColor.withValues(alpha: 0.1),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.info_outline,
+              size: kIsWeb ? 20 : 18,
+              color: AppColors.primaryColor,
+            ),
+            SizedBox(width: kIsWeb ? 12 : 8),
+            Text(
+              'App Version: $_appVersion',
+              style: AppFonts.getFont(
+                weight: AppFonts.medium,
+                fontSize: kIsWeb ? 16 : 14,
+                color: AppColors.primaryColor,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
