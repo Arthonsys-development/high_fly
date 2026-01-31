@@ -59,17 +59,20 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
+    // Only add observer on non-web platforms (web app lifecycle is unreliable)
+    if (!kIsWeb) {
+      WidgetsBinding.instance.addObserver(this);
+    }
     // Load projects and user profile when dashboard is initialized
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!_isDisposed) {
-        ref.read(projectsControllerProvider.notifier).loadProjects();
-        // Log dashboard view analytics
+      if (!_isDisposed && mounted) {
         try {
+          ref.read(projectsControllerProvider.notifier).loadProjects();
+          // Log dashboard view analytics
           final analyticsService = ref.read(analyticsProvider);
           analyticsService.logDashboardViewed();
         } catch (e) {
-          debugPrint('Error logging dashboard view analytics: $e');
+          debugPrint('Error initializing dashboard: $e');
         }
       }
     });
@@ -80,14 +83,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (_isDisposed) return;
+    if (_isDisposed || !mounted) return;
     // Handle app lifecycle changes to prevent rendering issues
     if (state == AppLifecycleState.paused) {
       // App is in background, pause any heavy operations
     } else if (state == AppLifecycleState.resumed) {
       // App is back in foreground, refresh data if needed
-      if (!_isDisposed) {
-        ref.read(projectsControllerProvider.notifier).loadProjects();
+      if (!_isDisposed && mounted) {
+        try {
+          ref.read(projectsControllerProvider.notifier).loadProjects();
+        } catch (e) {
+          // Silently catch any errors from accessing deactivated widget
+          debugPrint('Error refreshing projects on resume: $e');
+        }
       }
     }
   }
@@ -95,7 +103,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
   @override
   void dispose() {
     _isDisposed = true;
-    WidgetsBinding.instance.removeObserver(this);
+    // Only remove observer if it was added (non-web)
+    if (!kIsWeb) {
+      WidgetsBinding.instance.removeObserver(this);
+    }
     _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
     _mobileScrollController.dispose();
@@ -240,57 +251,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     }).toList();
   }
 
-  bool _hasAvailablePlots(Project project) {
-    return (project.availablePlotCount ?? 0) > 0;
-  }
-
-  void _showNoPlotsAvailableAlert(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          title: const Text(
-            'No Plots Available',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: AppColors.primaryTextColor,
-            ),
-          ),
-          content: const Text(
-            'There are no available plots for this project. Please try another project.',
-            style: TextStyle(
-              fontSize: 14,
-              color: AppColors.secondaryTextColor,
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text(
-                'OK',
-                style: TextStyle(
-                  color: AppColors.primaryColor,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final isMobile = Responsive.isMobile(context);
 
     return Scaffold(
       backgroundColor: AppColors.textFieldBGColor,
+      floatingActionButton: null,
       drawer: isMobile
           ? MobileSideMenuDrawer(
               selectedIndex: selectedMenuIndex,
@@ -469,12 +436,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(16.0),
         child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Title and Refresh Button
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+              // Title and Refresh Button
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
               Text(
                 "Projects",
                 style: TextStyle(
@@ -493,54 +461,53 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
             ],
           ),
 
-          const SizedBox(height: 16),
+              const SizedBox(height: 16),
 
-          Row(
-            children: [
-              _statsCard(
-                context,
-                title: "Total Projects",
-                count: projectsState.projects.length.toString(),
-                subtitleLeft: null,
-                subtitleRight: null,
-                icon: IconsAssets.totalProjectIcon,
-                color: AppColors.primaryColor,
-                isDesktop: false,
+              Row(
+                children: [
+                  _statsCard(
+                    context,
+                    title: "Total Projects",
+                    count: projectsState.projects.length.toString(),
+                    subtitleLeft: null,
+                    subtitleRight: null,
+                    icon: IconsAssets.totalProjectIcon,
+                    color: AppColors.primaryColor,
+                    isDesktop: false,
+                  ),
+                  _statsCard(
+                    context,
+                    title: "Active Projects",
+                    count: projectsState.activeProjects.length.toString(),
+                    icon: IconsAssets.activeProjectIcon,
+                    color: Colors.green,
+                    isDesktop: false,
+                  ),
+                ],
               ),
-              const SizedBox(width: 5),
-              _statsCard(
-                context,
-                title: "Active Projects",
-                count: projectsState.activeProjects.length.toString(),
-                icon: IconsAssets.activeProjectIcon,
-                color: Colors.green,
-                isDesktop: false,
-              ),
-            ],
-          ),
-          // Stats Cards - Stacked vertically on mobile
+              // Stats Cards - Stacked vertically on mobile
 
 
-          const SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-          // Mobile Projects List
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Search Bar and Status Filter - Full width on mobile
-                Padding(
-                  padding: const EdgeInsets.all(15.0),
-                  child: Column(
-                    children: [
-                      Row(
+              // Mobile Projects List
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Search Bar and Status Filter - Full width on mobile
+                    Padding(
+                      padding: const EdgeInsets.all(15.0),
+                      child: Column(
                         children: [
-                          Expanded(
-                            child: TextField(
+                          Row(
+                            children: [
+                              Expanded(
+                                child: TextField(
                               controller: _searchController,
                               cursorColor: AppColors.primaryTextColor,
                               style: const TextStyle(fontSize: 14, color: AppColors.primaryTextColor),
@@ -612,94 +579,94 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                   ),
                 ),
 
-                // Show loading indicator
-                if (projectsState.isLoading)
-                  const Padding(
-                    padding: EdgeInsets.all(16.0),
-                    child: Center(
-                      child: Column(
-                        children: [
-                          CircularProgressIndicator(),
-                          SizedBox(height: 8),
-                          Text('Loading projects...'),
-                        ],
+                    // Show loading indicator
+                    if (projectsState.isLoading)
+                      const Padding(
+                        padding: EdgeInsets.all(16.0),
+                        child: Center(
+                          child: Column(
+                            children: [
+                              CircularProgressIndicator(),
+                              SizedBox(height: 8),
+                              Text('Loading projects...'),
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
 
-                // Show error message if any
-                if (projectsState.error != null)
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      children: [
-                        Text(
-                          'Error loading projects:',
-                          style: const TextStyle(
-                            color: Colors.red,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          projectsState.error!,
-                          style: const TextStyle(color: Colors.red),
-                        ),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: () {
-                            ref.read(projectsControllerProvider.notifier).loadProjects();
-                            ref.read(projectsControllerProvider.notifier).loadActiveProjects();
-                          },
-                          child: const Text('Retry'),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                // Show empty state if no projects and no errors
-                if (!projectsState.isLoading && 
-                    projectsState.error == null && 
-                    filteredProjects.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.all(16.0),
-                    child: Center(
-                      child: Column(
-                        children: [
-                          Icon(
-                            Icons.search_off,
-                            size: 48,
-                            color: Colors.grey,
-                          ),
-                          SizedBox(height: 16),
-                          Text(
-                            'No projects found',
-                            style: TextStyle(
-                              color: Colors.grey,
-                              fontSize: 16,
+                    // Show error message if any
+                    if (projectsState.error != null)
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          children: [
+                            Text(
+                              'Error loading projects:',
+                              style: const TextStyle(
+                                color: Colors.red,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                          ),
-                          // SizedBox(height: 8),
-                          // Text(
-                          //   'Try a different search term',
-                          //   style: TextStyle(
-                          //     color: Colors.grey,
-                          //     fontSize: 14,
-                          //   ),
-                          // ),
-                        ],
+                            const SizedBox(height: 8),
+                            Text(
+                              projectsState.error!,
+                              style: const TextStyle(color: Colors.red),
+                            ),
+                            const SizedBox(height: 16),
+                            ElevatedButton(
+                              onPressed: () {
+                                ref.read(projectsControllerProvider.notifier).loadProjects();
+                                ref.read(projectsControllerProvider.notifier).loadActiveProjects();
+                              },
+                              child: const Text('Retry'),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ),
 
-                // Mobile Project Cards instead of DataTable (show FILTERED projects)
-                if (!projectsState.isLoading && projectsState.error == null)
-                  ...filteredProjects.map((project) => _buildMobileProjectCard(project)),
-              ],
-            ),
+                    // Show empty state if no projects and no errors
+                    if (!projectsState.isLoading && 
+                        projectsState.error == null && 
+                        filteredProjects.isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.all(16.0),
+                        child: Center(
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.search_off,
+                                size: 48,
+                                color: Colors.grey,
+                              ),
+                              SizedBox(height: 16),
+                              Text(
+                                'No projects found',
+                                style: TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              // SizedBox(height: 8),
+                              // Text(
+                              //   'Try a different search term',
+                              //   style: TextStyle(
+                              //     color: Colors.grey,
+                              //     fontSize: 14,
+                              //   ),
+                              // ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                    // Mobile Project Cards instead of DataTable (show FILTERED projects)
+                    if (!projectsState.isLoading && projectsState.error == null)
+                      ...filteredProjects.map((project) => _buildMobileProjectCard(project)),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
       ),
     );
   }
@@ -729,8 +696,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
           child: ConstrainedBox(
             constraints: BoxConstraints(maxWidth: maxContentWidth),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+                children: [
                 // Header Section with Title and Actions
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -798,6 +766,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                             icon: IconsAssets.totalProjectIcon,
                             color: AppColors.primaryColor,
                             isDesktop: isDesktop,
+                            useExpanded: false,
                           ),
                           const SizedBox(height: 16),
                           _statsCard(
@@ -807,6 +776,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                             icon: IconsAssets.activeProjectIcon,
                             color: Colors.green,
                             isDesktop: isDesktop,
+                            useExpanded: false,
                           ),
                         ],
                       )
@@ -1108,99 +1078,100 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         String? subtitleRight,
         required String icon,
         required Color color,
-        bool isDesktop = false}) {
+        bool isDesktop = false,
+        bool useExpanded = true}) {
     final isMobile = Responsive.isMobile(context);
     
-    return Expanded(
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 15,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Padding(
-          padding: EdgeInsets.all(isMobile ? 16 : isDesktop ? 24 : 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          title,
-                          style: TextStyle(
-                            color: AppColors.secondaryTextColor,
-                            fontSize: isMobile ? 13 : isDesktop ? 15 : 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          count,
-                          style: TextStyle(
-                            color: AppColors.primaryTextColor,
-                            fontSize: isMobile ? 28 : isDesktop ? 36 : 32,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: -1,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: EdgeInsets.all(isMobile ? 10 : isDesktop ? 14 : 12),
-                    decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Image.asset(
-                      icon,
-                      width: isDesktop ? 28 : 24,
-                      height: isDesktop ? 28 : 24,
-                      color: color,
-                    ),
-                  ),
-                ],
-              ),
-              if (subtitleLeft != null && subtitleRight != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 16),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    final cardWidget = Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 15,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(isMobile ? 16 : isDesktop ? 24 : 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        subtitleLeft,
+                        title,
                         style: TextStyle(
                           color: AppColors.secondaryTextColor,
-                          fontSize: isDesktop ? 13 : 12,
+                          fontSize: isMobile ? 13 : isDesktop ? 15 : 14,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
+                      const SizedBox(height: 12),
                       Text(
-                        subtitleRight,
+                        count,
                         style: TextStyle(
-                          color: AppColors.secondaryTextColor,
-                          fontSize: isDesktop ? 13 : 12,
+                          color: AppColors.primaryTextColor,
+                          fontSize: isMobile ? 28 : isDesktop ? 36 : 32,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -1,
                         ),
                       ),
                     ],
                   ),
                 ),
-            ],
-          ),
+                Container(
+                  padding: EdgeInsets.all(isMobile ? 10 : isDesktop ? 14 : 12),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Image.asset(
+                    icon,
+                    width: isDesktop ? 28 : 24,
+                    height: isDesktop ? 28 : 24,
+                    color: color,
+                  ),
+                ),
+              ],
+            ),
+            if (subtitleLeft != null && subtitleRight != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      subtitleLeft,
+                      style: TextStyle(
+                        color: AppColors.secondaryTextColor,
+                        fontSize: isDesktop ? 13 : 12,
+                      ),
+                    ),
+                    Text(
+                      subtitleRight,
+                      style: TextStyle(
+                        color: AppColors.secondaryTextColor,
+                        fontSize: isDesktop ? 13 : 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
         ),
       ),
     );
+    
+    return useExpanded ? Expanded(child: cardWidget) : cardWidget;
   }
 
   Widget _statusChip(String text) {
@@ -1247,14 +1218,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 child: kIsWeb
                     ? WebImageWidget(
                         imageUrl: project.projectImage,
-                        width: MediaQuery.of(context).size.width - 65 - 32, // Screen width - container margins (15*2) - container padding (16*2)
-                        height: 200,
-                        borderRadius: 20,
-                        fit: Responsive.isLargeMobile(context) ? BoxFit.contain : BoxFit.cover,
+                        width: MediaQuery.of(context).size.width,
+                        height: 150,
+                        borderRadius: 5,
+                        fit: BoxFit.cover,
                       )
                     : Image.network(
                         project.projectImage, // sample image url
-                        width: double.infinity, // Fill available width within parent container
+                        width: MediaQuery.of(context).size.width,
                         height: 150,
                         fit: BoxFit.cover,
                         loadingBuilder: (context, child, loadingProgress) {
@@ -1279,16 +1250,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 ),
               ),
 
-              // Transparent overlay to capture taps on web
-              Positioned.fill(
-                child: GestureDetector(
-                  onTap: () => context.push(Routes.projectDetailScreen, extra: project),
-                  behavior: HitTestBehavior.opaque,
-                  child: Container(
-                    color: Colors.transparent,
-                  ),
-                ),
-              ),
 
               Align(
                 alignment: Alignment.topRight,
@@ -1373,22 +1334,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               children: [
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: _hasAvailablePlots(project) ? () {
+                    onPressed: () {
                       // Set booking navigation with project and Book Now tab (index 0)
                       ref.read(bookingNavigationProvider.notifier).navigateToBooking(project, 0);
                       // Switch to booking tab in dashboard
                       setState(() {
                         selectedMenuIndex = 2;
                       });
-                    } : () {
-                      _showNoPlotsAvailableAlert(context);
                     },
                     icon: const Icon(Icons.bookmark, size: 18),
                     label: const Text('Book Now'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: _hasAvailablePlots(project) 
-                          ? AppColors.primaryColor 
-                          : Colors.grey,
+                      backgroundColor: AppColors.primaryColor,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
@@ -1399,22 +1356,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 const SizedBox(width: 8),
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: _hasAvailablePlots(project) ? () {
+                    onPressed: () {
                       // Set booking navigation with project and Hold tab (index 1)
                       ref.read(bookingNavigationProvider.notifier).navigateToBooking(project, 1);
                       // Switch to booking tab in dashboard
                       setState(() {
                         selectedMenuIndex = 2;
                       });
-                    } : () {
-                      _showNoPlotsAvailableAlert(context);
                     },
                     icon: const Icon(Icons.access_time, size: 18),
                     label: const Text('Hold'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: _hasAvailablePlots(project) 
-                          ? Colors.orange 
-                          : Colors.grey,
+                      backgroundColor: Colors.orange,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
@@ -1532,19 +1485,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                           // Book Now button
                           Container(
                             decoration: BoxDecoration(
-                              color: _hasAvailablePlots(project) 
-                                  ? AppColors.primaryColor.withValues(alpha: 0.1)
-                                  : Colors.grey.withValues(alpha: 0.1),
+                              color: AppColors.primaryColor.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Material(
                               color: Colors.transparent,
                               child: InkWell(
-                                onTap: _hasAvailablePlots(project) ? () {
+                                onTap: () {
                                   ref.read(bookingNavigationProvider.notifier).navigateToBooking(project, 0);
                                   onMenuItemSelected(2);
-                                } : () {
-                                  _showNoPlotsAvailableAlert(context);
                                 },
                                 borderRadius: BorderRadius.circular(8),
                                 child: Padding(
@@ -1555,20 +1504,16 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Icon(
+                                      const Icon(
                                         Icons.bookmark,
                                         size: 18,
-                                        color: _hasAvailablePlots(project) 
-                                            ? AppColors.primaryColor 
-                                            : Colors.grey,
+                                        color: AppColors.primaryColor,
                                       ),
                                       const SizedBox(width: 4),
-                                      Text(
+                                      const Text(
                                         'Book Now',
                                         style: TextStyle(
-                                          color: _hasAvailablePlots(project) 
-                                              ? AppColors.primaryColor 
-                                              : Colors.grey,
+                                          color: AppColors.primaryColor,
                                           fontSize: 13,
                                           fontWeight: FontWeight.w500,
                                         ),
@@ -1583,19 +1528,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                           // Hold button
                           Container(
                             decoration: BoxDecoration(
-                              color: _hasAvailablePlots(project) 
-                                  ? Colors.orange.withValues(alpha: 0.1)
-                                  : Colors.grey.withValues(alpha: 0.1),
+                              color: Colors.orange.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Material(
                               color: Colors.transparent,
                               child: InkWell(
-                                onTap: _hasAvailablePlots(project) ? () {
+                                onTap: () {
                                   ref.read(bookingNavigationProvider.notifier).navigateToBooking(project, 1);
                                   onMenuItemSelected(2);
-                                } : () {
-                                  _showNoPlotsAvailableAlert(context);
                                 },
                                 borderRadius: BorderRadius.circular(8),
                                 child: Padding(
@@ -1606,20 +1547,16 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Icon(
+                                      const Icon(
                                         Icons.access_time,
                                         size: 18,
-                                        color: _hasAvailablePlots(project) 
-                                            ? Colors.orange 
-                                            : Colors.grey,
+                                        color: Colors.orange,
                                       ),
                                       const SizedBox(width: 4),
-                                      Text(
+                                      const Text(
                                         'Hold',
                                         style: TextStyle(
-                                          color: _hasAvailablePlots(project) 
-                                              ? Colors.orange 
-                                              : Colors.grey,
+                                          color: Colors.orange,
                                           fontSize: 13,
                                           fontWeight: FontWeight.w500,
                                         ),
@@ -1856,19 +1793,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                   Container(
                                     width: 40,
                                     decoration: BoxDecoration(
-                                      color: _hasAvailablePlots(project) 
-                                          ? AppColors.primaryColor.withValues(alpha: 0.1)
-                                          : Colors.grey.withValues(alpha: 0.1),
+                                      color: AppColors.primaryColor.withValues(alpha: 0.1),
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Material(
                                       color: Colors.transparent,
                                       child: InkWell(
-                                        onTap: _hasAvailablePlots(project) ? () {
+                                        onTap: () {
                                           ref.read(bookingNavigationProvider.notifier).navigateToBooking(project, 0);
                                           onMenuItemSelected(2);
-                                        } : () {
-                                          _showNoPlotsAvailableAlert(context);
                                         },
                                         borderRadius: BorderRadius.circular(8),
                                         child: Padding(
@@ -1879,12 +1812,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                           child: Row(
                                             mainAxisAlignment: MainAxisAlignment.center,
                                             children: [
-                                              Icon(
+                                              const Icon(
                                                 Icons.bookmark,
                                                 size: 16,
-                                                color: _hasAvailablePlots(project) 
-                                                    ? AppColors.primaryColor 
-                                                    : Colors.grey,
+                                                color: AppColors.primaryColor,
                                               ),
                                               // const SizedBox(width: 4),
                                               // const Text(
@@ -1906,19 +1837,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                   Container(
                                     width: 40,
                                     decoration: BoxDecoration(
-                                      color: _hasAvailablePlots(project) 
-                                          ? Colors.orange.withValues(alpha: 0.1)
-                                          : Colors.grey.withValues(alpha: 0.1),
+                                      color: Colors.orange.withValues(alpha: 0.1),
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Material(
                                       color: Colors.transparent,
                                       child: InkWell(
-                                        onTap: _hasAvailablePlots(project) ? () {
+                                        onTap: () {
                                           ref.read(bookingNavigationProvider.notifier).navigateToBooking(project, 1);
                                           onMenuItemSelected(2);
-                                        } : () {
-                                          _showNoPlotsAvailableAlert(context);
                                         },
                                         borderRadius: BorderRadius.circular(8),
                                         child: Padding(
@@ -1929,12 +1856,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                           child: Row(
                                             mainAxisAlignment: MainAxisAlignment.center,
                                             children: [
-                                              Icon(
+                                              const Icon(
                                                 Icons.access_time,
                                                 size: 16,
-                                                color: _hasAvailablePlots(project) 
-                                                    ? Colors.orange 
-                                                    : Colors.grey,
+                                                color: Colors.orange,
                                               ),
                                               // const SizedBox(width: 4),
                                               // const Text(
