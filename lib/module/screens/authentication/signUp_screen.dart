@@ -57,6 +57,39 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     return 'RERA-$phoneDigits-$timestamp';
   }
 
+  /// Show permission dialog when permission is permanently denied
+  Future<bool?> _showPermissionDialog({
+    required String title,
+    required String message,
+    required String permissionType,
+  }) async {
+    return showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(title),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text(
+                'Open Settings',
+                style: TextStyle(
+                  color: AppColors.primaryColor,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -78,40 +111,85 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     try {
       debugPrint('🔥 Image Picker: Attempting to pick image from camera');
       
-      // Check and request camera permission on mobile
-      if (!kIsWeb) {
-        try {
-          final status = await Permission.camera.request();
-          if (status != PermissionStatus.granted) {
-            debugPrint('🔥 Image Picker: Camera permission denied');
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Camera permission is required to take photos'),
-                  backgroundColor: Colors.red,
-                ),
-              );
+      // On iOS/Android, image_picker automatically handles camera permissions
+      // Let it request permissions internally, then catch any errors
+      XFile? pickedImage;
+      try {
+        pickedImage = await _picker.pickImage(
+          source: ImageSource.camera,
+          imageQuality: 80,
+          maxWidth: 1920,
+          maxHeight: 1920,
+        );
+      
+        debugPrint('🔥 Image Picker: Image picker returned: ${pickedImage != null ? 'image captured' : 'no image'}');
+      } catch (e) {
+        debugPrint('❌ Image Picker: Error opening camera: $e');
+        
+        // Check if it's a permission error
+        final errorString = e.toString().toLowerCase();
+        if (errorString.contains('permission') || 
+            errorString.contains('camera') ||
+            errorString.contains('denied')) {
+          
+          if (!kIsWeb && mounted) {
+            // Check permission status and handle accordingly
+            try {
+              var status = await Permission.camera.status;
               
-              // Open app settings if permanently denied
-              if (status == PermissionStatus.permanentlyDenied) {
-                await openAppSettings();
+              if (status.isPermanentlyDenied) {
+                // Permission is permanently denied, offer to open settings
+                final shouldOpenSettings = await _showPermissionDialog(
+                  title: 'Camera Permission Required',
+                  message: 'Camera permission is required to take photos. Would you like to open Settings to enable it?',
+                  permissionType: 'camera',
+                );
+                
+                if (shouldOpenSettings == true) {
+                  await openAppSettings();
+                }
+              } else if (!status.isGranted) {
+                // Try to request permission
+                status = await Permission.camera.request();
+                if (!status.isGranted) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Camera permission is required to take photos'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                } else {
+                  // Permission granted, try again
+                  await _pickImageFromCamera();
+                }
+              }
+            } catch (permError) {
+              debugPrint('❌ Image Picker: Permission check error: $permError');
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Unable to check camera permission'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
               }
             }
-            return;
           }
-        } catch (permissionError) {
-          debugPrint('🔥 Image Picker: Permission error, trying to proceed anyway: $permissionError');
-          // On some devices, we might still be able to pick an image even without explicit permission
-          // This is a fallback approach
+        } else {
+          // Some other error
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Failed to open camera: ${e.toString()}'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
         }
+        return;
       }
-      
-      final XFile? pickedImage = await _picker.pickImage(
-        source: ImageSource.camera,
-        imageQuality: 80,
-        maxWidth: 1920,
-        maxHeight: 1920,
-      );
       
       debugPrint('🔥 Image Picker: Camera result: ${pickedImage != null ? 'Image captured' : 'No image captured'}');
       
@@ -154,27 +232,14 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
         }
       }
     } catch (e) {
-      debugPrint('🔥 Image Picker: Error picking image from camera: $e');
-      
-      // Special handling for web camera errors
-      if (kIsWeb) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Camera access denied or not supported by your browser. Please check browser permissions or try selecting from gallery.'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Failed to pick image from camera: ${e.toString()}'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
+      debugPrint('🔥 Image Picker: Unexpected error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Unexpected error: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     }
   }
@@ -193,46 +258,95 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     try {
       debugPrint('🔥 Image Picker: Attempting to pick image from gallery');
       
-      // Check and request gallery permission on mobile
-      if (!kIsWeb) {
-        try {
-          if (Platform.isAndroid) {
-            // On Android 13+ this maps to READ_MEDIA_IMAGES
-            var status = await Permission.photos.request();
-            if (status != PermissionStatus.granted) {
-              // Fallback for Android 12 and below
-              status = await Permission.storage.request();
-            }
-            if (status != PermissionStatus.granted) {
-              debugPrint('🔥 Image Picker: Gallery permission denied');
+      // On iOS/Android, image_picker automatically handles gallery permissions
+      // Let it request permissions internally, then catch any errors
+      XFile? pickedImage;
+      try {
+        pickedImage = await _picker.pickImage(
+          source: ImageSource.gallery,
+          imageQuality: 80,
+          maxWidth: 1920,
+          maxHeight: 1920,
+        );
+      
+        debugPrint('🔥 Image Picker: Image picker returned: ${pickedImage != null ? 'image selected' : 'no image'}');
+      } catch (e) {
+        debugPrint('❌ Image Picker: Error opening gallery: $e');
+        
+        // Check if it's a permission error (mainly for Android)
+        final errorString = e.toString().toLowerCase();
+        if (errorString.contains('permission') || 
+            errorString.contains('photo') ||
+            errorString.contains('storage') ||
+            errorString.contains('denied')) {
+          
+          if (!kIsWeb && Platform.isAndroid && mounted) {
+            // Check permission status and handle accordingly
+            try {
+              var status = await Permission.photos.status;
+              
+              // Try storage permission if photos permission is not available
+              if (!status.isGranted) {
+                status = await Permission.storage.status;
+              }
+              
+              if (status.isPermanentlyDenied) {
+                // Permission is permanently denied, offer to open settings
+                final shouldOpenSettings = await _showPermissionDialog(
+                  title: 'Gallery Permission Required',
+                  message: 'Gallery permission is required to select photos. Would you like to open Settings to enable it?',
+                  permissionType: 'gallery',
+                );
+                
+                if (shouldOpenSettings == true) {
+                  await openAppSettings();
+                }
+              } else if (!status.isGranted) {
+                // Try to request permission
+                status = await Permission.photos.request();
+                if (!status.isGranted) {
+                  status = await Permission.storage.request();
+                }
+                
+                if (!status.isGranted) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Gallery permission is required to select photos'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                } else {
+                  // Permission granted, try again
+                  await _pickImageFromGallery();
+                }
+              }
+            } catch (permError) {
+              debugPrint('❌ Image Picker: Permission check error: $permError');
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('Gallery permission is required to select photos'),
+                    content: Text('Unable to check gallery permission'),
                     backgroundColor: Colors.red,
                   ),
                 );
-                if (status == PermissionStatus.permanentlyDenied) {
-                  await openAppSettings();
-                }
               }
-              return;
             }
-          } else if (Platform.isIOS) {
-            // iOS: PHPicker does not require Photos permission; proceed without requesting
           }
-        } catch (permissionError) {
-          debugPrint('🔥 Image Picker: Permission error, trying to proceed anyway: $permissionError');
-          // On some devices, we might still be able to pick an image even without explicit permission
+        } else {
+          // Some other error
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Failed to open gallery: ${e.toString()}'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
         }
+        return;
       }
-      
-      final XFile? pickedImage = await _picker.pickImage(
-        source: ImageSource.gallery,
-        imageQuality: 80,
-        maxWidth: 1920,
-        maxHeight: 1920,
-      );
       
       debugPrint('🔥 Image Picker: Gallery result: ${pickedImage != null ? 'Image selected' : 'No image selected'}');
       
@@ -275,27 +389,14 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
         }
       }
     } catch (e) {
-      debugPrint('🔥 Image Picker: Error picking image from gallery: $e');
-      
-      // Special handling for web gallery errors
-      if (kIsWeb) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Gallery access denied or not supported by your browser. Please check browser permissions.'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Failed to pick image from gallery: ${e.toString()}'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
+      debugPrint('🔥 Image Picker: Unexpected error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Unexpected error: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     }
   }
