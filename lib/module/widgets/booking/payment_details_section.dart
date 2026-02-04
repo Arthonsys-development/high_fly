@@ -393,7 +393,9 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                   borderRadius: 6,
                   onChanged: (value) {
                     setState(() {
-                      _paymentDetails = _paymentDetails.copyWith(paymentAmount: value);
+                      _paymentDetails = _paymentDetails.copyWith(
+                        paymentAmount: (value.trim().isEmpty) ? '0' : value,
+                      );
                     });
                   },
                 ),
