@@ -11,6 +11,7 @@ class ProfilePicture extends StatelessWidget {
   final VoidCallback? onEditPressed;
   final double size;
   final bool showEditButton;
+  final bool isUpdating;
 
   const ProfilePicture({
     super.key,
@@ -18,6 +19,7 @@ class ProfilePicture extends StatelessWidget {
     this.onEditPressed,
     this.size = 120,
     this.showEditButton = true,
+    this.isUpdating = false,
   });
 
   @override
@@ -76,6 +78,26 @@ class ProfilePicture extends StatelessWidget {
                       ),
               ),
             ),
+            // Show loader overlay when updating
+            if (isUpdating)
+              Positioned.fill(
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.black.withValues(alpha: 0.5),
+                  ),
+                  child: const Center(
+                    child: SizedBox(
+                      height: 30,
+                      width: 30,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 3,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
         if (showEditButton) ...[

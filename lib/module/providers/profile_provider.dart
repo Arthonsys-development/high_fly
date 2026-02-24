@@ -13,12 +13,14 @@ import '../../config/network/base_url_config.dart';
 class ProfileState {
   final ProfileResponseData? profile;
   final bool isLoading;
+  final bool isUpdating;
   final String? error;
   final bool isEditing;
 
   const ProfileState({
     this.profile,
     this.isLoading = false,
+    this.isUpdating = false,
     this.error,
     this.isEditing = false,
   });
@@ -26,12 +28,14 @@ class ProfileState {
   ProfileState copyWith({
     ProfileResponseData? profile,
     bool? isLoading,
+    bool? isUpdating,
     String? error,
     bool? isEditing,
   }) {
     return ProfileState(
       profile: profile ?? this.profile,
       isLoading: isLoading ?? this.isLoading,
+      isUpdating: isUpdating ?? this.isUpdating,
       error: error,
       isEditing: isEditing ?? this.isEditing,
     );
@@ -114,6 +118,26 @@ class ProfileNotifier extends Notifier<ProfileState> {
   // Public method to refresh profile data
   Future<void> refreshProfile() async {
     await loadProfile();
+  }
+  
+  // Private method to refresh profile data silently (without full-screen loader)
+  Future<void> _refreshProfileSilently() async {
+    try {
+      debugPrint('🔄 ProfileNotifier: Silently refreshing profile from API...');
+      
+      final profileData = await _profileApiRepository.getProfile();
+      
+      debugPrint('✅ ProfileNotifier: Profile refreshed successfully');
+      state = state.copyWith(
+        profile: profileData,
+      );
+      
+      // Sync data to secure storage after loading
+      await _syncToSecureStorage(profileData);
+    } catch (e) {
+      debugPrint('❌ ProfileNotifier: Error refreshing profile - $e');
+      // Don't update error state for silent refresh
+    }
   }
 
   // Update profile field locally (for form editing)
@@ -212,7 +236,7 @@ class ProfileNotifier extends Notifier<ProfileState> {
       return;
     }
     
-    state = state.copyWith(isLoading: true, error: null);
+    state = state.copyWith(isUpdating: true, error: null);
     
     try {
       debugPrint('💾 ProfileNotifier: Saving profile changes...');
@@ -231,17 +255,19 @@ class ProfileNotifier extends Notifier<ProfileState> {
         updateData['team_leader_name'] = state.profile!.teamLeaderName;
       }
       
-      await _profileApiRepository.updateProfile(state.profile!, updateData);
+      final updatedProfile = await _profileApiRepository.updateProfile(state.profile!, updateData);
       
       debugPrint('✅ ProfileNotifier: Profile saved successfully');
-      // Allow loadProfile to proceed (it early-returns if already loading)
-      state = state.copyWith(isLoading: false);
-      // After saving, fetch the latest profile from API to ensure fresh data
-      await loadProfile();
-      // Ensure we exit edit mode
+      
+      // Update state with returned profile data
       state = state.copyWith(
+        profile: updatedProfile,
+        isUpdating: false,
         isEditing: false,
       );
+      
+      // Sync to secure storage
+      await _syncToSecureStorage(updatedProfile);
     } on DioException catch (e) {
       debugPrint('❌ ProfileNotifier: API Error saving profile - ${e.message}');
       if (e.response?.data != null) {
@@ -257,25 +283,25 @@ class ProfileNotifier extends Notifier<ProfileState> {
           });
           state = state.copyWith(
             error: 'Validation failed: ${errorMessages.join('; ')}',
-            isLoading: false,
+            isUpdating: false,
           );
         } else {
           state = state.copyWith(
             error: 'Failed to save profile: ${errorData.toString()}',
-            isLoading: false,
+            isUpdating: false,
           );
         }
       } else {
         state = state.copyWith(
           error: 'Failed to save profile: ${e.message}',
-          isLoading: false,
+          isUpdating: false,
         );
       }
     } catch (e) {
       debugPrint('❌ ProfileNotifier: Unexpected error saving profile - $e');
       state = state.copyWith(
         error: e.toString(),
-        isLoading: false,
+        isUpdating: false,
       );
     }
   }
@@ -291,19 +317,21 @@ class ProfileNotifier extends Notifier<ProfileState> {
       );
 
       if (image != null) {
-        state = state.copyWith(isLoading: true, error: null);
+        state = state.copyWith(isUpdating: true, error: null);
         
         // Upload the image to the backend (pass XFile directly for cross-platform support)
         await _profileApiRepository.uploadProfilePhoto(image);
         debugPrint('✅ ProfileNotifier: Profile image updated successfully');
-        // Allow loadProfile to proceed and fetch the freshest data, including CDN URLs
-        state = state.copyWith(isLoading: false);
-        await loadProfile();
+        
+        // Refresh profile silently without showing full-screen loader
+        await _refreshProfileSilently();
+        
+        state = state.copyWith(isUpdating: false);
       }
     } catch (e) {
       state = state.copyWith(
         error: 'Failed to update profile photo: $e',
-        isLoading: false,
+        isUpdating: false,
       );
     }
   }
@@ -319,18 +347,21 @@ class ProfileNotifier extends Notifier<ProfileState> {
       );
 
       if (image != null) {
-        state = state.copyWith(isLoading: true, error: null);
+        state = state.copyWith(isUpdating: true, error: null);
 
         // Upload the image to the backend (pass XFile directly for cross-platform support)
         await _profileApiRepository.uploadProfilePhoto(image);
         debugPrint('✅ ProfileNotifier: Profile image updated successfully (from ${source.name})');
-        state = state.copyWith(isLoading: false);
-        await loadProfile();
+        
+        // Refresh profile silently without showing full-screen loader
+        await _refreshProfileSilently();
+        
+        state = state.copyWith(isUpdating: false);
       }
     } catch (e) {
       state = state.copyWith(
         error: 'Failed to update profile photo: $e',
-        isLoading: false,
+        isUpdating: false,
       );
     }
   }

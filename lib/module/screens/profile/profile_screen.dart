@@ -360,6 +360,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           _showImageSourceDialog();
         },
         size: kIsWeb ? 150 : 120,
+        isUpdating: state.isUpdating,
       ),
     );
   }
@@ -520,7 +521,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               textColor: Colors.white,
               height: 52,
               borderRadius: 8,
-              isLoading: state.isLoading,
+              isLoading: state.isUpdating,
             ),
           ],
         ),
@@ -556,7 +557,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             textColor: Colors.white,
             height: 48,
             borderRadius: 4,
-            isLoading: state.isLoading,
+            isLoading: state.isUpdating,
           ),
         ],
       );
