@@ -62,6 +62,10 @@ dependencies:
   
   # reCAPTCHA Enterprise
   recaptcha_enterprise_flutter: ^18.8.2
+  
+  # Sentry for error tracking and monitoring
+  sentry_flutter: ^8.14.0
+  sentry_dio: ^8.14.0
 
 dev_dependencies:
   flutter_test:

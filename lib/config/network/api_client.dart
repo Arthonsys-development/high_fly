@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:highfly/config/network/tenant_keys.dart';
 import 'package:highfly/config/network/base_url_config.dart';
+import 'package:highfly/config/network/sentry_dio_interceptor.dart';
 import 'package:talker_dio_logger/talker_dio_logger_interceptor.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:highfly/config/routes.dart';
@@ -83,6 +84,10 @@ class ApiClient {
     if (kDebugMode) {
       _dio.interceptors.add(TalkerDioLogger());
     }
+    
+    // Add Sentry interceptor for API monitoring
+    _dio.interceptors.add(SentryDioInterceptor());
+    debugPrint('API Client: Sentry interceptor added for API monitoring');
     
     // Add interceptor to include access token in requests
     _dio.interceptors.add(InterceptorsWrapper(

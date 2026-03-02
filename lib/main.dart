@@ -7,12 +7,14 @@ import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/foundation.dart' as foundation;
 import 'package:permission_handler/permission_handler.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 
 import 'config/constant/app_strings.dart';
 import 'config/routes.dart';
 import 'config/theme.dart';
 import 'config/network/api_client.dart';
 import 'config/network/base_url_config.dart';
+import 'config/sentry_config.dart';
 import 'module/providers/organization_provider.dart';
 import 'utils/flutter_web_error_handler.dart';
 import 'utils/notification_service.dart';
@@ -55,200 +57,231 @@ void _handleNotificationTap(RemoteMessage message) {
 
 
 Future<void> main() async {
-  // Override debugPrint to suppress logs in release mode (especially for web)
-  // This prevents logs from appearing in the browser console in production
-  if (!kDebugMode) {
-    // In release mode, suppress all debugPrint output
-    foundation.debugPrint = (String? message, {int? wrapWidth}) {
-      // Do nothing - suppress all logs in release mode
-      return;
-    };
-  }
-  
-  // Add comprehensive error handling
-  try {
-    WidgetsFlutterBinding.ensureInitialized();
-    debugPrint('🔥 App: WidgetsFlutterBinding initialized');
-  } catch (e) {
-    debugPrint('🔥 App: Error initializing WidgetsFlutterBinding: $e');
-  }
-  
-  // Initialize Flutter web error handler
-  try {
-    FlutterWebErrorHandler.initialize();
-    debugPrint('🔥 App: FlutterWebErrorHandler initialized');
-  } catch (e) {
-    debugPrint('🔥 App: Error initializing FlutterWebErrorHandler: $e');
-  }
-  
-  // Initialize plugins
-  try {
-    // This helps ensure all plugins are properly initialized
-    await Permission.camera.status;
-    debugPrint('🔥 App: Plugins initialized');
-  } catch (e) {
-    debugPrint('🔥 App: Plugin initialization warning: $e');
-  }
-  
-  try {
-    if (kIsWeb) {
-      // For web, Firebase will be initialized by the JS SDK in index.html
-      // We just need to initialize the Flutter Firebase plugin
-      await Firebase.initializeApp(
-        options: const FirebaseOptions(
-          apiKey: "AIzaSyAuLYabgeakEBFP0vijPe0B1HlxJXLwmVg",
-          authDomain: "vistarak-apps.firebaseapp.com",
-          projectId: "vistarak-apps",
-          storageBucket: "vistarak-apps.firebasestorage.app",
-          messagingSenderId: "930030992658",
-          appId: "1:930030992658:web:0f03cbb4fd5ac8a0f407cb",
-          measurementId: "G-MTNV4XJEBF",
-        ),
-      );
-      debugPrint('🔥 Firebase Web initialized successfully for project: vistarak-apps');
-    } else {
-      // For mobile platforms, use the google-services configuration
-      await Firebase.initializeApp();
-      debugPrint('🔥 Firebase Mobile initialized successfully');
-    }
-  } catch (e) {
-    debugPrint('🔥 Firebase initialization error: $e');
-    // Continue anyway - the app should still work for basic functionality
-  }
-  
-  // Initialize Firebase Messaging
-  try {
-    if (!kIsWeb) {
-      // Initialize notification service for foreground notifications
-      await NotificationService().initialize();
+  // Initialize Sentry for error tracking and monitoring
+  await SentryFlutter.init(
+    (options) {
+      options.dsn = SentryConfig.dsn;
+      options.environment = SentryConfig.environment;
+      options.tracesSampleRate = SentryConfig.tracesSampleRate;
+      options.enableAutoSessionTracking = true;
+      options.attachScreenshot = SentryConfig.attachScreenshot;
+      options.sendDefaultPii = SentryConfig.sendDefaultPii;
       
-      // Request permission for notifications (iOS specific)
-      if (defaultTargetPlatform == TargetPlatform.iOS) {
-        await FirebaseMessaging.instance.requestPermission(
-          alert: true,
-          badge: true,
-          sound: true,
-        );
+      // Breadcrumbs are automatically captured by default in Sentry Flutter
+      // Navigation, user interactions, and HTTP requests are tracked automatically
+      
+      // Set release version if needed
+      // options.release = 'highfly@1.0.1+9';
+      
+      debugPrint('🔍 Sentry initialized successfully');
+    },
+    appRunner: () async {
+      // Override debugPrint to suppress logs in release mode (especially for web)
+      // This prevents logs from appearing in the browser console in production
+      if (!kDebugMode) {
+        // In release mode, suppress all debugPrint output
+        foundation.debugPrint = (String? message, {int? wrapWidth}) {
+          // Do nothing - suppress all logs in release mode
+          return;
+        };
       }
       
-      // Set the background messaging handler early, before other initialization
-      FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+      // Add comprehensive error handling
+      try {
+        WidgetsFlutterBinding.ensureInitialized();
+        debugPrint('🔥 App: WidgetsFlutterBinding initialized');
+      } catch (e) {
+        debugPrint('🔥 App: Error initializing WidgetsFlutterBinding: $e');
+        Sentry.captureException(e, stackTrace: StackTrace.current);
+      }
       
-      // Configure foreground notification presentation (iOS)
-      await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
-        alert: true,
-        badge: true,
-        sound: true,
-      );
+      // Initialize Flutter web error handler
+      try {
+        FlutterWebErrorHandler.initialize();
+        debugPrint('🔥 App: FlutterWebErrorHandler initialized');
+      } catch (e) {
+        debugPrint('🔥 App: Error initializing FlutterWebErrorHandler: $e');
+        Sentry.captureException(e, stackTrace: StackTrace.current);
+      }
       
-      // Handle foreground messages
-      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-        debugPrint('🔔 Got a message whilst in the FOREGROUND!');
-        debugPrint('🔔 Message data: ${message.data}');
-
-        if (message.notification != null) {
-          debugPrint('🔔 Message also contained a notification: ${message.notification}');
-          debugPrint('🔔 Title: ${message.notification?.title}');
-          debugPrint('🔔 Body: ${message.notification?.body}');
-          
-          // Show notification in foreground
-          NotificationService().showNotification(message);
+      // Initialize plugins
+      try {
+        // This helps ensure all plugins are properly initialized
+        await Permission.camera.status;
+        debugPrint('🔥 App: Plugins initialized');
+      } catch (e) {
+        debugPrint('🔥 App: Plugin initialization warning: $e');
+        Sentry.captureException(e, stackTrace: StackTrace.current);
+      }
+      
+      try {
+        if (kIsWeb) {
+          // For web, Firebase will be initialized by the JS SDK in index.html
+          // We just need to initialize the Flutter Firebase plugin
+          await Firebase.initializeApp(
+            options: const FirebaseOptions(
+              apiKey: "AIzaSyAuLYabgeakEBFP0vijPe0B1HlxJXLwmVg",
+              authDomain: "vistarak-apps.firebaseapp.com",
+              projectId: "vistarak-apps",
+              storageBucket: "vistarak-apps.firebasestorage.app",
+              messagingSenderId: "930030992658",
+              appId: "1:930030992658:web:0f03cbb4fd5ac8a0f407cb",
+              measurementId: "G-MTNV4XJEBF",
+            ),
+          );
+          debugPrint('🔥 Firebase Web initialized successfully for project: vistarak-apps');
+        } else {
+          // For mobile platforms, use the google-services configuration
+          await Firebase.initializeApp();
+          debugPrint('🔥 Firebase Mobile initialized successfully');
         }
-      });
-
-      // Handle notification taps when app is in background (but not terminated)
-      FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-        debugPrint('🔔 A notification was tapped - app was in BACKGROUND');
-        debugPrint('🔔 Message data: ${message.data}');
-        
-        // Handle navigation based on notification data
-        _handleNotificationTap(message);
-      });
-
-      // Check if app was opened from a notification (terminated state)
-      RemoteMessage? initialMessage = await FirebaseMessaging.instance.getInitialMessage();
-      if (initialMessage != null) {
-        debugPrint('🔔 App opened from TERMINATED state via notification');
-        debugPrint('🔔 Message data: ${initialMessage.data}');
-        
-        // Handle navigation based on notification data
-        _handleNotificationTap(initialMessage);
+      } catch (e) {
+        debugPrint('🔥 Firebase initialization error: $e');
+        Sentry.captureException(e, stackTrace: StackTrace.current);
+        // Continue anyway - the app should still work for basic functionality
       }
       
-      // Get the FCM token
-      final String? token = await FirebaseMessaging.instance.getToken();
-      if (token != null) {
-        debugPrint('🔔 FCM Registration Token: $token');
+      // Initialize Firebase Messaging
+      try {
+        if (!kIsWeb) {
+          // Initialize notification service for foreground notifications
+          await NotificationService().initialize();
+          
+          // Request permission for notifications (iOS specific)
+          if (defaultTargetPlatform == TargetPlatform.iOS) {
+            await FirebaseMessaging.instance.requestPermission(
+              alert: true,
+              badge: true,
+              sound: true,
+            );
+          }
+          
+          // Set the background messaging handler early, before other initialization
+          FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+          
+          // Configure foreground notification presentation (iOS)
+          await FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
+            alert: true,
+            badge: true,
+            sound: true,
+          );
+          
+          // Handle foreground messages
+          FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+            debugPrint('🔔 Got a message whilst in the FOREGROUND!');
+            debugPrint('🔔 Message data: ${message.data}');
+
+            if (message.notification != null) {
+              debugPrint('🔔 Message also contained a notification: ${message.notification}');
+              debugPrint('🔔 Title: ${message.notification?.title}');
+              debugPrint('🔔 Body: ${message.notification?.body}');
+              
+              // Show notification in foreground
+              NotificationService().showNotification(message);
+            }
+          });
+
+          // Handle notification taps when app is in background (but not terminated)
+          FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+            debugPrint('🔔 A notification was tapped - app was in BACKGROUND');
+            debugPrint('🔔 Message data: ${message.data}');
+            
+            // Handle navigation based on notification data
+            _handleNotificationTap(message);
+          });
+
+          // Check if app was opened from a notification (terminated state)
+          RemoteMessage? initialMessage = await FirebaseMessaging.instance.getInitialMessage();
+          if (initialMessage != null) {
+            debugPrint('🔔 App opened from TERMINATED state via notification');
+            debugPrint('🔔 Message data: ${initialMessage.data}');
+            
+            // Handle navigation based on notification data
+            _handleNotificationTap(initialMessage);
+          }
+          
+          // Get the FCM token
+          final String? token = await FirebaseMessaging.instance.getToken();
+          if (token != null) {
+            debugPrint('🔔 FCM Registration Token: $token');
+          } else {
+            debugPrint('🔔 Failed to get FCM token');
+          }
+          
+          // Listen for token refreshes
+          FirebaseMessaging.instance.onTokenRefresh.listen((newToken) {
+            debugPrint('🔔 FCM Token refreshed: $newToken');
+          }).onError((error) {
+            debugPrint('🔔 Error listening for token refresh: $error');
+            Sentry.captureException(error, stackTrace: StackTrace.current);
+          });
+        }
+      } catch (e) {
+        debugPrint('🔥 Firebase Messaging initialization error: $e');
+        Sentry.captureException(e, stackTrace: StackTrace.current);
+      }
+      
+      // Initialize Firebase Analytics
+      try {
+        final analytics = FirebaseAnalytics.instance;
+        debugPrint('🔥 Firebase Analytics initialized successfully');
+        // Set analytics collection enabled (it's enabled by default)
+        await analytics.setAnalyticsCollectionEnabled(true);
+      } catch (e) {
+        debugPrint('🔥 Firebase Analytics initialization error: $e');
+        Sentry.captureException(e, stackTrace: StackTrace.current);
+        // Continue anyway - analytics is not critical for app functionality
+      }
+      
+      try {
+        await initEnv();
+        debugPrint('🔥 App: Environment initialized');
+        
+        // Update ApiClient base URL after env is loaded
+        // This is important for web deployments where ApiClient might initialize before env loads
+        try {
+          final apiClient = ApiClient();
+          apiClient.updateBaseUrl();
+          debugPrint('🔥 App: ApiClient base URL updated after env load');
+        } catch (e) {
+          debugPrint('🔥 App: Error updating ApiClient base URL: $e');
+          Sentry.captureException(e, stackTrace: StackTrace.current);
+        }
+      } catch (e) {
+        debugPrint('🔥 App: Environment initialization error: $e');
+        Sentry.captureException(e, stackTrace: StackTrace.current);
+        // Continue with default environment
+      }
+
+      // Initialize reCAPTCHA Enterprise client (Android only)
+      // Note: For iOS, Firebase Auth handles reCAPTCHA internally for phone authentication
+      // Initializing a separate reCAPTCHA client on iOS causes conflicts with Firebase Auth
+      if (!kIsWeb && Platform.isAndroid) {
+        try {
+          recaptchaClient = await initializeRecaptchaClient();
+          if (recaptchaClient != null) {
+            debugPrint('✅ reCAPTCHA Enterprise client ready');
+          }
+        } catch (e) {
+          debugPrint('❌ reCAPTCHA Enterprise initialization error: $e');
+          debugPrint('⚠️ App will continue without reCAPTCHA Enterprise');
+          Sentry.captureException(e, stackTrace: StackTrace.current);
+          recaptchaClient = null;
+        }
       } else {
-        debugPrint('🔔 Failed to get FCM token');
+        if (kIsWeb) {
+          debugPrint('🛡️ reCAPTCHA Enterprise skipped (web platform)');
+        } else if (Platform.isIOS) {
+          debugPrint('🛡️ reCAPTCHA Enterprise skipped (iOS - Firebase Auth handles reCAPTCHA internally)');
+        } else {
+          debugPrint('🛡️ reCAPTCHA Enterprise skipped (unsupported platform)');
+        }
       }
-      
-      // Listen for token refreshes
-      FirebaseMessaging.instance.onTokenRefresh.listen((newToken) {
-        debugPrint('🔔 FCM Token refreshed: $newToken');
-      }).onError((error) {
-        debugPrint('🔔 Error listening for token refresh: $error');
-      });
-    }
-  } catch (e) {
-    debugPrint('🔥 Firebase Messaging initialization error: $e');
-  }
-  
-  // Initialize Firebase Analytics
-  try {
-    final analytics = FirebaseAnalytics.instance;
-    debugPrint('🔥 Firebase Analytics initialized successfully');
-    // Set analytics collection enabled (it's enabled by default)
-    await analytics.setAnalyticsCollectionEnabled(true);
-  } catch (e) {
-    debugPrint('🔥 Firebase Analytics initialization error: $e');
-    // Continue anyway - analytics is not critical for app functionality
-  }
-  
-  try {
-    await initEnv();
-    debugPrint('🔥 App: Environment initialized');
-    
-    // Update ApiClient base URL after env is loaded
-    // This is important for web deployments where ApiClient might initialize before env loads
-    try {
-      final apiClient = ApiClient();
-      apiClient.updateBaseUrl();
-      debugPrint('🔥 App: ApiClient base URL updated after env load');
-    } catch (e) {
-      debugPrint('🔥 App: Error updating ApiClient base URL: $e');
-    }
-  } catch (e) {
-    debugPrint('🔥 App: Environment initialization error: $e');
-    // Continue with default environment
-  }
 
-  // Initialize reCAPTCHA Enterprise client (Android only)
-  // Note: For iOS, Firebase Auth handles reCAPTCHA internally for phone authentication
-  // Initializing a separate reCAPTCHA client on iOS causes conflicts with Firebase Auth
-  if (!kIsWeb && Platform.isAndroid) {
-    try {
-      recaptchaClient = await initializeRecaptchaClient();
-      if (recaptchaClient != null) {
-        debugPrint('✅ reCAPTCHA Enterprise client ready');
-      }
-    } catch (e) {
-      debugPrint('❌ reCAPTCHA Enterprise initialization error: $e');
-      debugPrint('⚠️ App will continue without reCAPTCHA Enterprise');
-      recaptchaClient = null;
-    }
-  } else {
-    if (kIsWeb) {
-      debugPrint('🛡️ reCAPTCHA Enterprise skipped (web platform)');
-    } else if (Platform.isIOS) {
-      debugPrint('🛡️ reCAPTCHA Enterprise skipped (iOS - Firebase Auth handles reCAPTCHA internally)');
-    } else {
-      debugPrint('🛡️ reCAPTCHA Enterprise skipped (unsupported platform)');
-    }
-  }
-
-  runApp(ProviderScope(
-      child: MyApp()));
+      runApp(ProviderScope(
+          child: MyApp()));
+    },
+  );
 }
 
 Future<void> initEnv() async{
