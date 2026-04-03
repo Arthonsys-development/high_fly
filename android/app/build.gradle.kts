@@ -50,7 +50,7 @@ android {
         applicationId = "vistarak.apps"
         minSdk = 24
         targetSdk = 36
-        versionCode = 9
+        versionCode = 10
         versionName = "1.0.1"
         multiDexEnabled = true
     }
