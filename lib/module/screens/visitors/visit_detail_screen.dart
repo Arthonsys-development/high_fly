@@ -141,7 +141,7 @@ class VisitDetailScreen extends StatelessWidget {
                                       shadows: [
                                         Shadow(
                                           blurRadius: 4.0,
-                                          color: Colors.black54, 
+                                          color: Colors.black54,
                                           offset: Offset(1.0, 1.0),
                                         ),
                                       ],
