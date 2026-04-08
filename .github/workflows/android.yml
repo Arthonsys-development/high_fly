@@ -1,10 +1,10 @@
-name: Flutter CI v2
+name: Flutter CI v3
 
 on:
   push:
     branches:
-      - feature/dev-s1-use-CI/CD-pipeline   # 👈 exact tumhari branch
-  workflow_dispatch:   # 👈 manual trigger button
+      - feature/dev-s1-use-CI/CD-pipeline
+  workflow_dispatch:
 
 jobs:
   build:
@@ -12,10 +12,10 @@ jobs:
 
     steps:
       - name: 📥 Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4   # 👈 updated
 
       - name: ☕ Setup Java
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4   # 👈 updated
         with:
           distribution: 'temurin'
           java-version: '17'
@@ -26,21 +26,23 @@ jobs:
           channel: 'stable'
 
       - name: ⚡ Cache dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4   # 👈 updated
         with:
-          path: ~/.pub-cache
-          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+          path: |
+            ~/.pub-cache
+            build
+          key: ${{ runner.os }}-flutter-${{ hashFiles('**/pubspec.lock') }}
           restore-keys: |
-            ${{ runner.os }}-pub-
+            ${{ runner.os }}-flutter-
 
       - name: 📦 Install dependencies
         run: flutter pub get
 
       - name: 🔍 Analyze code
-        run: flutter analyze || true
+        run: flutter analyze
 
       - name: 🧪 Run tests
-        run: flutter test || true
+        run: flutter test   # 👈 ab proper enable (no || true)
 
       - name: 🏗️ Build APK (Debug)
         run: flutter build apk --debug
