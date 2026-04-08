@@ -6,6 +6,9 @@ on:
       - feature/dev-s1-use-CI/CD-pipeline
   workflow_dispatch:
 
+permissions:
+   contents: write   # ✅ IMPORTANT FIX
+
 jobs:
   # -------------------------
   # 1️⃣ CI Job: Build & Test
@@ -67,7 +70,7 @@ jobs:
           git config --global user.email "github-actions@github.com"
           git add pubspec.yaml
           git commit -m "🔖 Auto increment version code" || echo "No changes to commit"
-          git push    
+          git push origin HEAD:${{ github.ref }}
 
       # 🔐 Decode keystore
       - name: 🔐 Decode keystore
