@@ -1,4 +1,4 @@
-name: Flutter CI v4 (Release)
+name: Flutter CI/CD v5 (Release)
 
 on:
   push:
@@ -7,7 +7,10 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  # -------------------------
+  # 1️⃣ CI Job: Build & Test
+  # -------------------------
+  ci:
     runs-on: ubuntu-latest
 
     steps:
@@ -49,7 +52,7 @@ jobs:
         run: |
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/upload-keystore.jks
 
-      # 📝 Create key.properties (VERY IMPORTANT)
+      # 📝 Create key.properties
       - name: 📝 Create key.properties
         run: |
           echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" > android/key.properties
@@ -61,12 +64,26 @@ jobs:
       - name: 🏗️ Build APK (Release)
         run: flutter build apk --release
 
-      # 📤 Upload APK
+      # 📤 Upload APK Artifact
       - name: 📤 Upload Release APK
         uses: actions/upload-artifact@v4
         with:
           name: release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
+
+  # -------------------------
+  # 2️⃣ CD Job: Firebase Distribution
+  # -------------------------
+  cd:
+    needs: ci
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Download APK Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: release-apk
+          path: build/app/outputs/flutter-apk/
 
       - name: 🚀 Distribute to Firebase
         uses: wzieba/Firebase-Distribution-Github-Action@v1
