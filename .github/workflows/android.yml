@@ -1,4 +1,4 @@
-name: Flutter CI/CD v7 (Release)
+name: Flutter CI/CD v8 (Release)
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-   contents: write   # ✅ IMPORTANT FIX
+  contents: read   # ❗ push nahi kar rahe, to read enough hai
 
 jobs:
   # -------------------------
@@ -55,22 +55,17 @@ jobs:
       # -------------------------
       - name: 🔢 Auto Increment Version
         run: |
-          # Read current versionCode
           currentCode=$(grep 'version: ' pubspec.yaml | sed 's/.*+//')
-          # Increment by 1
           nextCode=$((currentCode + 1))
-          # Replace versionCode in pubspec.yaml
           sed -i "s/\(version: .*+\).*/\1$nextCode/" pubspec.yaml
           echo "Updated version:"
           cat pubspec.yaml
 
-      - name: 💾 Commit version update
-        run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "github-actions@github.com"
-          git add pubspec.yaml
-          git commit -m "🔖 Auto increment version code" || echo "No changes to commit"
-          git push origin HEAD:${{ github.ref }}
+      # -------------------------
+      # 🔄 Refresh pubspec
+      # -------------------------
+      - name: 🔄 Refresh pubspec after version change
+        run: flutter pub get
 
       # 🔐 Decode keystore
       - name: 🔐 Decode keystore
@@ -88,6 +83,20 @@ jobs:
       # 🏗️ Build Release APK
       - name: 🏗️ Build APK (Release)
         run: flutter build apk --release
+
+      # -------------------------
+      # 🧾 DEBUG: Check Version
+      # -------------------------
+      - name: 🧾 Check final version used in build
+        run: |
+          echo "Final version in pubspec:"
+          grep version pubspec.yaml
+
+      # -------------------------
+      # 📦 DEBUG: Check APK
+      # -------------------------
+      - name: 📦 Check APK file
+        run: ls -lh build/app/outputs/flutter-apk/
 
       # 📤 Upload APK Artifact
       - name: 📤 Upload Release APK
@@ -117,3 +126,4 @@ jobs:
           token: ${{ secrets.FIREBASE_TOKEN }}
           groups: testers
           file: build/app/outputs/flutter-apk/app-release.apk
+          releaseNotes: "🚀 New CI/CD build with incremented version"
