@@ -130,7 +130,7 @@ class VisitDetailScreen extends StatelessWidget {
                                   color: Colors.white,
                                   size: 20,
                                 ),
-                                const SizedBox(width: 6),
+                                const SizedBox(width: 6), 
                                 Expanded(
                                   child: Text(
                                     visit.projectName,
