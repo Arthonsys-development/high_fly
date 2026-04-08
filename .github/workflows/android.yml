@@ -1,4 +1,4 @@
-name: Flutter CI v3
+name: Flutter CI v4 (Release)
 
 on:
   push:
@@ -12,10 +12,10 @@ jobs:
 
     steps:
       - name: 📥 Checkout code
-        uses: actions/checkout@v4   # 👈 updated
+        uses: actions/checkout@v4
 
       - name: ☕ Setup Java
-        uses: actions/setup-java@v4   # 👈 updated
+        uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
@@ -26,7 +26,7 @@ jobs:
           channel: 'stable'
 
       - name: ⚡ Cache dependencies
-        uses: actions/cache@v4   # 👈 updated
+        uses: actions/cache@v4
         with:
           path: |
             ~/.pub-cache
@@ -42,13 +42,28 @@ jobs:
         run: flutter analyze --no-fatal-infos --no-fatal-warnings
 
       - name: 🧪 Run tests
-        run: flutter test   # 👈 ab proper enable (no || true)
+        run: flutter test
 
-      - name: 🏗️ Build APK (Debug)
-        run: flutter build apk --debug
+      # 🔐 Decode keystore
+      - name: 🔐 Decode keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/upload-keystore.jks
 
-      - name: 📤 Upload APK
+      # 📝 Create key.properties (VERY IMPORTANT)
+      - name: 📝 Create key.properties
+        run: |
+          echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" > android/key.properties
+          echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android/key.properties
+          echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android/key.properties
+          echo "storeFile=upload-keystore.jks" >> android/key.properties
+
+      # 🏗️ Build Release APK
+      - name: 🏗️ Build APK (Release)
+        run: flutter build apk --release
+
+      # 📤 Upload APK
+      - name: 📤 Upload Release APK
         uses: actions/upload-artifact@v4
         with:
-          name: debug-apk
-          path: build/app/outputs/flutter-apk/app-debug.apk
+          name: release-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
