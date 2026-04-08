@@ -1,4 +1,4 @@
-name: Flutter CI/CD v8 (Release)
+name: Flutter CI/CD v9 (Release)
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read   # ❗ push nahi kar rahe, to read enough hai
+  contents: read
 
 jobs:
   # -------------------------
@@ -38,8 +38,6 @@ jobs:
             ~/.pub-cache
             build
           key: ${{ runner.os }}-flutter-${{ hashFiles('**/pubspec.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-flutter-
 
       - name: 📦 Install dependencies
         run: flutter pub get
@@ -50,21 +48,17 @@ jobs:
       - name: 🧪 Run tests
         run: flutter test
 
-      # -------------------------
       # 🔢 Auto Increment Version
-      # -------------------------
       - name: 🔢 Auto Increment Version
         run: |
           currentCode=$(grep 'version: ' pubspec.yaml | sed 's/.*+//')
           nextCode=$((currentCode + 1))
           sed -i "s/\(version: .*+\).*/\1$nextCode/" pubspec.yaml
           echo "Updated version:"
-          cat pubspec.yaml
+          grep version pubspec.yaml
 
-      # -------------------------
       # 🔄 Refresh pubspec
-      # -------------------------
-      - name: 🔄 Refresh pubspec after version change
+      - name: 🔄 Refresh pubspec
         run: flutter pub get
 
       # 🔐 Decode keystore
@@ -80,45 +74,50 @@ jobs:
           echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android/key.properties
           echo "storeFile=upload-keystore.jks" >> android/key.properties
 
-      # 🏗️ Build Release APK
+      # 🏗️ Build APK
       - name: 🏗️ Build APK (Release)
         run: flutter build apk --release
 
-      # -------------------------
-      # 🧾 DEBUG: Check Version
-      # -------------------------
-      - name: 🧾 Check final version used in build
-        run: |
-          echo "Final version in pubspec:"
-          grep version pubspec.yaml
+      # 🧾 Check version used in build
+      - name: 🧾 Verify version
+        run: grep version pubspec.yaml
 
-      # -------------------------
-      # 📦 DEBUG: Check APK
-      # -------------------------
-      - name: 📦 Check APK file
+      # 📦 Check APK exists
+      - name: 📦 Verify APK file
         run: ls -lh build/app/outputs/flutter-apk/
 
       # 📤 Upload APK Artifact
-      - name: 📤 Upload Release APK
+      - name: 📤 Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
 
   # -------------------------
-  # 2️⃣ CD Job: Firebase Distribution
+  # 2️⃣ CD Job: Firebase
   # -------------------------
   cd:
     needs: ci
     runs-on: ubuntu-latest
 
     steps:
-      - name: 📥 Download APK Artifact
+      - name: 📥 Download APK
         uses: actions/download-artifact@v4
         with:
           name: release-apk
           path: build/app/outputs/flutter-apk/
 
+      # 🔍 Verify APK before upload
+      - name: 🔍 Verify APK before Firebase
+        run: |
+          echo "APK files:"
+          ls -lh build/app/outputs/flutter-apk/
+
+      # 🧾 Print version again
+      - name: 🧾 Final version before upload
+        run: grep version pubspec.yaml
+
+      # 🚀 Firebase Upload
       - name: 🚀 Distribute to Firebase
         uses: wzieba/Firebase-Distribution-Github-Action@v1
         with:
@@ -126,4 +125,4 @@ jobs:
           token: ${{ secrets.FIREBASE_TOKEN }}
           groups: testers
           file: build/app/outputs/flutter-apk/app-release.apk
-          releaseNotes: "🚀 New CI/CD build with incremented version"
+          releaseNotes: "🚀 CI/CD build with version increment"
