@@ -243,7 +243,7 @@ class VisitDetailScreen extends StatelessWidget {
                       const SizedBox(height: 16),
                       _buildDetailRow(
                         icon: Icons.category,
-                        label: "Visit Type",
+                        label: "Visit Type", 
                         value: _formatVisitType(visit.purpose),
                       ),
                     ],
