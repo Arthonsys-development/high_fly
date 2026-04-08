@@ -61,6 +61,14 @@ jobs:
           echo "Updated version:"
           cat pubspec.yaml
 
+      - name: 💾 Commit version update
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git add pubspec.yaml
+          git commit -m "🔖 Auto increment version code" || echo "No changes to commit"
+          git push    
+
       # 🔐 Decode keystore
       - name: 🔐 Decode keystore
         run: |
