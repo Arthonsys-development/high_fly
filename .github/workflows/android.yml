@@ -1,48 +1,51 @@
-name: Flutter CI
+name: Flutter CI v2
 
 on:
   push:
     branches:
-      - feature/*
+      - feature/dev-s1-use-CI/CD-pipeline   # 👈 exact tumhari branch
+  workflow_dispatch:   # 👈 manual trigger button
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: 📥 Checkout code
         uses: actions/checkout@v3
 
-      - name: Setup Java
+      - name: ☕ Setup Java
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Setup Flutter
+      - name: 🐦 Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.22.0'
 
-      - name: Cache dependencies
+      - name: ⚡ Cache dependencies
         uses: actions/cache@v3
         with:
           path: ~/.pub-cache
           key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
 
-      - name: Install dependencies
+      - name: 📦 Install dependencies
         run: flutter pub get
 
-      - name: Analyze
+      - name: 🔍 Analyze code
         run: flutter analyze
 
-      - name: Run tests
+      - name: 🧪 Run tests
         run: flutter test
 
-      - name: Build APK
+      - name: 🏗️ Build APK
         run: flutter build apk --release
 
-      - name: Upload APK
+      - name: 📤 Upload APK
         uses: actions/upload-artifact@v3
         with:
           name: release-apk
