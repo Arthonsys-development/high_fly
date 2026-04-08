@@ -1,4 +1,4 @@
-name: Flutter CI/CD v5 (Release)
+name: Flutter CI/CD v7 (Release)
 
 on:
   push:
@@ -46,6 +46,20 @@ jobs:
 
       - name: 🧪 Run tests
         run: flutter test
+
+      # -------------------------
+      # 🔢 Auto Increment Version
+      # -------------------------
+      - name: 🔢 Auto Increment Version
+        run: |
+          # Read current versionCode
+          currentCode=$(grep 'version: ' pubspec.yaml | sed 's/.*+//')
+          # Increment by 1
+          nextCode=$((currentCode + 1))
+          # Replace versionCode in pubspec.yaml
+          sed -i "s/\(version: .*+\).*/\1$nextCode/" pubspec.yaml
+          echo "Updated version:"
+          cat pubspec.yaml
 
       # 🔐 Decode keystore
       - name: 🔐 Decode keystore
