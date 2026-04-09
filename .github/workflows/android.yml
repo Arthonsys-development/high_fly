@@ -1,4 +1,4 @@
-name: Flutter CI/CD v9 (Release)
+name: Flutter CI/CD v10 (Release)
 
 on:
   push:
@@ -48,19 +48,6 @@ jobs:
       - name: 🧪 Run tests
         run: flutter test
 
-      # 🔢 Auto Increment Version
-      - name: 🔢 Auto Increment Version
-        run: |
-          currentCode=$(grep 'version: ' pubspec.yaml | sed 's/.*+//')
-          nextCode=$((currentCode + 1))
-          sed -i "s/\(version: .*+\).*/\1$nextCode/" pubspec.yaml
-          echo "Updated version:"
-          grep version pubspec.yaml
-
-      # 🔄 Refresh pubspec
-      - name: 🔄 Refresh pubspec
-        run: flutter pub get
-
       # 🔐 Decode keystore
       - name: 🔐 Decode keystore
         run: |
@@ -78,11 +65,11 @@ jobs:
       - name: 🏗️ Build APK (Release)
         run: flutter build apk --release
 
-      # 🧾 Check version used in build
+      # 🧾 Verify version
       - name: 🧾 Verify version
         run: grep version pubspec.yaml
 
-      # 📦 Check APK exists
+      # 📦 Verify APK exists
       - name: 📦 Verify APK file
         run: ls -lh build/app/outputs/flutter-apk/
 
@@ -101,6 +88,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # ✅ FIX: checkout added
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
       - name: 📥 Download APK
         uses: actions/download-artifact@v4
         with:
@@ -113,11 +104,11 @@ jobs:
           echo "APK files:"
           ls -lh build/app/outputs/flutter-apk/
 
-      # 🧾 Print version again
+      # 🧾 Final version check
       - name: 🧾 Final version before upload
         run: grep version pubspec.yaml
 
-      # 🚀 Firebase Upload
+      # 🚀 Firebase Distribution
       - name: 🚀 Distribute to Firebase
         uses: wzieba/Firebase-Distribution-Github-Action@v1
         with:
@@ -125,4 +116,4 @@ jobs:
           token: ${{ secrets.FIREBASE_TOKEN }}
           groups: testers
           file: build/app/outputs/flutter-apk/app-release.apk
-          releaseNotes: "🚀 CI/CD build with version increment"
+          releaseNotes: "🚀 New build uploaded via CI/CD"
