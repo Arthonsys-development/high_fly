@@ -11,7 +11,6 @@ import 'dart:io' show File;
 import 'dart:typed_data' show Uint8List;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:permission_handler/permission_handler.dart';
-import 'dart:io' show Platform;
 
 import 'package:highfly/data/repository/firebase_auth_repository.dart';
 
@@ -273,66 +272,19 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
       } catch (e) {
         debugPrint('❌ Image Picker: Error opening gallery: $e');
         
-        // Check if it's a permission error (mainly for Android)
+        // Check if it's a permission error
         final errorString = e.toString().toLowerCase();
         if (errorString.contains('permission') || 
             errorString.contains('photo') ||
             errorString.contains('storage') ||
             errorString.contains('denied')) {
-          
-          if (!kIsWeb && Platform.isAndroid && mounted) {
-            // Check permission status and handle accordingly
-            try {
-              var status = await Permission.photos.status;
-              
-              // Try storage permission if photos permission is not available
-              if (!status.isGranted) {
-                status = await Permission.storage.status;
-              }
-              
-              if (status.isPermanentlyDenied) {
-                // Permission is permanently denied, offer to open settings
-                final shouldOpenSettings = await _showPermissionDialog(
-                  title: 'Gallery Permission Required',
-                  message: 'Gallery permission is required to select photos. Would you like to open Settings to enable it?',
-                  permissionType: 'gallery',
-                );
-                
-                if (shouldOpenSettings == true) {
-                  await openAppSettings();
-                }
-              } else if (!status.isGranted) {
-                // Try to request permission
-                status = await Permission.photos.request();
-                if (!status.isGranted) {
-                  status = await Permission.storage.request();
-                }
-                
-                if (!status.isGranted) {
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Gallery permission is required to select photos'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                  }
-                } else {
-                  // Permission granted, try again
-                  await _pickImageFromGallery();
-                }
-              }
-            } catch (permError) {
-              debugPrint('❌ Image Picker: Permission check error: $permError');
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Unable to check gallery permission'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-              }
-            }
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Unable to access gallery. Please allow media access when prompted by the system.'),
+                backgroundColor: Colors.red,
+              ),
+            );
           }
         } else {
           // Some other error

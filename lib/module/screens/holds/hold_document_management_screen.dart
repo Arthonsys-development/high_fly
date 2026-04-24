@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
+import 'package:flutter/foundation.dart' show kIsWeb, debugPrint, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
@@ -468,9 +468,13 @@ class _HoldDocumentManagementScreenState extends ConsumerState<HoldDocumentManag
     if (kIsWeb) {
       return;
     }
+
+    // Android uses system picker/scoped storage and does not need photos permission.
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      return;
+    }
     
-    // For Android 13+ (API 33+), we don't need storage permission for file picker
-    // For iOS, we need to check photos permission
+    // For iOS, we may need photos permission depending on picker source.
     try {
       var status = await Permission.photos.status;
       if (status.isGranted) {

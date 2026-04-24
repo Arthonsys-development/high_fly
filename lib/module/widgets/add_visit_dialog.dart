@@ -14,7 +14,6 @@ import 'dart:io' show File;
 import 'dart:typed_data' show Uint8List;
 import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode;
 import 'package:permission_handler/permission_handler.dart';
-import 'dart:io' show Platform;
 import 'package:geolocator/geolocator.dart';
 
 import '../../config/constant/app_strings.dart';
@@ -949,69 +948,7 @@ class _AddVisitDialogState extends ConsumerState<AddVisitDialog>
       
       // Image source dialog is already closed by the onTap handler
       
-      // Check and request gallery permission on mobile
-      if (!kIsWeb) {
-        try {
-          if (Platform.isAndroid) {
-            // On Android 13+ this maps to READ_MEDIA_IMAGES
-            var status = await Permission.photos.request();
-            if (status != PermissionStatus.granted) {
-              // Fallback for Android 12 and below
-              status = await Permission.storage.request();
-            }
-            if (status != PermissionStatus.granted) {
-              debugPrint('Gallery permission denied');
-              if (mounted) {
-                // Show dialog asking user if they want to open settings
-                if (status == PermissionStatus.permanentlyDenied) {
-                  final shouldOpenSettings = await showDialog<bool>(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: const Text('Gallery Permission Required'),
-                      content: const Text(
-                        'Gallery permission is required to select photos. Would you like to open Settings to enable it?',
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.of(context).pop(false),
-                          child: const Text('Cancel'),
-                        ),
-                        TextButton(
-                          onPressed: () => Navigator.of(context).pop(true),
-                          child: const Text('Open Settings'),
-                        ),
-                      ],
-                    ),
-                  );
-                  
-                  if (shouldOpenSettings == true) {
-                    await openAppSettings();
-                  }
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Gallery permission is required to select photos', style: TextStyle(color: Colors.white)),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
-              }
-              setState(() {
-                _isPickingImage = false;
-                _imagePickStartTime = null;
-              });
-              Routes.isPickingImage = false;
-              debugPrint('Reset isPickingImage flag to false (permission denied)');
-              return;
-            }
-          } else if (Platform.isIOS) {
-            // iOS: PHPicker does not require Photos permission; proceed without requesting
-          }
-        } catch (permissionError) {
-          debugPrint('Error requesting gallery permission: $permissionError');
-          // On some devices, we might still be able to pick an image even without explicit permission
-        }
-      }
+      // Gallery/media access is handled by the OS picker; avoid runtime photos/storage requests.
       
       debugPrint('Calling image picker for gallery');
       final XFile? pickedImage = await _picker.pickImage(

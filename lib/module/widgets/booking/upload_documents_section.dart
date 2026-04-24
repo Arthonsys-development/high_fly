@@ -300,7 +300,7 @@ class _UploadDocumentsSectionState extends State<UploadDocumentsSection> {
             errorString.contains('photos') ||
             errorString.contains('denied')) {
           
-          if (!kIsWeb && mounted) {
+          if (!kIsWeb && mounted && defaultTargetPlatform == TargetPlatform.iOS) {
             // Check permission status and handle accordingly
             try {
               var status = await Permission.photos.status;
@@ -381,10 +381,12 @@ class _UploadDocumentsSectionState extends State<UploadDocumentsSection> {
           } else {
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Photos permission is required to select images'),
+                SnackBar(
+                  content: Text(defaultTargetPlatform == TargetPlatform.iOS
+                      ? 'Photos permission is required to select images'
+                      : 'Gallery access denied'),
                   backgroundColor: Colors.red,
-                  duration: Duration(seconds: 2),
+                  duration: const Duration(seconds: 2),
                 ),
               );
             }
