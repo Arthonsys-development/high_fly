@@ -475,10 +475,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                     color: AppColors.primaryColor,
                     isDesktop: false,
                   ),
+
+                  SizedBox(
+                    width: 10,
+                  ),
+
                   _statsCard(
                     context,
                     title: "Active Projects",
                     count: projectsState.activeProjects.length.toString(),
+                    subtitleLeft: null,
+                    subtitleRight: null,
                     icon: IconsAssets.activeProjectIcon,
                     color: Colors.green,
                     isDesktop: false,

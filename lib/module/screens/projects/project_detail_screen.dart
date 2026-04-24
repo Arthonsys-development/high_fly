@@ -933,7 +933,9 @@ class ProjectDetailScreen extends StatelessWidget {
           // Thumbnail or Image Preview
           if (file.thumbnailUrl.isNotEmpty || file.fileUrl.isNotEmpty)
             GestureDetector(
-              onTap: () => _showFullScreenImage(context, file.fileUrl.isNotEmpty ? file.fileUrl : file.thumbnailUrl),
+              onTap: () {
+                _showFullScreenImage(context, file.thumbnailUrl.isNotEmpty ? file.thumbnailUrl : file.fileUrl);
+              },
               child: ClipRRect(
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
                 child: kIsWeb
