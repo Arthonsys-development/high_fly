@@ -570,6 +570,37 @@ class BookingApiRepository {
           }
         }
       }
+
+      if (updateData['cheque_copy_bytes'] != null) {
+        final chequeBytesRaw = updateData['cheque_copy_bytes'];
+        final chequeCopyName = updateData['cheque_copy_name']?.toString() ?? 'cheque_image.jpg';
+
+        formDataMap.remove('cheque_copy_bytes');
+        formDataMap.remove('cheque_copy_name');
+
+        List<int>? chequeBytes;
+        if (chequeBytesRaw is List<int>) {
+          chequeBytes = chequeBytesRaw;
+        } else if (chequeBytesRaw is List) {
+          chequeBytes = chequeBytesRaw.map((e) => e as int).toList();
+        }
+
+        if (chequeBytes != null && chequeBytes.isNotEmpty) {
+          final extension = chequeCopyName.split('.').last.toLowerCase();
+          String? contentType;
+          if (extension == 'jpg' || extension == 'jpeg') {
+            contentType = 'image/jpeg';
+          } else if (extension == 'png') {
+            contentType = 'image/png';
+          }
+
+          formDataMap['cheque_copy'] = MultipartFile.fromBytes(
+            chequeBytes,
+            filename: chequeCopyName,
+            contentType: contentType != null ? MediaType.parse(contentType) : null,
+          );
+        }
+      }
       
       final formData = FormData.fromMap(formDataMap);
 

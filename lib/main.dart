@@ -14,6 +14,7 @@ import 'config/routes.dart';
 import 'config/theme.dart';
 import 'config/network/api_client.dart';
 import 'config/network/base_url_config.dart';
+import 'config/global_keys.dart';
 import 'config/sentry_config.dart';
 import 'module/providers/organization_provider.dart';
 import 'utils/flutter_web_error_handler.dart';
@@ -22,9 +23,6 @@ import 'dart:io' show Platform;
 
 // Conditional import for reCAPTCHA helper (only on mobile platforms)
 import 'utils/recaptcha_helper.dart' if (dart.library.html) 'utils/recaptcha_helper_stub.dart';
-
-final scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
-final navigatorKey = GlobalKey<NavigatorState>();
 
 // Global reCAPTCHA Enterprise client
 // Imported dynamically to avoid build issues on unsupported platforms

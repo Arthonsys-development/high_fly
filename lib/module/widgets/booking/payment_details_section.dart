@@ -143,11 +143,11 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                   children: [
                     // Payment Amount field (full width)
                     CustomTextField(
-                      titleText: 'Payment Amount',
+                      titleText: 'Booking Amount',
                       controller: _paymentAmountController,
                       isMandatory: false,
                       keyboardType: TextInputType.number,
-                      hintText: 'Enter Payment Amount',
+                      hintText: 'Enter Booking Amount',
                       borderRadius: 8,
                       onChanged: (value) {
                         setState(() {
@@ -392,11 +392,11 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
               children: [
                 // Payment Amount field
                 CustomTextField(
-                  titleText: 'Payment Amount',
+                  titleText: 'Booking Amount',
                   controller: _paymentAmountController,
                   isMandatory: false,
                   keyboardType: TextInputType.number,
-                  hintText: 'Enter Payment Amount',
+                  hintText: 'Enter Booking Amount',
                   borderRadius: 6,
                   onChanged: (value) {
                     setState(() {
@@ -652,9 +652,11 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
     if (_aadharNumberController.text.trim().isEmpty) return false;
 
     if (_paymentDetails.paymentMethodKey == PaymentMethod.cheque) {
+      final hasNewChequeImage = _paymentDetails.chequeImageBytes?.isNotEmpty ?? false;
+      final hasExistingChequeImage = _paymentDetails.existingChequeImageUrl?.isNotEmpty ?? false;
       return _chequeNumberController.text.trim().isNotEmpty &&
           _paymentDetails.chequeDate != null &&
-          (_paymentDetails.chequeImageBytes?.isNotEmpty ?? false);
+          (hasNewChequeImage || hasExistingChequeImage);
     }
 
     return true;
@@ -677,6 +679,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
               chequeDate: key == PaymentMethod.cheque ? _paymentDetails.chequeDate : null,
               chequeImageName: key == PaymentMethod.cheque ? _paymentDetails.chequeImageName : null,
               chequeImageBytes: key == PaymentMethod.cheque ? _paymentDetails.chequeImageBytes : null,
+              existingChequeImageUrl: key == PaymentMethod.cheque ? _paymentDetails.existingChequeImageUrl : null,
             );
             _paymentMethodController.text = value;
             
@@ -743,7 +746,10 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
   }
 
   Widget _buildChequeImageUploadSection() {
-    final hasChequeImage = _paymentDetails.chequeImageBytes != null && _paymentDetails.chequeImageBytes!.isNotEmpty;
+    final hasNewChequeImage = _paymentDetails.chequeImageBytes != null && _paymentDetails.chequeImageBytes!.isNotEmpty;
+    final hasExistingChequeImage = _paymentDetails.existingChequeImageUrl != null &&
+        _paymentDetails.existingChequeImageUrl!.isNotEmpty;
+    final hasChequeImage = hasNewChequeImage || hasExistingChequeImage;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -782,12 +788,29 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                     children: [
                       ClipRRect(
                         borderRadius: BorderRadius.circular(8),
-                        child: Image.memory(
-                          Uint8List.fromList(_paymentDetails.chequeImageBytes!),
-                          width: double.infinity,
-                          height: 180,
-                          fit: BoxFit.cover,
-                        ),
+                        child: hasNewChequeImage
+                            ? Image.memory(
+                                Uint8List.fromList(_paymentDetails.chequeImageBytes!),
+                                width: double.infinity,
+                                height: 180,
+                                fit: BoxFit.cover,
+                              )
+                            : Image.network(
+                                _paymentDetails.existingChequeImageUrl!,
+                                width: double.infinity,
+                                height: 180,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => Container(
+                                  width: double.infinity,
+                                  height: 180,
+                                  color: AppColors.textFieldBGColor,
+                                  alignment: Alignment.center,
+                                  child: const Text(
+                                    'Unable to load cheque image',
+                                    style: TextStyle(color: Colors.red),
+                                  ),
+                                ),
+                              ),
                       ),
                       const SizedBox(height: 8),
                       SizedBox(
@@ -907,6 +930,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
         _paymentDetails = _paymentDetails.copyWith(
           chequeImageName: pickedImage.name,
           chequeImageBytes: imageBytes,
+          existingChequeImageUrl: null,
         );
       });
     } catch (e) {
