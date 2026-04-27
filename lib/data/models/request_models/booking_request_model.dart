@@ -29,6 +29,8 @@ class BookingRequestModel {
   final String? form16APath;
   final int? holdId;
   final List<String>? documents;
+  final String? chequeImageName;
+  final List<int>? chequeImageBytes;
 
   const BookingRequestModel({
     required this.plot,
@@ -61,6 +63,8 @@ class BookingRequestModel {
     this.form16APath,
     this.holdId,
     this.documents,
+    this.chequeImageName,
+    this.chequeImageBytes,
   });
 
   Map<String, dynamic> toJson() {
@@ -95,6 +99,7 @@ class BookingRequestModel {
       if (form16APath != null) 'form_16a_path': form16APath,
       if (holdId != null) 'hold_id': holdId,
       if (documents != null && documents!.isNotEmpty) 'documents': documents,
+      if (chequeImageName != null) 'cheque_copy_name': chequeImageName,
     };
   }
 

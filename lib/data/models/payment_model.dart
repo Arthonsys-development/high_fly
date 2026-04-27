@@ -12,6 +12,8 @@ class PaymentDetails {
   final String additionalNotes;
   final String? chequeNumber;
   final DateTime? chequeDate;
+  final String? chequeImageName;
+  final List<int>? chequeImageBytes;
 
   const PaymentDetails({
     required this.paymentAmount,
@@ -27,6 +29,8 @@ class PaymentDetails {
     required this.additionalNotes,
     this.chequeNumber,
     this.chequeDate,
+    this.chequeImageName,
+    this.chequeImageBytes,
   });
 
   factory PaymentDetails.fromJson(Map<String, dynamic> json) {
@@ -44,6 +48,10 @@ class PaymentDetails {
       additionalNotes: json['additionalNotes'] as String,
       chequeNumber: json['chequeNumber'] as String?,
       chequeDate: json['chequeDate'] != null ? DateTime.parse(json['chequeDate'] as String) : null,
+      chequeImageName: json['chequeImageName'] as String?,
+      chequeImageBytes: json['chequeImageBytes'] != null
+          ? List<int>.from(json['chequeImageBytes'] as List)
+          : null,
     );
   }
 
@@ -62,6 +70,8 @@ class PaymentDetails {
       'additionalNotes': additionalNotes,
       'chequeNumber': chequeNumber,
       'chequeDate': chequeDate?.toIso8601String(),
+      'chequeImageName': chequeImageName,
+      'chequeImageBytes': chequeImageBytes,
     };
   }
 
@@ -79,6 +89,8 @@ class PaymentDetails {
     String? additionalNotes,
     String? chequeNumber,
     DateTime? chequeDate,
+    String? chequeImageName,
+    List<int>? chequeImageBytes,
   }) {
     return PaymentDetails(
       paymentAmount: paymentAmount ?? this.paymentAmount,
@@ -94,6 +106,8 @@ class PaymentDetails {
       additionalNotes: additionalNotes ?? this.additionalNotes,
       chequeNumber: chequeNumber ?? this.chequeNumber,
       chequeDate: chequeDate ?? this.chequeDate,
+      chequeImageName: chequeImageName ?? this.chequeImageName,
+      chequeImageBytes: chequeImageBytes ?? this.chequeImageBytes,
     );
   }
 }
