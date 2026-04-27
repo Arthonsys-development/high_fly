@@ -80,6 +80,7 @@ class _BookingEditScreenState extends State<BookingEditScreen> {
       additionalNotes: widget.booking.remarks.isNotEmpty ? widget.booking.remarks : '',
       chequeNumber: widget.booking.chequeNumber.isNotEmpty ? widget.booking.chequeNumber : null,
       chequeDate: _parseChequeDate(widget.booking.chequeDate),
+      existingChequeImageUrl: widget.booking.chequeCopy,
     );
     
     _bankDetails = BankDetails(
@@ -127,6 +128,10 @@ class _BookingEditScreenState extends State<BookingEditScreen> {
         'cheque_date': _paymentDetails!.chequeDate != null
             ? _paymentDetails!.chequeDate!.toIso8601String().split('T')[0]
             : '',
+        if (_paymentDetails!.chequeImageBytes != null && _paymentDetails!.chequeImageBytes!.isNotEmpty)
+          'cheque_copy_bytes': _paymentDetails!.chequeImageBytes!,
+        if (_paymentDetails!.chequeImageName != null && _paymentDetails!.chequeImageName!.isNotEmpty)
+          'cheque_copy_name': _paymentDetails!.chequeImageName!,
         
         // File paths (will be converted to MultipartFile in repository)
         if (_paymentDetails!.salarySlipPath != null && _paymentDetails!.salarySlipPath!.isNotEmpty)

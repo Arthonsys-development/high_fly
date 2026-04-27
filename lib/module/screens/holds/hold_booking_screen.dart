@@ -89,6 +89,8 @@ class _HoldBookingScreenState extends State<HoldBookingScreen> {
         salaryIndividual: _paymentDetails!.isSalariedIndividual,
         salarySlipPath: _paymentDetails!.salarySlipPath,
         form16APath: _paymentDetails!.form16APath,
+        chequeImageName: _paymentDetails!.chequeImageName,
+        chequeImageBytes: _paymentDetails!.chequeImageBytes,
         holdId: widget.hold.id, // Include hold ID when booking from hold
       );
 

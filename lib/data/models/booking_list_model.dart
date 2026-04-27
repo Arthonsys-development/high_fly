@@ -28,6 +28,7 @@ class BookingListModel {
   final String paymentReference;
   final String chequeNumber;
   final String? chequeDate;
+  final String? chequeCopy;
   final String paymentDetails;
   final String panCard;
   final String aadharCard;
@@ -82,6 +83,7 @@ class BookingListModel {
     required this.paymentReference,
     required this.chequeNumber,
     this.chequeDate,
+    this.chequeCopy,
     required this.paymentDetails,
     required this.panCard,
     required this.aadharCard,
@@ -160,6 +162,7 @@ class BookingListModel {
       paymentReference: json['payment_reference'] ?? '',
       chequeNumber: json['cheque_number'] ?? '',
       chequeDate: json['cheque_date'],
+      chequeCopy: json['cheque_copy']?.toString(),
       paymentDetails: json['payment_details'] ?? '',
       panCard: json['pan_card'] ?? '',
       aadharCard: json['aadhar_card'] ?? '',
@@ -217,6 +220,7 @@ class BookingListModel {
       'payment_reference': paymentReference,
       'cheque_number': chequeNumber,
       'cheque_date': chequeDate,
+      'cheque_copy': chequeCopy,
       'payment_details': paymentDetails,
       'pan_card': panCard,
       'aadhar_card': aadharCard,

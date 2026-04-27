@@ -14,6 +14,61 @@ import 'package:dio/dio.dart';
 class AuthApiRepository {
   final ApiClient _apiClient = ApiClient();
 
+  bool _isHtmlContent(String value) {
+    final lower = value.toLowerCase();
+    return lower.contains('<!doctype html') ||
+        lower.contains('<html') ||
+        lower.contains('<body') ||
+        lower.contains('</html>');
+  }
+
+  String _safeLogData(dynamic data) {
+    if (data == null) return 'null';
+    if (data is String && _isHtmlContent(data)) {
+      return '[HTML error page omitted]';
+    }
+    return data.toString();
+  }
+
+  String _extractSafeErrorMessage(dynamic responseData, String fallback) {
+    if (responseData is Map<String, dynamic>) {
+      final message = responseData['error']?.toString() ??
+          responseData['message']?.toString() ??
+          responseData['detail']?.toString() ??
+          responseData['non_field_errors']?.toString();
+      if (message != null && message.isNotEmpty) {
+        return message;
+      }
+
+      final errorMessages = <String>[];
+      responseData.forEach((_, value) {
+        if (value is List && value.isNotEmpty) {
+          errorMessages.add(value.join(', '));
+        } else if (value is String && value.isNotEmpty) {
+          errorMessages.add(value);
+        }
+      });
+
+      if (errorMessages.isNotEmpty) {
+        return errorMessages.join('\n');
+      }
+      return fallback;
+    }
+
+    if (responseData is List && responseData.isNotEmpty) {
+      return responseData.join(', ');
+    }
+
+    if (responseData is String && responseData.isNotEmpty) {
+      if (_isHtmlContent(responseData)) {
+        return fallback;
+      }
+      return responseData;
+    }
+
+    return fallback;
+  }
+
   Future<Map<String, dynamic>> verifyPhoneNumber(String phoneNumber) async {
     try {
       debugPrint('📞 verifyPhoneNumber: Making request for phone: $phoneNumber');
@@ -55,7 +110,7 @@ class AuthApiRepository {
     } on DioException catch (e) {
       debugPrint('❌ DioException in verifyPhoneNumber: ${e.message}');
       debugPrint('❌ Error type: ${e.type}');
-      debugPrint('❌ Error response: ${e.response?.data}');
+      debugPrint('❌ Error response: ${_safeLogData(e.response?.data)}');
       debugPrint('❌ Error status code: ${e.response?.statusCode}');
       
       String errorMessage = 'Unable to verify phone number';
@@ -64,16 +119,7 @@ class AuthApiRepository {
         final responseData = e.response?.data;
         debugPrint('❌ Response data type: ${responseData.runtimeType}');
         
-        if (responseData is Map<String, dynamic>) {
-          errorMessage = responseData['message']?.toString() ??
-              responseData['detail']?.toString() ??
-              responseData['error']?.toString() ??
-              errorMessage;
-        } else if (responseData is String && responseData.isNotEmpty) {
-          errorMessage = responseData;
-        } else if (responseData is List && responseData.isNotEmpty) {
-          errorMessage = responseData.join(', ');
-        }
+        errorMessage = _extractSafeErrorMessage(responseData, errorMessage);
       } else if (e.message != null && e.message!.isNotEmpty) {
         errorMessage = e.message!;
       }
@@ -114,41 +160,11 @@ class AuthApiRepository {
       
       // Extract error message from response
       if (e.response != null) {
-        debugPrint('Error response data: ${e.response?.data}');
+        debugPrint('Error response data: ${_safeLogData(e.response?.data)}');
         debugPrint('Error status code: ${e.response?.statusCode}');
         
         final responseData = e.response?.data;
-        if (responseData != null) {
-          // Try to extract error message from different response formats
-          if (responseData is Map<String, dynamic>) {
-            // Common error response formats
-            errorMessage = responseData['error']?.toString() ?? 
-                          responseData['message']?.toString() ?? 
-                          responseData['detail']?.toString() ?? 
-                          responseData['non_field_errors']?.toString() ?? 
-                          errorMessage;
-            
-            // Handle field-specific errors
-            if (errorMessage == 'Registration failed' && responseData.isNotEmpty) {
-              // Collect all error messages (without field name prefix)
-              final errorMessages = <String>[];
-              responseData.forEach((key, value) {
-                if (value is List && value.isNotEmpty) {
-                  errorMessages.add(value.join(", "));
-                } else if (value is String && value.isNotEmpty) {
-                  errorMessages.add(value);
-                }
-              });
-              if (errorMessages.isNotEmpty) {
-                errorMessage = errorMessages.join('\n');
-              }
-            }
-          } else if (responseData is String) {
-            errorMessage = responseData;
-          } else if (responseData is List && responseData.isNotEmpty) {
-            errorMessage = responseData.join(', ');
-          }
-        }
+        errorMessage = _extractSafeErrorMessage(responseData, errorMessage);
       } else {
         // Network or other errors
         if (e.type == DioExceptionType.connectionTimeout || 
@@ -233,41 +249,11 @@ class AuthApiRepository {
       
       // Extract error message from response
       if (e.response != null) {
-        debugPrint('Error response data: ${e.response?.data}');
+        debugPrint('Error response data: ${_safeLogData(e.response?.data)}');
         debugPrint('Error status code: ${e.response?.statusCode}');
         
         final responseData = e.response?.data;
-        if (responseData != null) {
-          // Try to extract error message from different response formats
-          if (responseData is Map<String, dynamic>) {
-            // Common error response formats
-            errorMessage = responseData['error']?.toString() ?? 
-                          responseData['message']?.toString() ?? 
-                          responseData['detail']?.toString() ?? 
-                          responseData['non_field_errors']?.toString() ?? 
-                          errorMessage;
-            
-            // Handle field-specific errors
-            if (errorMessage == 'Token verification failed' && responseData.isNotEmpty) {
-              // Collect all error messages (without field name prefix)
-              final errorMessages = <String>[];
-              responseData.forEach((key, value) {
-                if (value is List && value.isNotEmpty) {
-                  errorMessages.add(value.join(", "));
-                } else if (value is String && value.isNotEmpty) {
-                  errorMessages.add(value);
-                }
-              });
-              if (errorMessages.isNotEmpty) {
-                errorMessage = errorMessages.join('\n');
-              }
-            }
-          } else if (responseData is String) {
-            errorMessage = responseData;
-          } else if (responseData is List && responseData.isNotEmpty) {
-            errorMessage = responseData.join(', ');
-          }
-        }
+        errorMessage = _extractSafeErrorMessage(responseData, errorMessage);
       } else {
         // Network or other errors
         if (e.type == DioExceptionType.connectionTimeout || 
@@ -736,13 +722,8 @@ class AuthApiRepository {
       
       if (e.response != null) {
         final responseData = e.response?.data;
-        if (responseData is Map<String, dynamic>) {
-          errorMessage = responseData['message']?.toString() ??
-              responseData['detail']?.toString() ??
-              errorMessage;
-        } else if (responseData is String && responseData.isNotEmpty) {
-          errorMessage = responseData;
-        }
+        debugPrint('Error response data: ${_safeLogData(responseData)}');
+        errorMessage = _extractSafeErrorMessage(responseData, errorMessage);
       } else if (e.message != null && e.message!.isNotEmpty) {
         errorMessage = e.message!;
       }

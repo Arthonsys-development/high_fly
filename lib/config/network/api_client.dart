@@ -5,6 +5,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:highfly/config/network/tenant_keys.dart';
 import 'package:highfly/config/network/base_url_config.dart';
 import 'package:highfly/config/network/sentry_dio_interceptor.dart';
+import 'package:highfly/config/global_keys.dart';
 import 'package:talker_dio_logger/talker_dio_logger_interceptor.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:highfly/config/routes.dart';
@@ -53,6 +54,57 @@ class ApiClient {
     } catch (e) {
       debugPrint('API Client: Error during force logout: $e');
     }
+  }
+
+  bool _isHtmlErrorPage(String value) {
+    final lower = value.toLowerCase();
+    return lower.contains('<!doctype html') ||
+        lower.contains('<html') ||
+        lower.contains('<body') ||
+        lower.contains('</html>');
+  }
+
+  String _safeErrorLogBody(dynamic body) {
+    if (body == null) return 'null';
+    if (body is String && _isHtmlErrorPage(body)) {
+      return '[HTML error page omitted]';
+    }
+    return body.toString();
+  }
+
+  void _showApiErrorToast(DioException error) {
+    String message = 'Something went wrong. Please try again.';
+    final statusCode = error.response?.statusCode;
+
+    if (statusCode == 401) {
+      message = 'Session expired. Please sign in again.';
+    } else if (statusCode == 500) {
+      message = 'Server error. Please try again later.';
+    } else if (statusCode != null && statusCode >= 400) {
+      message = 'Request failed ($statusCode). Please try again.';
+    } else if (error.type == DioExceptionType.connectionError ||
+        error.type == DioExceptionType.connectionTimeout ||
+        error.type == DioExceptionType.receiveTimeout ||
+        error.type == DioExceptionType.sendTimeout) {
+      message = 'Network error. Please check your internet connection.';
+    }
+
+    final messenger = scaffoldMessengerKey.currentState;
+    if (messenger == null) {
+      debugPrint('API Client: Could not show SnackBar, scaffoldMessengerKey is null');
+      return;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      messenger.hideCurrentSnackBar();
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    });
   }
 
   void _init() {
@@ -120,6 +172,8 @@ class ApiClient {
       onError: (DioException e, handler) async {
         debugPrint('API error: ${e.message}');
         debugPrint('Error URL: ${e.requestOptions.uri}');
+
+        _showApiErrorToast(e);
         
         // Detect CORS errors on web
         if (kIsWeb) {
@@ -153,7 +207,7 @@ class ApiClient {
         
         if (e.response != null) {
           debugPrint('Error status: ${e.response?.statusCode}');
-          debugPrint('Error data: ${e.response?.data}');
+          debugPrint('Error data: ${_safeErrorLogBody(e.response?.data)}');
           
           // Handle 401 Unauthorized - Force logout
           if (e.response?.statusCode == 401) {
@@ -290,7 +344,7 @@ class ApiClient {
     
     if (error.response != null) {
       debugPrint('Error Status: ${error.response?.statusCode}');
-      debugPrint('Error Data: ${error.response?.data}');
+      debugPrint('Error Data: ${_safeErrorLogBody(error.response?.data)}');
     }
     
     // Provide user-friendly error messages

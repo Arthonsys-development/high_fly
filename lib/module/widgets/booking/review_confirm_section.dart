@@ -162,6 +162,8 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
       salaryIndividual: summary.paymentDetails!.isSalariedIndividual,
       salarySlipPath: summary.paymentDetails!.salarySlipPath,
       form16APath: summary.paymentDetails!.form16APath,
+      chequeImageName: summary.paymentDetails!.chequeImageName,
+      chequeImageBytes: summary.paymentDetails!.chequeImageBytes,
       documents: summary.documents,
     );
 

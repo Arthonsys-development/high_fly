@@ -132,6 +132,23 @@ class BookingApiRepository {
           }
         }
       }
+
+      if (request.chequeImageBytes != null && request.chequeImageBytes!.isNotEmpty) {
+        final chequeImageName = request.chequeImageName ?? 'cheque_image.jpg';
+        final chequeImageExtension = chequeImageName.split('.').last.toLowerCase();
+        String? contentType;
+        if (chequeImageExtension == 'jpg' || chequeImageExtension == 'jpeg') {
+          contentType = 'image/jpeg';
+        } else if (chequeImageExtension == 'png') {
+          contentType = 'image/png';
+        }
+
+        formDataMap['cheque_copy'] = MultipartFile.fromBytes(
+          request.chequeImageBytes!,
+          filename: chequeImageName,
+          contentType: contentType != null ? MediaType.parse(contentType) : null,
+        );
+      }
       
       // Create FormData manually to ensure proper array handling for documents
       final formData = FormData();
@@ -139,6 +156,7 @@ class BookingApiRepository {
       // Track which file keys we have so we can skip corresponding path fields
       final hasSalarySlipFile = formDataMap.containsKey('salary_slip') && formDataMap['salary_slip'] is MultipartFile;
       final hasForm16AFile = formDataMap.containsKey('form_16a') && formDataMap['form_16a'] is MultipartFile;
+      final hasChequeImageFile = formDataMap.containsKey('cheque_copy') && formDataMap['cheque_copy'] is MultipartFile;
       
       // Add all form fields from formDataMap
       for (var entry in formDataMap.entries) {
@@ -150,6 +168,9 @@ class BookingApiRepository {
           continue;
         }
         if (entry.key == 'form_16a_path' && hasForm16AFile) {
+          continue;
+        }
+        if (entry.key == 'cheque_copy_name' && hasChequeImageFile) {
           continue;
         }
         
@@ -547,6 +568,37 @@ class BookingApiRepository {
               // File doesn't exist or can't be accessed, skip
             }
           }
+        }
+      }
+
+      if (updateData['cheque_copy_bytes'] != null) {
+        final chequeBytesRaw = updateData['cheque_copy_bytes'];
+        final chequeCopyName = updateData['cheque_copy_name']?.toString() ?? 'cheque_image.jpg';
+
+        formDataMap.remove('cheque_copy_bytes');
+        formDataMap.remove('cheque_copy_name');
+
+        List<int>? chequeBytes;
+        if (chequeBytesRaw is List<int>) {
+          chequeBytes = chequeBytesRaw;
+        } else if (chequeBytesRaw is List) {
+          chequeBytes = chequeBytesRaw.map((e) => e as int).toList();
+        }
+
+        if (chequeBytes != null && chequeBytes.isNotEmpty) {
+          final extension = chequeCopyName.split('.').last.toLowerCase();
+          String? contentType;
+          if (extension == 'jpg' || extension == 'jpeg') {
+            contentType = 'image/jpeg';
+          } else if (extension == 'png') {
+            contentType = 'image/png';
+          }
+
+          formDataMap['cheque_copy'] = MultipartFile.fromBytes(
+            chequeBytes,
+            filename: chequeCopyName,
+            contentType: contentType != null ? MediaType.parse(contentType) : null,
+          );
         }
       }
       

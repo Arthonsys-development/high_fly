@@ -271,6 +271,10 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
                             _buildDetailRow('Cheque Number', booking.chequeNumber),
                           if (booking.chequeDate != null && booking.chequeDate!.isNotEmpty)
                             _buildDetailRow('Cheque Date', booking.chequeDate!),
+                          if (booking.paymentMode.toLowerCase() == PaymentMethod.cheque &&
+                              booking.chequeCopy != null &&
+                              booking.chequeCopy!.isNotEmpty)
+                            _buildChequeCopyRow('Cheque Copy', booking.chequeCopy!),
                           if (booking.paymentDetails.isNotEmpty)
                             _buildDetailRow('Payment Details', booking.paymentDetails),
                         ]),
@@ -303,6 +307,10 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
                   _buildDetailRow('Cheque Number', booking.chequeNumber),
                 if (booking.chequeDate != null && booking.chequeDate!.isNotEmpty)
                   _buildDetailRow('Cheque Date', booking.chequeDate!),
+                if (booking.paymentMode.toLowerCase() == PaymentMethod.cheque &&
+                    booking.chequeCopy != null &&
+                    booking.chequeCopy!.isNotEmpty)
+                  _buildChequeCopyRow('Cheque Copy', booking.chequeCopy!),
                 if (booking.paymentDetails.isNotEmpty)
                   _buildDetailRow('Payment Details', booking.paymentDetails),
               ]),
@@ -565,6 +573,65 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
                   ),
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildChequeCopyRow(String label, String imageUrl) {
+    final isDesktopWeb = _isDesktopWeb(context);
+
+    return Padding(
+      padding: EdgeInsets.only(bottom: isDesktopWeb ? 16.0 : 12.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: isDesktopWeb ? 180 : 140,
+            child: Text(
+              '$label:',
+              style: TextStyle(
+                fontSize: isDesktopWeb ? 15 : 14,
+                color: AppColors.lightGreyColor,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          Expanded(
+            child: GestureDetector(
+              onTap: () => _openDocument(imageUrl),
+              child: Container(
+                height: isDesktopWeb ? 120 : 96,
+                decoration: BoxDecoration(
+                  color: Colors.grey.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.grey.withValues(alpha: 0.25)),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: kIsWeb
+                      ? WebImageWidget(
+                          imageUrl: imageUrl,
+                          width: double.infinity,
+                          height: double.infinity,
+                          fit: BoxFit.cover,
+                          borderRadius: 1,
+                        )
+                      : Image.network(
+                          imageUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => Center(
+                            child: Icon(
+                              Icons.image_not_supported,
+                              color: Colors.grey[500],
+                              size: isDesktopWeb ? 30 : 26,
+                            ),
+                          ),
+                        ),
+                ),
+              ),
             ),
           ),
         ],
