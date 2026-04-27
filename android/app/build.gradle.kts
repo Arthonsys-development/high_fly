@@ -61,12 +61,15 @@ android {
     if (keystorePropertiesFile.exists()) {
         keystoreProperties.load(FileInputStream(keystorePropertiesFile))
     }
+    val releaseStorePath = keystoreProperties["storeFile"]?.toString() ?: "upload-keystore.jks"
+    val releaseStoreFile = file(releaseStorePath)
+    val hasReleaseKeystore = keystorePropertiesFile.exists() && releaseStoreFile.exists()
 
     signingConfigs {
         create("release") {
             keyAlias = keystoreProperties["keyAlias"] as? String
             keyPassword = keystoreProperties["keyPassword"] as? String
-            storeFile = file(keystoreProperties["storeFile"]?.toString() ?: "upload-keystore.jks")
+            storeFile = releaseStoreFile
             storePassword = keystoreProperties["storePassword"] as? String
         }
     }
@@ -75,7 +78,12 @@ android {
         release {
             isMinifyEnabled = false
             isShrinkResources = false
-            signingConfig = signingConfigs.getByName("release")
+            // Allow local release builds when keystore is not available.
+            signingConfig = if (hasReleaseKeystore) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
