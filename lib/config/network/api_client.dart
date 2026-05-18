@@ -173,7 +173,16 @@ class ApiClient {
         debugPrint('API error: ${e.message}');
         debugPrint('Error URL: ${e.requestOptions.uri}');
 
-        _showApiErrorToast(e);
+        // Skip generic toast for 4xx errors (except 401) — the repository layer
+        // extracts and displays the specific error message from the response body.
+        final statusCode = e.response?.statusCode;
+        final is4xxNon401 = statusCode != null &&
+            statusCode >= 400 &&
+            statusCode < 500 &&
+            statusCode != 401;
+        if (!is4xxNon401) {
+          _showApiErrorToast(e);
+        }
         
         // Detect CORS errors on web
         if (kIsWeb) {

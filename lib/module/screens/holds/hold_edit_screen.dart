@@ -5,7 +5,6 @@ import 'package:highfly/data/models/bank_details_model.dart';
 import 'package:highfly/data/repository/booking_api_repository.dart';
 import '../../global/widgets/common_app_bar.dart';
 import '../../widgets/booking/hold_details_section.dart';
-import '../../widgets/booking/bank_details_section.dart';
 
 class HoldEditScreen extends StatefulWidget {
   final HoldListModel hold;
@@ -17,7 +16,6 @@ class HoldEditScreen extends StatefulWidget {
 }
 
 class _HoldEditScreenState extends State<HoldEditScreen> {
-  int _currentStep = 0; // 0: Hold Details, 1: Bank Details
   HoldDetails? _holdDetails;
   BankDetails? _bankDetails;
   bool _isLoading = false;
@@ -46,7 +44,7 @@ class _HoldEditScreenState extends State<HoldEditScreen> {
   }
 
   Future<void> _submitUpdate() async {
-    if (_holdDetails == null || _bankDetails == null) {
+    if (_holdDetails == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please fill all required fields'),
@@ -139,38 +137,22 @@ class _HoldEditScreenState extends State<HoldEditScreen> {
   }
 
   Widget _buildCurrentStep() {
-    if (_currentStep == 0) {
-      // Hold Details Section
-      return HoldDetailsSection(
-        title: "Hold Details",
-        nextButtonText: "Next",
-        initialHoldDetails: _holdDetails,
-        onNext: (holdDetails) {
-          setState(() {
-            _holdDetails = holdDetails;
-            _currentStep = 1; // Move to bank details
-          });
-        },
-      );
-    } else {
-      // Bank Details Section
-      return BankDetailsSection(
-        title: "Bank Details",
-        nextButtonText: "Submit",
-        initialBankDetails: _bankDetails,
-        onPrevious: () {
-          setState(() {
-            _currentStep = 0; // Go back to hold details
-          });
-        },
-        onNext: (bankDetails) {
-          setState(() {
-            _bankDetails = bankDetails;
-          });
-          _submitUpdate();
-        },
-      );
-    }
+    final saleableSizeVal = widget.hold.saleableSize != null
+        ? double.tryParse(widget.hold.saleableSize!)
+        : null;
+
+    return HoldDetailsSection(
+      title: "Hold Details",
+      nextButtonText: "Submit",
+      initialHoldDetails: _holdDetails,
+      saleableSize: saleableSizeVal,
+      onNext: (holdDetails) {
+        setState(() {
+          _holdDetails = holdDetails;
+        });
+        _submitUpdate();
+      },
+    );
   }
 }
 

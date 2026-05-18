@@ -34,7 +34,7 @@ dependencies {
 android {
     namespace = "vistarak.apps"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = "27.0.12077973"
+    ndkVersion = "28.2.13676358"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -50,8 +50,8 @@ android {
         applicationId = "vistarak.apps"
         minSdk = 24
         targetSdk = 36
-        versionCode = 13
-        versionName = "1.0.1"
+        versionCode = flutter.versionCode
+        versionName = flutter.versionName
         multiDexEnabled = true
     }
 

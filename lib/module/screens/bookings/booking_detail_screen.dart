@@ -109,6 +109,12 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
   Widget build(BuildContext context) {
     final booking = _currentBooking;
     final isDesktopWeb = _isDesktopWeb(context);
+    final bookingTypeKey = booking.bookingType.toLowerCase();
+    final bookingTypeDisplay = PaymentType.getValue(bookingTypeKey).isNotEmpty
+        ? PaymentType.getValue(bookingTypeKey)
+        : booking.bookingType;
+    final isWithoutLoan = bookingTypeKey == PaymentType.oneTime ||
+        bookingTypeDisplay.toLowerCase() == PaymentType.all[PaymentType.oneTime]!.toLowerCase();
 
     return Scaffold(
       appBar: PreferredSize(
@@ -125,12 +131,12 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
           centerTitle: true,
           elevation: 1,
           actions: [
-            if (!_isBookingCancelled())
-              IconButton(
-                icon: const Icon(Icons.edit, color: AppColors.primaryColor),
-                onPressed: _isLoading ? null : _navigateToEdit,
-                tooltip: 'Edit Booking',
-              )
+            // if (!_isBookingCancelled())
+            //   IconButton(
+            //     icon: const Icon(Icons.edit, color: AppColors.primaryColor),
+            //     onPressed: _isLoading ? null : _navigateToEdit,
+            //     tooltip: 'Edit Booking',
+            //   )
           ],
         ),
       ),
@@ -219,17 +225,19 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
                 _buildDetailRow('Project', booking.project!.name),
               if (booking.plotSize != null && booking.plotSize!.isNotEmpty)
                 _buildDetailRow('Plot Size', booking.plotSize!),
+              if (booking.saleableSize != null && booking.saleableSize!.isNotEmpty)
+                _buildDetailRow('Saleable Size', '${booking.saleableSize} sq yd'),
               if (booking.plotArea != null && booking.plotArea!.isNotEmpty)
                 _buildDetailRow('Plot Area', '${booking.plotArea} sq mtr'),
-              if (booking.plotPrice != null && booking.plotPrice!.isNotEmpty)
-                _buildDetailRow('Plot Price', '₹${booking.plotPrice}'),
+              // if (booking.plotPrice != null && booking.plotPrice!.isNotEmpty)
+              //   _buildDetailRow('Plot Price', '₹${booking.plotPrice}'),
               if (booking.plotFacing != null && booking.plotFacing!.isNotEmpty)
                 _buildDetailRow('Plot Facing', booking.plotFacing!),
-              _buildDetailRow('Booking Type', PaymentType.getValue(booking.bookingType.toLowerCase()).isNotEmpty 
-                  ? PaymentType.getValue(booking.bookingType.toLowerCase()) 
-                  : booking.bookingType),
-              _buildDetailRow('Booking Amount', '₹${booking.bookingAmount}'),
+              _buildDetailRow('Payment Type', bookingTypeDisplay),
+              if (booking.pricePerSqYd != null && booking.pricePerSqYd!.isNotEmpty)
+                _buildDetailRow('Price (per Sq Yd)', '₹${booking.pricePerSqYd}'),
               _buildDetailRow('Total Amount', '₹${booking.totalAmount}'),
+              _buildDetailRow('Booking Amount', '₹${booking.bookingAmount}'),
              // _buildDetailRow('Booking Date', booking.bookingDate),
               _buildDetailRow('Booked At', booking.bookedAt),
             ]),
@@ -263,10 +271,12 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
                       children: [
                         _buildSectionTitle('Payment Information'),
                         _buildDetailCard([
-                          _buildDetailRow('Payment Mode', PaymentMethod.getValue(booking.paymentMode).isNotEmpty 
+                          _buildDetailRow('Payment Method', PaymentMethod.getValue(booking.paymentMode).isNotEmpty 
                               ? PaymentMethod.getValue(booking.paymentMode) 
                               : booking.paymentMode),
-                          _buildDetailRow('Payment Reference', booking.paymentReference),
+                          if (booking.paymentMode.toLowerCase() == PaymentMethod.upi &&
+                              booking.paymentReference.isNotEmpty)
+                            _buildDetailRow('UPI Transaction ID', booking.paymentReference),
                           if (booking.chequeNumber.isNotEmpty)
                             _buildDetailRow('Cheque Number', booking.chequeNumber),
                           if (booking.chequeDate != null && booking.chequeDate!.isNotEmpty)
@@ -275,8 +285,16 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
                               booking.chequeCopy != null &&
                               booking.chequeCopy!.isNotEmpty)
                             _buildChequeCopyRow('Cheque Copy', booking.chequeCopy!),
+                          if (booking.paymentMode.toLowerCase() == PaymentMethod.rtgs &&
+                              booking.rtgsImage != null &&
+                              booking.rtgsImage!.isNotEmpty)
+                            _buildChequeCopyRow('RTGS/NEFT Image', booking.rtgsImage!),
                           if (booking.paymentDetails.isNotEmpty)
                             _buildDetailRow('Payment Details', booking.paymentDetails),
+                          if (!isWithoutLoan && booking.loanAmount != null && booking.loanAmount!.isNotEmpty)
+                            _buildDetailRow('Loan Amount', '₹${booking.loanAmount!}'),
+                          if (!isWithoutLoan && booking.loanBankName != null && booking.loanBankName!.isNotEmpty)
+                            _buildDetailRow('Loan Bank', booking.loanBankName!),
                         ]),
                       ],
                     ),
@@ -299,10 +317,12 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
               // Payment Information Section
               _buildSectionTitle('Payment Information'),
               _buildDetailCard([
-                _buildDetailRow('Payment Mode', PaymentMethod.getValue(booking.paymentMode).isNotEmpty 
+                _buildDetailRow('Payment Method', PaymentMethod.getValue(booking.paymentMode).isNotEmpty 
                     ? PaymentMethod.getValue(booking.paymentMode) 
                     : booking.paymentMode),
-                /*_buildDetailRow('Payment Reference', booking.paymentReference),*/
+                if (booking.paymentMode.toLowerCase() == PaymentMethod.upi &&
+                    booking.paymentReference.isNotEmpty)
+                  _buildDetailRow('UPI Transaction ID', booking.paymentReference),
                 if (booking.chequeNumber.isNotEmpty)
                   _buildDetailRow('Cheque Number', booking.chequeNumber),
                 if (booking.chequeDate != null && booking.chequeDate!.isNotEmpty)
@@ -311,39 +331,47 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
                     booking.chequeCopy != null &&
                     booking.chequeCopy!.isNotEmpty)
                   _buildChequeCopyRow('Cheque Copy', booking.chequeCopy!),
+                if (booking.paymentMode.toLowerCase() == PaymentMethod.rtgs &&
+                    booking.rtgsImage != null &&
+                    booking.rtgsImage!.isNotEmpty)
+                  _buildChequeCopyRow('RTGS/NEFT Image', booking.rtgsImage!),
                 if (booking.paymentDetails.isNotEmpty)
                   _buildDetailRow('Payment Details', booking.paymentDetails),
+                if (!isWithoutLoan && booking.loanAmount != null && booking.loanAmount!.isNotEmpty)
+                  _buildDetailRow('Loan Amount', '₹${booking.loanAmount!}'),
+                if (!isWithoutLoan && booking.loanBankName != null && booking.loanBankName!.isNotEmpty)
+                  _buildDetailRow('Loan Bank', booking.loanBankName!),
               ]),
             ],
             SizedBox(height: isDesktopWeb ? 32 : 24),
 
-            // Document Information Section
-            // _buildSectionTitle('Document Information'),
-            // _buildDetailCard([
-            //   _buildDetailRow('PAN Card', booking.panCard),
-            //   _buildDetailRow('Aadhar Card', booking.aadharCard),
-            //   if (booking.salaryIndividual && booking.salarySlip != null && booking.salarySlip!.isNotEmpty)
-            //     _buildDocumentRow(context, 'Salary Slip', booking.salarySlip!),
-            //   if (booking.salaryIndividual && booking.form16a != null && booking.form16a!.isNotEmpty)
-            //     _buildDocumentRow(context, 'Form 16A', booking.form16a!),
-            //   if (booking.bankStatement != null && booking.bankStatement!.isNotEmpty)
-            //     _buildDocumentRow(context, 'Bank Statement', booking.bankStatement!),
-            //   if (booking.otherDocuments != null && booking.otherDocuments!.isNotEmpty)
-            //     _buildDocumentRow(context, 'Other Documents', booking.otherDocuments!),
-            // ]),
-            // SizedBox(height: isDesktopWeb ? 32 : 24),
-
-            // Bank Details Section
-            _buildSectionTitle('Bank Details'),
+            //Document Information Section
+            _buildSectionTitle('Document Information'),
             _buildDetailCard([
-              _buildDetailRow('Account Holder Name', booking.accountHolderName),
-              _buildDetailRow('Branch Name', booking.branchName),
-              _buildDetailRow('Account Number', booking.accountNumber),
-              _buildDetailRow('IFSC Code', booking.ifscCode),
-              _buildDetailRow('Account Type', booking.accountType),
-              _buildDetailRow('Bank Contact', booking.bankContactNumber),
+              _buildDetailRow('PAN Card', booking.panCard),
+              _buildDetailRow('Aadhar Card', booking.aadharCard),
+              if (booking.salaryIndividual && booking.salarySlip != null && booking.salarySlip!.isNotEmpty)
+                _buildDocumentRow(context, 'Salary Slip', booking.salarySlip!),
+              if (booking.salaryIndividual && booking.form16a != null && booking.form16a!.isNotEmpty)
+                _buildDocumentRow(context, 'Form 16A', booking.form16a!),
+              if (booking.bankStatement != null && booking.bankStatement!.isNotEmpty)
+                _buildDocumentRow(context, 'Bank Statement', booking.bankStatement!),
+              if (booking.otherDocuments != null && booking.otherDocuments!.isNotEmpty)
+                _buildDocumentRow(context, 'Other Documents', booking.otherDocuments!),
             ]),
             SizedBox(height: isDesktopWeb ? 32 : 24),
+
+            // Bank Details Section
+            // _buildSectionTitle('Bank Details'),
+            // _buildDetailCard([
+            //   _buildDetailRow('Account Holder Name', booking.accountHolderName),
+            //   _buildDetailRow('Branch Name', booking.branchName),
+            //   _buildDetailRow('Account Number', booking.accountNumber),
+            //   _buildDetailRow('IFSC Code', booking.ifscCode),
+            //   _buildDetailRow('Account Type', booking.accountType),
+            //   _buildDetailRow('Bank Contact', booking.bankContactNumber),
+            // ]),
+            //SizedBox(height: isDesktopWeb ? 32 : 24),
 
             // Remarks Section
             if (booking.remarks.isNotEmpty) ...[

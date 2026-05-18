@@ -24,8 +24,11 @@ class _HoldBookingScreenState extends State<HoldBookingScreen> {
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
 
   String _generatePaymentReference() {
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
-    return 'REF$timestamp';
+    if (_paymentDetails?.paymentMethodKey == 'upi' &&
+        (_paymentDetails?.upiTransactionId ?? '').isNotEmpty) {
+      return _paymentDetails!.upiTransactionId!;
+    }
+    return '';
   }
 
   String _generatePaymentDetails() {
@@ -70,7 +73,12 @@ class _HoldBookingScreenState extends State<HoldBookingScreen> {
         customerAddress: '', // Not available in hold
         bookingType: _paymentDetails!.paymentTypeKey,
         bookingAmount: _paymentDetails!.paymentAmount,
-        totalAmount: _paymentDetails!.paymentAmount,
+        totalAmount: _paymentDetails!.totalAmount.isNotEmpty
+            ? _paymentDetails!.totalAmount
+            : _paymentDetails!.paymentAmount,
+        pricePerSqYd: _paymentDetails!.pricePerSqYd.isNotEmpty
+            ? _paymentDetails!.pricePerSqYd
+            : null,
         paymentMode: _paymentDetails!.paymentMethodKey,
         paymentReference: _generatePaymentReference(),
         chequeNumber: _paymentDetails!.chequeNumber ?? '',
@@ -91,7 +99,12 @@ class _HoldBookingScreenState extends State<HoldBookingScreen> {
         form16APath: _paymentDetails!.form16APath,
         chequeImageName: _paymentDetails!.chequeImageName,
         chequeImageBytes: _paymentDetails!.chequeImageBytes,
-        holdId: widget.hold.id, // Include hold ID when booking from hold
+        rtgsImageName: _paymentDetails!.rtgsImageName,
+        rtgsImageBytes: _paymentDetails!.rtgsImageBytes,
+        holdId: widget.hold.id,
+        loanBankName: _paymentDetails!.loanBankName,
+        loanBankKey: _paymentDetails!.loanBankKey,
+        loanAmount: _paymentDetails!.loanAmount,
       );
 
       await _bookingRepository.createBooking(request);
@@ -153,11 +166,19 @@ class _HoldBookingScreenState extends State<HoldBookingScreen> {
   }
 
   Widget _buildCurrentStep() {
+    final saleableSizeVal = widget.hold.saleableSize != null
+        ? double.tryParse(widget.hold.saleableSize!)
+        : null;
+
     // Only Payment Details Step - bank details are already in the hold
     return PaymentDetailsSection(
       title: "Payment Details",
       paymentAmount: widget.hold.plotPrice ?? widget.hold.holdAmount,
       nextButtonText: "Submit",
+      initialPaymentDetails: _paymentDetails,
+      saleableSize: saleableSizeVal,
+      plcApplied: widget.hold.plcApplied,
+      plcPercentage: widget.hold.plcPercentage,
       onNext: (paymentDetails) {
         setState(() {
           _paymentDetails = paymentDetails;

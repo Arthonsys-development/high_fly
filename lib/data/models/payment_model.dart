@@ -15,6 +15,15 @@ class PaymentDetails {
   final String? chequeImageName;
   final List<int>? chequeImageBytes;
   final String? existingChequeImageUrl;
+  final String? rtgsImageName;
+  final List<int>? rtgsImageBytes;
+  final String? existingRtgsImageUrl;
+  final String? loanBankName;
+  final String? loanBankKey;
+  final String? loanAmount;
+  final String pricePerSqYd;
+  final String totalAmount;
+  final String? upiTransactionId;
 
   const PaymentDetails({
     required this.paymentAmount,
@@ -33,6 +42,15 @@ class PaymentDetails {
     this.chequeImageName,
     this.chequeImageBytes,
     this.existingChequeImageUrl,
+    this.rtgsImageName,
+    this.rtgsImageBytes,
+    this.existingRtgsImageUrl,
+    this.loanBankName,
+    this.loanBankKey,
+    this.loanAmount,
+    this.pricePerSqYd = '',
+    this.totalAmount = '',
+    this.upiTransactionId,
   });
 
   factory PaymentDetails.fromJson(Map<String, dynamic> json) {
@@ -55,6 +73,17 @@ class PaymentDetails {
           ? List<int>.from(json['chequeImageBytes'] as List)
           : null,
       existingChequeImageUrl: json['existingChequeImageUrl'] as String?,
+      rtgsImageName: json['rtgsImageName'] as String?,
+      rtgsImageBytes: json['rtgsImageBytes'] != null
+          ? List<int>.from(json['rtgsImageBytes'] as List)
+          : null,
+      existingRtgsImageUrl: json['existingRtgsImageUrl'] as String?,
+      loanBankName: json['loanBankName'] as String?,
+      loanBankKey: json['loanBankKey'] as String?,
+      loanAmount: json['loanAmount'] as String?,
+      pricePerSqYd: json['pricePerSqYd'] as String? ?? '',
+      totalAmount: json['totalAmount'] as String? ?? '',
+      upiTransactionId: json['upiTransactionId'] as String?,
     );
   }
 
@@ -76,6 +105,15 @@ class PaymentDetails {
       'chequeImageName': chequeImageName,
       'chequeImageBytes': chequeImageBytes,
       'existingChequeImageUrl': existingChequeImageUrl,
+      'rtgsImageName': rtgsImageName,
+      'rtgsImageBytes': rtgsImageBytes,
+      'existingRtgsImageUrl': existingRtgsImageUrl,
+      'loanBankName': loanBankName,
+      'loanBankKey': loanBankKey,
+      'loanAmount': loanAmount,
+      'pricePerSqYd': pricePerSqYd,
+      'totalAmount': totalAmount,
+      'upiTransactionId': upiTransactionId,
     };
   }
 
@@ -96,6 +134,15 @@ class PaymentDetails {
     String? chequeImageName,
     List<int>? chequeImageBytes,
     String? existingChequeImageUrl,
+    String? rtgsImageName,
+    List<int>? rtgsImageBytes,
+    String? existingRtgsImageUrl,
+    String? loanBankName,
+    String? loanBankKey,
+    String? loanAmount,
+    String? pricePerSqYd,
+    String? totalAmount,
+    String? upiTransactionId,
   }) {
     return PaymentDetails(
       paymentAmount: paymentAmount ?? this.paymentAmount,
@@ -114,6 +161,15 @@ class PaymentDetails {
       chequeImageName: chequeImageName ?? this.chequeImageName,
       chequeImageBytes: chequeImageBytes ?? this.chequeImageBytes,
       existingChequeImageUrl: existingChequeImageUrl ?? this.existingChequeImageUrl,
+      rtgsImageName: rtgsImageName ?? this.rtgsImageName,
+      rtgsImageBytes: rtgsImageBytes ?? this.rtgsImageBytes,
+      existingRtgsImageUrl: existingRtgsImageUrl ?? this.existingRtgsImageUrl,
+      loanBankName: loanBankName ?? this.loanBankName,
+      loanBankKey: loanBankKey ?? this.loanBankKey,
+      loanAmount: loanAmount ?? this.loanAmount,
+      pricePerSqYd: pricePerSqYd ?? this.pricePerSqYd,
+      totalAmount: totalAmount ?? this.totalAmount,
+      upiTransactionId: upiTransactionId ?? this.upiTransactionId,
     );
   }
 }
@@ -127,8 +183,8 @@ class PaymentMethod {
   static const Map<String, String> all = {
     cheque: 'Cheque',
     rtgs: 'RTGS/NEFT',
+    upi: 'UPI',
    // online: 'Online Transfer',
-   // upi: 'UPI',
   };
 
   static List<String> get keys => all.keys.toList();
@@ -141,8 +197,70 @@ class PaymentType {
   static const String finance = 'finance';
 
   static const Map<String, String> all = {
-    oneTime: 'One Time Payment',
-    finance: 'Finance/EMI',
+    oneTime: 'Without Loan',
+    finance: 'With Loan',
+  };
+
+  static List<String> get keys => all.keys.toList();
+  static List<String> get values => all.values.toList();
+  static String getValue(String key) => all[key] ?? '';
+}
+
+class IndianBanks {
+  static const Map<String, String> all = {
+    // Public Sector Banks
+    'sbi': 'State Bank of India',
+    'bob': 'Bank of Baroda',
+    'boi': 'Bank of India',
+    'bom': 'Bank of Maharashtra',
+    'canara': 'Canara Bank',
+    'central_bank': 'Central Bank of India',
+    'indian_bank': 'Indian Bank',
+    'iob': 'Indian Overseas Bank',
+    'psb': 'Punjab & Sind Bank',
+    'pnb': 'Punjab National Bank',
+    'uco': 'UCO Bank',
+    'union_bank': 'Union Bank of India',
+    // Private Sector Banks
+    'axis': 'Axis Bank',
+    'bandhan': 'Bandhan Bank',
+    'cub': 'City Union Bank',
+    'csb': 'CSB Bank',
+    'dcb': 'DCB Bank',
+    'dhanlaxmi': 'Dhanlaxmi Bank',
+    'federal': 'Federal Bank',
+    'hdfc': 'HDFC Bank',
+    'icici': 'ICICI Bank',
+    'idbi': 'IDBI Bank',
+    'idfc_first': 'IDFC First Bank',
+    'indusind': 'IndusInd Bank',
+    'jk_bank': 'Jammu & Kashmir Bank',
+    'karnataka': 'Karnataka Bank',
+    'kvb': 'Karur Vysya Bank',
+    'kotak': 'Kotak Mahindra Bank',
+    'nainital': 'Nainital Bank',
+    'rbl': 'RBL Bank',
+    'south_indian': 'South Indian Bank',
+    'tmb': 'Tamilnad Mercantile Bank',
+    'yes_bank': 'YES Bank',
+    // Small Finance Banks
+    'au_sfb': 'AU Small Finance Bank',
+    'equitas_sfb': 'Equitas Small Finance Bank',
+    'esaf_sfb': 'ESAF Small Finance Bank',
+    'fincare_sfb': 'Fincare Small Finance Bank',
+    'jana_sfb': 'Jana Small Finance Bank',
+    'ne_sfb': 'North East Small Finance Bank',
+    'shivalik_sfb': 'Shivalik Small Finance Bank',
+    'suryoday_sfb': 'Suryoday Small Finance Bank',
+    'ujjivan_sfb': 'Ujjivan Small Finance Bank',
+    'unity_sfb': 'Unity Small Finance Bank',
+    'utkarsh_sfb': 'Utkarsh Small Finance Bank',
+    // Payments Banks
+    'airtel_pb': 'Airtel Payments Bank',
+    'ippb': 'India Post Payments Bank',
+    'jio_pb': 'Jio Payments Bank',
+    'paytm_pb': 'Paytm Payments Bank',
+    'fino_pb': 'FINO Payments Bank',
   };
 
   static List<String> get keys => all.keys.toList();

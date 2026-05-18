@@ -149,6 +149,23 @@ class BookingApiRepository {
           contentType: contentType != null ? MediaType.parse(contentType) : null,
         );
       }
+
+      if (request.rtgsImageBytes != null && request.rtgsImageBytes!.isNotEmpty) {
+        final rtgsImageName = request.rtgsImageName ?? 'rtgs_image.jpg';
+        final rtgsImageExtension = rtgsImageName.split('.').last.toLowerCase();
+        String? contentType;
+        if (rtgsImageExtension == 'jpg' || rtgsImageExtension == 'jpeg') {
+          contentType = 'image/jpeg';
+        } else if (rtgsImageExtension == 'png') {
+          contentType = 'image/png';
+        }
+
+        formDataMap['rtgs_image'] = MultipartFile.fromBytes(
+          request.rtgsImageBytes!,
+          filename: rtgsImageName,
+          contentType: contentType != null ? MediaType.parse(contentType) : null,
+        );
+      }
       
       // Create FormData manually to ensure proper array handling for documents
       final formData = FormData();
@@ -157,6 +174,7 @@ class BookingApiRepository {
       final hasSalarySlipFile = formDataMap.containsKey('salary_slip') && formDataMap['salary_slip'] is MultipartFile;
       final hasForm16AFile = formDataMap.containsKey('form_16a') && formDataMap['form_16a'] is MultipartFile;
       final hasChequeImageFile = formDataMap.containsKey('cheque_copy') && formDataMap['cheque_copy'] is MultipartFile;
+      final hasRtgsImageFile = formDataMap.containsKey('rtgs_image') && formDataMap['rtgs_image'] is MultipartFile;
       
       // Add all form fields from formDataMap
       for (var entry in formDataMap.entries) {
@@ -171,6 +189,9 @@ class BookingApiRepository {
           continue;
         }
         if (entry.key == 'cheque_copy_name' && hasChequeImageFile) {
+          continue;
+        }
+        if (entry.key == 'rtgs_image_name' && hasRtgsImageFile) {
           continue;
         }
         
@@ -597,6 +618,37 @@ class BookingApiRepository {
           formDataMap['cheque_copy'] = MultipartFile.fromBytes(
             chequeBytes,
             filename: chequeCopyName,
+            contentType: contentType != null ? MediaType.parse(contentType) : null,
+          );
+        }
+      }
+
+      if (updateData['rtgs_image_bytes'] != null) {
+        final rtgsBytesRaw = updateData['rtgs_image_bytes'];
+        final rtgsImageName = updateData['rtgs_image_name']?.toString() ?? 'rtgs_image.jpg';
+
+        formDataMap.remove('rtgs_image_bytes');
+        formDataMap.remove('rtgs_image_name');
+
+        List<int>? rtgsBytes;
+        if (rtgsBytesRaw is List<int>) {
+          rtgsBytes = rtgsBytesRaw;
+        } else if (rtgsBytesRaw is List) {
+          rtgsBytes = rtgsBytesRaw.map((e) => e as int).toList();
+        }
+
+        if (rtgsBytes != null && rtgsBytes.isNotEmpty) {
+          final extension = rtgsImageName.split('.').last.toLowerCase();
+          String? contentType;
+          if (extension == 'jpg' || extension == 'jpeg') {
+            contentType = 'image/jpeg';
+          } else if (extension == 'png') {
+            contentType = 'image/png';
+          }
+
+          formDataMap['rtgs_image'] = MultipartFile.fromBytes(
+            rtgsBytes,
+            filename: rtgsImageName,
             contentType: contentType != null ? MediaType.parse(contentType) : null,
           );
         }

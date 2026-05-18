@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../config/constant/const_assets.dart';
 import '../../../data/models/payment_model.dart';
 import '../../../config/constant/app_colors.dart';
+import '../../../services/cheque_analysis_service.dart';
 import '../../global/widgets/custom_text_field.dart';
 import 'header_icon_widget.dart';
 import 'pdf_upload_widget.dart';
@@ -19,6 +20,10 @@ class PaymentDetailsSection extends StatefulWidget {
   final Function(PaymentDetails?)? onNext;
   final String? nextButtonText;
   final PaymentDetails? initialPaymentDetails;
+  final double? saleableSize;
+  final bool plcApplied;
+  final double? plcPercentage;
+  final String? pricePerSqYd;
 
   const PaymentDetailsSection({
     super.key,
@@ -28,6 +33,10 @@ class PaymentDetailsSection extends StatefulWidget {
     this.onNext,
     this.nextButtonText,
     this.initialPaymentDetails,
+    this.saleableSize,
+    this.plcApplied = false,
+    this.plcPercentage,
+    this.pricePerSqYd,
   });
 
   @override
@@ -44,8 +53,22 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
   late TextEditingController _paymentTypeController;
   late TextEditingController _chequeNumberController;
   late TextEditingController _chequeDateController;
+  late TextEditingController _bankController;
+  late TextEditingController _loanAmountController;
+  late TextEditingController _pricePerSqYdController;
+  late TextEditingController _totalAmountController;
+  late TextEditingController _upiTransactionIdController;
   final ImagePicker _imagePicker = ImagePicker();
+  final ChequeAnalysisService _chequeAnalysisService = ChequeAnalysisService();
   String _selectedPaymentTypeKey = '';
+  bool _isAnalyzingCheque = false;
+  ChequeInfo? _chequeInfo;
+  // When true, user has chosen to skip AI and enter cheque details manually
+  bool _chequeManualOverride = false;
+  List<int>? _lastChequeImageBytes; // kept for retry
+  // When true, the cheque image was pre-loaded from initialPaymentDetails
+  // (already AI-verified in a prior step), so the AI check can be skipped
+  bool _chequePreloaded = false;
 
   @override
   void initState() {
@@ -56,7 +79,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
       _selectedPaymentTypeKey = widget.initialPaymentDetails!.paymentTypeKey;
     } else {
       _paymentDetails = PaymentDetails(
-        paymentAmount: widget.paymentAmount,
+        paymentAmount: '',
         paymentMethod: '',
         paymentMethodKey: '',
         paymentType: '',
@@ -66,11 +89,13 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
         additionalNotes: '',
         chequeImageName: null,
         chequeImageBytes: null,
+        rtgsImageName: null,
+        rtgsImageBytes: null,
       );
     }
     
     _paymentAmountController = TextEditingController(
-      text: widget.initialPaymentDetails?.paymentAmount ?? widget.paymentAmount
+      text: widget.initialPaymentDetails?.paymentAmount ?? ''
     );
     _panNumberController = TextEditingController(
       text: widget.initialPaymentDetails?.panNumber ?? ''
@@ -95,6 +120,51 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
           ? '${widget.initialPaymentDetails!.chequeDate!.day.toString().padLeft(2, '0')}/${widget.initialPaymentDetails!.chequeDate!.month.toString().padLeft(2, '0')}/${widget.initialPaymentDetails!.chequeDate!.year}'
           : ''
     );
+    _bankController = TextEditingController(
+      text: widget.initialPaymentDetails?.loanBankName ?? ''
+    );
+    _loanAmountController = TextEditingController(
+      text: widget.initialPaymentDetails?.loanAmount ?? ''
+    );
+    final resolvedPricePerSqYd =
+        (widget.initialPaymentDetails?.pricePerSqYd.isNotEmpty == true)
+            ? widget.initialPaymentDetails!.pricePerSqYd
+            : (widget.pricePerSqYd ?? '');
+    _pricePerSqYdController = TextEditingController(text: resolvedPricePerSqYd);
+    final initialPrice = resolvedPricePerSqYd;
+    final initialTotal = _computeTotalAmount(initialPrice);
+    _totalAmountController = TextEditingController(
+      text: widget.initialPaymentDetails?.totalAmount.isNotEmpty == true
+          ? widget.initialPaymentDetails!.totalAmount
+          : initialTotal,
+    );
+    if (resolvedPricePerSqYd.isNotEmpty &&
+        (widget.initialPaymentDetails?.pricePerSqYd ?? '').isEmpty) {
+      _paymentDetails = _paymentDetails.copyWith(pricePerSqYd: resolvedPricePerSqYd);
+    }
+    if (initialTotal.isNotEmpty && (widget.initialPaymentDetails?.totalAmount ?? '').isEmpty) {
+      _paymentDetails = _paymentDetails.copyWith(totalAmount: initialTotal);
+    }
+    _upiTransactionIdController = TextEditingController(
+      text: widget.initialPaymentDetails?.upiTransactionId ?? '',
+    );
+
+    // If initial data already has cheque bytes, the image was previously AI-verified
+    if (widget.initialPaymentDetails?.chequeImageBytes?.isNotEmpty == true) {
+      _chequePreloaded = true;
+    }
+  }
+
+  String _computeTotalAmount(String priceText) {
+    final price = double.tryParse(priceText.trim());
+    final size = widget.saleableSize;
+    if (price == null || size == null || size == 0) return '';
+    double effectivePrice = price;
+    if (widget.plcApplied && widget.plcPercentage != null && widget.plcPercentage! > 0) {
+      effectivePrice = price * (1 + widget.plcPercentage! / 100);
+    }
+    final total = effectivePrice * size;
+    return total % 1 == 0 ? total.toStringAsFixed(0) : total.toStringAsFixed(2);
   }
 
   @override
@@ -107,6 +177,11 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
     _paymentTypeController.dispose();
     _chequeNumberController.dispose();
     _chequeDateController.dispose();
+    _bankController.dispose();
+    _loanAmountController.dispose();
+    _pricePerSqYdController.dispose();
+    _totalAmountController.dispose();
+    _upiTransactionIdController.dispose();
     super.dispose();
   }
 
@@ -141,11 +216,12 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                   
                     // Payment Amount field (full width)
                     CustomTextField(
                       titleText: 'Booking Amount',
                       controller: _paymentAmountController,
-                      isMandatory: false,
+                      isMandatory: true,
                       keyboardType: TextInputType.number,
                       hintText: 'Enter Booking Amount',
                       borderRadius: 8,
@@ -155,9 +231,8 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                         });
                       },
                     ),
-                    
+
                     SizedBox(height: spacing),
-                    
                     // Payment Method field (full width)
                     GestureDetector(
                       onTap: _showPaymentMethodDialog,
@@ -178,69 +253,81 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                     
                     SizedBox(height: spacing),
                     
-                    // Cheque Number and Date fields (two columns on web, only visible if Payment Method is cheque)
+                    // Cheque image upload (only visible if Payment Method is cheque)
                     if (_paymentDetails.paymentMethodKey == PaymentMethod.cheque) ...[
+                      _buildChequeImageUploadSection(),
+                      SizedBox(height: spacing),
+                    ],
+
+                    // RTGS slip upload (only visible if Payment Method is RTGS/NEFT)
+                    if (_paymentDetails.paymentMethodKey == PaymentMethod.rtgs) ...[
+                      _buildRtgsImageUploadSection(),
+                      SizedBox(height: spacing),
+                    ],
+
+                    // UPI Transaction ID (only visible if Payment Method is UPI)
+                    if (_paymentDetails.paymentMethodKey == PaymentMethod.upi) ...[
+                      CustomTextField(
+                        titleText: 'UPI Transaction ID',
+                        controller: _upiTransactionIdController,
+                        isMandatory: true,
+                        hintText: 'Enter UPI Transaction ID',
+                        borderRadius: 8,
+                        onChanged: (value) {
+                          setState(() {
+                            _paymentDetails = _paymentDetails.copyWith(upiTransactionId: value);
+                          });
+                        },
+                      ),
+                      SizedBox(height: spacing),
+                    ],
+                    
+                    // Payment Type radio group (full width)
+                    _buildPaymentTypeRadioGroup(borderRadius: 8),
+
+                    // Select Bank and Loan Amount fields (only visible when Payment Type is With Loan)
+                    if (_selectedPaymentTypeKey == PaymentType.finance) ...[
+                      SizedBox(height: spacing),
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Expanded(
-                            child: CustomTextField(
-                              titleText: 'Cheque Number',
-                              controller: _chequeNumberController,
-                              hintText: 'Enter cheque number',
-                              isMandatory: true,
-                              borderRadius: 8,
-                              maxLength: 6,
-                              keyboardType: TextInputType.number,
-                              onChanged: (value) {
-                                setState(() {
-                                  _paymentDetails = _paymentDetails.copyWith(chequeNumber: value);
-                                });
-                              },
-                            ),
-                          ),
-                          SizedBox(width: 20),
-                          Expanded(
                             child: GestureDetector(
-                              onTap: _showDatePicker,
+                              onTap: _showBankSelectionDialog,
                               child: CustomTextField(
-                                titleText: 'Cheque Date',
-                                controller: _chequeDateController,
-                                hintText: 'Select cheque date',
+                                titleText: 'Select Bank',
+                                controller: _bankController,
+                                hintText: 'Select Loan Bank',
                                 isMandatory: true,
                                 borderRadius: 8,
                                 enabled: false,
                                 suffixIcon: const Icon(
-                                  Icons.calendar_today,
+                                  Icons.keyboard_arrow_down,
                                   color: AppColors.lightGreyColor,
                                   size: 20,
                                 ),
                               ),
                             ),
                           ),
+                          const SizedBox(width: 20),
+                          Expanded(
+                            child: CustomTextField(
+                              titleText: 'Loan Amount',
+                              controller: _loanAmountController,
+                              hintText: 'Enter Loan Amount',
+                              isMandatory: false,
+                              borderRadius: 8,
+                              keyboardType: TextInputType.number,
+                              onChanged: (value) {
+                                setState(() {
+                                  _paymentDetails = _paymentDetails.copyWith(loanAmount: value);
+                                });
+                              },
+                            ),
+                          ),
                         ],
                       ),
-                      _buildChequeImageUploadSection(),
-                      SizedBox(height: spacing),
                     ],
-                    
-                    // Payment Type field (full width)
-                    GestureDetector(
-                      onTap: _showPaymentTypeDialog,
-                      child: CustomTextField(
-                        titleText: 'Payment Type',
-                        controller: _paymentTypeController,
-                        hintText: 'Select Payment Type',
-                        isMandatory: false,
-                        borderRadius: 8,
-                        enabled: false,
-                        suffixIcon: const Icon(
-                          Icons.keyboard_arrow_down,
-                          color: AppColors.lightGreyColor,
-                          size: 20,
-                        ),
-                      ),
-                    ),
                     
                     SizedBox(height: spacing),
                     
@@ -269,7 +356,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                             titleText: 'Aadhar Number',
                             controller: _aadharNumberController,
                             hintText: 'Enter Aadhar number',
-                            isMandatory: true,
+                            isMandatory: false,
                             borderRadius: 8,
                             maxLength: 12,
                             keyboardType: TextInputType.number,
@@ -335,7 +422,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                       ),
                       const SizedBox(height: 20),
                     ],
-                    /*
+                    
                     // Salary Slip field (only visible if Salaried Individual is checked)
                     if (_paymentDetails.isSalariedIndividual) ...[
                       PdfUploadWidget(
@@ -367,7 +454,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                       ),
                       SizedBox(height: spacing),
                     ],
-                    */
+                    
                     // Additional Notes field (full width)
                     CustomTextField(
                       titleText: 'Additional Notes',
@@ -390,11 +477,13 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
           else
             Column(
               children: [
+                
+
                 // Payment Amount field
                 CustomTextField(
                   titleText: 'Booking Amount',
                   controller: _paymentAmountController,
-                  isMandatory: false,
+                  isMandatory: true,
                   keyboardType: TextInputType.number,
                   hintText: 'Enter Booking Amount',
                   borderRadius: 6,
@@ -406,7 +495,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                     });
                   },
                 ),
-                
+
                 SizedBox(height: spacing),
                 
                 // Payment Method field
@@ -429,64 +518,72 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                 
                 SizedBox(height: spacing),
                 
-                // Cheque Number and Date fields (only visible if Payment Method is cheque)
+                // Cheque image upload (only visible if Payment Method is cheque)
                 if (_paymentDetails.paymentMethodKey == PaymentMethod.cheque) ...[
+                  _buildChequeImageUploadSection(),
+                  SizedBox(height: spacing),
+                ],
+
+                // RTGS slip upload (only visible if Payment Method is RTGS/NEFT)
+                if (_paymentDetails.paymentMethodKey == PaymentMethod.rtgs) ...[
+                  _buildRtgsImageUploadSection(),
+                  SizedBox(height: spacing),
+                ],
+
+                // UPI Transaction ID (only visible if Payment Method is UPI)
+                if (_paymentDetails.paymentMethodKey == PaymentMethod.upi) ...[
                   CustomTextField(
-                    titleText: 'Cheque Number',
-                    controller: _chequeNumberController,
-                    hintText: 'Enter cheque number',
+                    titleText: 'UPI Transaction ID',
+                    controller: _upiTransactionIdController,
                     isMandatory: true,
+                    hintText: 'Enter UPI Transaction ID',
                     borderRadius: 6,
-                    maxLength: 6,
-                    keyboardType: TextInputType.number,
                     onChanged: (value) {
                       setState(() {
-                        _paymentDetails = _paymentDetails.copyWith(chequeNumber: value);
+                        _paymentDetails = _paymentDetails.copyWith(upiTransactionId: value);
                       });
                     },
                   ),
-                  
                   SizedBox(height: spacing),
-                  
+                ],
+                
+                // Payment Type radio group
+                _buildPaymentTypeRadioGroup(borderRadius: 6),
+
+                // Select Bank and Loan Amount fields (only visible when Payment Type is With Loan)
+                if (_selectedPaymentTypeKey == PaymentType.finance) ...[
+                  SizedBox(height: spacing),
                   GestureDetector(
-                    onTap: _showDatePicker,
+                    onTap: _showBankSelectionDialog,
                     child: CustomTextField(
-                      titleText: 'Cheque Date',
-                      controller: _chequeDateController,
-                      hintText: 'Select cheque date',
+                      titleText: 'Select Bank',
+                      controller: _bankController,
+                      hintText: 'Select Loan Bank',
                       isMandatory: true,
                       borderRadius: 6,
                       enabled: false,
                       suffixIcon: const Icon(
-                        Icons.calendar_today,
+                        Icons.keyboard_arrow_down,
                         color: AppColors.lightGreyColor,
                         size: 20,
                       ),
                     ),
                   ),
-                  
                   SizedBox(height: spacing),
-                  _buildChequeImageUploadSection(),
-                  SizedBox(height: spacing),
-                ],
-                
-                // Payment Type field
-                GestureDetector(
-                  onTap: _showPaymentTypeDialog,
-                  child: CustomTextField(
-                    titleText: 'Payment Type',
-                    controller: _paymentTypeController,
-                    hintText: 'Select Payment Type',
+                  CustomTextField(
+                    titleText: 'Loan Amount',
+                    controller: _loanAmountController,
+                    hintText: 'Enter Loan Amount',
                     isMandatory: false,
                     borderRadius: 6,
-                    enabled: false,
-                    suffixIcon: const Icon(
-                      Icons.keyboard_arrow_down,
-                      color: AppColors.lightGreyColor,
-                      size: 20,
-                    ),
+                    keyboardType: TextInputType.number,
+                    onChanged: (value) {
+                      setState(() {
+                        _paymentDetails = _paymentDetails.copyWith(loanAmount: value);
+                      });
+                    },
                   ),
-                ),
+                ],
                 
                 SizedBox(height: spacing),
                 
@@ -512,7 +609,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                   titleText: 'Aadhar Number',
                   controller: _aadharNumberController,
                   hintText: 'Enter Aadhar number',
-                  isMandatory: true,
+                  isMandatory: false,
                   borderRadius: 6,
                   maxLength: 12,
                   keyboardType: TextInputType.number,
@@ -575,7 +672,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                   ),
                   const SizedBox(height: 20),
                 ],
-                /*
+                
                 // Salary Slip field (only visible if Salaried Individual is checked)
                 if (_paymentDetails.isSalariedIndividual) ...[
                   PdfUploadWidget(
@@ -607,7 +704,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                   ),
                   SizedBox(height: spacing),
                 ],
-                */
+                
                 // Additional Notes field
                 CustomTextField(
                   titleText: 'Additional Notes',
@@ -645,18 +742,46 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
   }
 
   bool _canProceed() {
+    // Booking Amount is mandatory
+    if (_paymentAmountController.text.trim().isEmpty) return false;
+
     // Payment Method is mandatory
     if (_paymentDetails.paymentMethodKey.isEmpty) return false;
 
-    // Aadhaar number is mandatory
-    if (_aadharNumberController.text.trim().isEmpty) return false;
+   
 
     if (_paymentDetails.paymentMethodKey == PaymentMethod.cheque) {
+      // Cannot proceed while Gemini is still analyzing
+      if (_isAnalyzingCheque) return false;
+
       final hasNewChequeImage = _paymentDetails.chequeImageBytes?.isNotEmpty ?? false;
       final hasExistingChequeImage = _paymentDetails.existingChequeImageUrl?.isNotEmpty ?? false;
-      return _chequeNumberController.text.trim().isNotEmpty &&
-          _paymentDetails.chequeDate != null &&
-          (hasNewChequeImage || hasExistingChequeImage);
+
+      if (!hasNewChequeImage && !hasExistingChequeImage) return false;
+
+      if (hasNewChequeImage) {
+        // Manual override: AI was unavailable, user entered cheque number themselves
+        if (_chequeManualOverride) {
+          return _chequeNumberController.text.trim().isNotEmpty;
+        }
+        // Image was pre-loaded from initialPaymentDetails (already AI-verified before)
+        if (_chequePreloaded) return true;
+        // AI must have confirmed it is a cheque with a readable cheque number
+        if (_chequeInfo == null || !_chequeInfo!.isCheque) return false;
+        if (_chequeNumberController.text.trim().isEmpty) return false;
+      }
+
+      return true;
+    }
+
+    if (_paymentDetails.paymentMethodKey == PaymentMethod.rtgs) {
+      final hasNewRtgsImage = _paymentDetails.rtgsImageBytes?.isNotEmpty ?? false;
+      final hasExistingRtgsImage = _paymentDetails.existingRtgsImageUrl?.isNotEmpty ?? false;
+      return hasNewRtgsImage || hasExistingRtgsImage;
+    }
+
+    if (_paymentDetails.paymentMethodKey == PaymentMethod.upi) {
+      return _upiTransactionIdController.text.trim().isNotEmpty;
     }
 
     return true;
@@ -674,19 +799,24 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
             _paymentDetails = _paymentDetails.copyWith(
               paymentMethodKey: key,
               paymentMethod: value,
-              // Clear cheque fields if payment method is not cheque
               chequeNumber: key == PaymentMethod.cheque ? _paymentDetails.chequeNumber : null,
               chequeDate: key == PaymentMethod.cheque ? _paymentDetails.chequeDate : null,
               chequeImageName: key == PaymentMethod.cheque ? _paymentDetails.chequeImageName : null,
               chequeImageBytes: key == PaymentMethod.cheque ? _paymentDetails.chequeImageBytes : null,
               existingChequeImageUrl: key == PaymentMethod.cheque ? _paymentDetails.existingChequeImageUrl : null,
+              rtgsImageName: key == PaymentMethod.rtgs ? _paymentDetails.rtgsImageName : null,
+              rtgsImageBytes: key == PaymentMethod.rtgs ? _paymentDetails.rtgsImageBytes : null,
+              existingRtgsImageUrl: key == PaymentMethod.rtgs ? _paymentDetails.existingRtgsImageUrl : null,
+              upiTransactionId: key == PaymentMethod.upi ? _paymentDetails.upiTransactionId : null,
             );
             _paymentMethodController.text = value;
             
-            // Clear cheque controllers if payment method is not cheque
             if (key != PaymentMethod.cheque) {
               _chequeNumberController.clear();
               _chequeDateController.clear();
+            }
+            if (key != PaymentMethod.upi) {
+              _upiTransactionIdController.clear();
             }
           });
         },
@@ -694,22 +824,132 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
     );
   }
 
-  void _showPaymentTypeDialog() {
+  void _onPaymentTypeSelected(String key, String value) {
+    setState(() {
+      _selectedPaymentTypeKey = key;
+      final isLoan = key == PaymentType.finance;
+      _paymentDetails = PaymentDetails(
+        paymentAmount: _paymentDetails.paymentAmount,
+        paymentMethod: _paymentDetails.paymentMethod,
+        paymentMethodKey: _paymentDetails.paymentMethodKey,
+        paymentType: value,
+        paymentTypeKey: key,
+        panNumber: _paymentDetails.panNumber,
+        aadharNumber: _paymentDetails.aadharNumber,
+        isSalariedIndividual: false,
+        salarySlipPath: _paymentDetails.salarySlipPath,
+        form16APath: _paymentDetails.form16APath,
+        additionalNotes: _paymentDetails.additionalNotes,
+        chequeNumber: _paymentDetails.chequeNumber,
+        chequeDate: _paymentDetails.chequeDate,
+        chequeImageName: _paymentDetails.chequeImageName,
+        chequeImageBytes: _paymentDetails.chequeImageBytes,
+        existingChequeImageUrl: _paymentDetails.existingChequeImageUrl,
+        rtgsImageName: _paymentDetails.rtgsImageName,
+        rtgsImageBytes: _paymentDetails.rtgsImageBytes,
+        existingRtgsImageUrl: _paymentDetails.existingRtgsImageUrl,
+        loanBankName: isLoan ? _paymentDetails.loanBankName : null,
+        loanBankKey: isLoan ? _paymentDetails.loanBankKey : null,
+        loanAmount: isLoan ? _paymentDetails.loanAmount : null,
+        pricePerSqYd: _paymentDetails.pricePerSqYd,
+        totalAmount: _paymentDetails.totalAmount,
+        upiTransactionId: _paymentDetails.upiTransactionId,
+      );
+      _paymentTypeController.text = value;
+      if (!isLoan) {
+        _bankController.clear();
+        _loanAmountController.clear();
+      }
+    });
+  }
+
+  Widget _buildPaymentTypeRadioGroup({double borderRadius = 8}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Payment Type',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: AppColors.headingTextColor,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: PaymentType.all.entries.map((entry) {
+            final isSelected = _selectedPaymentTypeKey == entry.key;
+            final isFirst = entry.key == PaymentType.oneTime;
+            return Expanded(
+              child: GestureDetector(
+                onTap: () => _onPaymentTypeSelected(entry.key, entry.value),
+                child: Container(
+                  margin: EdgeInsets.only(right: isFirst ? 10 : 0),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? AppColors.primaryColor.withValues(alpha: 0.07)
+                        : AppColors.textFieldBGColor,
+                    borderRadius: BorderRadius.circular(borderRadius),
+                    border: Border.all(
+                      color: isSelected
+                          ? AppColors.primaryColor
+                          : AppColors.lightGreyBorderColor,
+                      width: isSelected ? 1.5 : 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Radio<String>(
+                        value: entry.key,
+                        groupValue: _selectedPaymentTypeKey,
+                        activeColor: AppColors.primaryColor,
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        visualDensity: VisualDensity.compact,
+                        onChanged: (val) {
+                          if (val != null) {
+                            _onPaymentTypeSelected(val, PaymentType.getValue(val));
+                          }
+                        },
+                      ),
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          entry.value,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: isSelected
+                                ? AppColors.primaryColor
+                                : AppColors.headingTextColor,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  void _showBankSelectionDialog() {
     showDialog(
       context: context,
       builder: (context) => PaymentMethodSelectionDialog(
-        title: 'Select Payment Type',
-        options: PaymentType.all,
-        selectedKey: _selectedPaymentTypeKey,
+        title: 'Select Bank',
+        options: IndianBanks.all,
+        selectedKey: _paymentDetails.loanBankKey ?? '',
         onSelected: (key, value) {
           setState(() {
-            _selectedPaymentTypeKey = key;
             _paymentDetails = _paymentDetails.copyWith(
-              paymentType: value,
-              paymentTypeKey: key,
-              isSalariedIndividual: false, // Reset when changing payment type
+              loanBankKey: key,
+              loanBankName: value,
             );
-            _paymentTypeController.text = value;
+            _bankController.text = value;
           });
         },
       ),
@@ -772,7 +1012,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
         ),
         const SizedBox(height: 8),
         InkWell(
-          onTap: _showChequeImageSourceDialog,
+          onTap: _isAnalyzingCheque ? null : _showChequeImageSourceDialog,
           borderRadius: BorderRadius.circular(8),
           child: Container(
             width: double.infinity,
@@ -782,103 +1022,391 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
               borderRadius: BorderRadius.circular(8),
               border: Border.all(color: AppColors.dropDownBorderColor),
             ),
-            child: hasChequeImage
-                ? Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: hasNewChequeImage
-                            ? Image.memory(
-                                Uint8List.fromList(_paymentDetails.chequeImageBytes!),
-                                width: double.infinity,
-                                height: 180,
-                                fit: BoxFit.cover,
-                              )
-                            : Image.network(
-                                _paymentDetails.existingChequeImageUrl!,
-                                width: double.infinity,
-                                height: 180,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => Container(
-                                  width: double.infinity,
-                                  height: 180,
-                                  color: AppColors.textFieldBGColor,
-                                  alignment: Alignment.center,
-                                  child: const Text(
-                                    'Unable to load cheque image',
-                                    style: TextStyle(color: Colors.red),
+            child: _isAnalyzingCheque
+                ? _buildAnalyzingLoader()
+                : hasChequeImage
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: hasNewChequeImage
+                                ? Image.memory(
+                                    Uint8List.fromList(_paymentDetails.chequeImageBytes!),
+                                    width: double.infinity,
+                                    height: 180,
+                                    fit: BoxFit.cover,
+                                  )
+                                : Image.network(
+                                    _paymentDetails.existingChequeImageUrl!,
+                                    width: double.infinity,
+                                    height: 180,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => Container(
+                                      width: double.infinity,
+                                      height: 180,
+                                      color: AppColors.textFieldBGColor,
+                                      alignment: Alignment.center,
+                                      child: const Text(
+                                        'Unable to load cheque image',
+                                        style: TextStyle(color: Colors.red),
+                                      ),
+                                    ),
                                   ),
+                          ),
+                          const SizedBox(height: 8),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: _showChequeImageSourceDialog,
+                              icon: const Icon(Icons.refresh, size: 18),
+                              label: const Text('Replace Image'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primaryColor,
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
                                 ),
                               ),
-                      ),
-                      const SizedBox(height: 8),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: _showChequeImageSourceDialog,
-                          icon: const Icon(Icons.refresh, size: 18),
-                          label: const Text('Replace Image'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primaryColor,
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
                             ),
                           ),
-                        ),
-                      ),
-                    ],
-                  )
-                : Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryColor.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(
-                          Icons.camera_alt_outlined,
-                          color: AppColors.primaryColor,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Upload cheque image',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.headingTextColor,
-                              ),
+                        ],
+                      )
+                    : Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryColor.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(8),
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Take a photo or choose one from the gallery',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: AppColors.headingTextColor.withValues(alpha: 0.7),
-                              ),
+                            child: const Icon(
+                              Icons.camera_alt_outlined,
+                              color: AppColors.primaryColor,
                             ),
-                          ],
-                        ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Upload cheque image',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.headingTextColor,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Take a photo or choose one from the gallery',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.headingTextColor.withValues(alpha: 0.7),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          const Icon(
+                            Icons.upload,
+                            color: AppColors.primaryColor,
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 8),
-                      const Icon(
-                        Icons.upload,
-                        color: AppColors.primaryColor,
-                      ),
-                    ],
-                  ),
           ),
         ),
+
+        // Gemini result cards
+        if (!_isAnalyzingCheque && _chequeInfo != null) ...[
+          const SizedBox(height: 12),
+          if (_chequeInfo!.isCheque)
+           // _buildChequeInfoCard(_chequeInfo!)
+           Container()
+          else if (_chequeInfo!.isServerError ||
+              _chequeInfo!.status == ChequeAnalysisStatus.unknownError)
+            _buildServerErrorCard(_chequeInfo!.errorMessage ?? 'AI is temporarily unavailable.'),
+        ],
+
+        // Cheque number field — shown when image present and not analyzing
+        if (hasChequeImage && !_isAnalyzingCheque) ...[
+          // Manual override banner
+          if (_chequeManualOverride) ...[
+            const SizedBox(height: 12),
+            _buildManualOverrideBanner(),
+          ],
+          const SizedBox(height: 16),
+          CustomTextField(
+            titleText: 'Cheque Number',
+            controller: _chequeNumberController,
+            isMandatory: _chequeManualOverride,
+            hintText: _chequeManualOverride
+                ? 'Enter cheque number manually'
+                : 'Cheque number (auto-filled by AI)',
+            borderRadius: kIsWeb ? 8 : 6,
+            keyboardType: TextInputType.number,
+            onChanged: (value) {
+              setState(() {
+                _paymentDetails = _paymentDetails.copyWith(chequeNumber: value);
+              });
+            },
+          ),
+        ],
       ],
+    );
+  }
+
+  Widget _buildServerErrorCard(String message) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFFCD34D), width: 1.5),
+      ),
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: const [
+              Icon(Icons.warning_amber_rounded, color: Color(0xFFD97706), size: 18),
+              SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  'AI Verification Temporarily Unavailable',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF92400E),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            message,
+            style: const TextStyle(fontSize: 12, color: Color(0xFF78350F)),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _lastChequeImageBytes != null
+                      ? () async {
+                          setState(() {
+                            _isAnalyzingCheque = true;
+                            _chequeInfo = null;
+                          });
+                          await _runChequeAnalysis(_lastChequeImageBytes!);
+                        }
+                      : null,
+                  icon: const Icon(Icons.refresh, size: 16),
+                  label: const Text('Retry AI', style: TextStyle(fontSize: 13)),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFFD97706),
+                    side: const BorderSide(color: Color(0xFFFCD34D)),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    setState(() => _chequeManualOverride = true);
+                  },
+                  icon: const Icon(Icons.edit_outlined, size: 16),
+                  label: const Text('Enter Manually', style: TextStyle(fontSize: 13)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFD97706),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildManualOverrideBanner() {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0F9FF),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFF7DD3FC)),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      child: Row(
+        children: [
+          const Icon(Icons.info_outline, color: Color(0xFF0284C7), size: 16),
+          const SizedBox(width: 8),
+          const Expanded(
+            child: Text(
+              'Manual mode: Please enter the cheque number carefully.',
+              style: TextStyle(fontSize: 12, color: Color(0xFF0369A1)),
+            ),
+          ),
+          GestureDetector(
+            onTap: () => setState(() => _chequeManualOverride = false),
+            child: const Icon(Icons.close, size: 16, color: Color(0xFF0284C7)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAnalyzingLoader() {
+    return Column(
+      children: [
+        const SizedBox(height: 16),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: const [
+            SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2.5,
+                valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryColor),
+              ),
+            ),
+            SizedBox(width: 12),
+            Text(
+              'Analyzing Your Image...',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: AppColors.headingTextColor,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Verifying cheque and extracting details',
+          style: TextStyle(
+            fontSize: 12,
+            color: AppColors.headingTextColor.withValues(alpha: 0.6),
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+
+  Widget _buildChequeInfoCard(ChequeInfo info) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0FDF4),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFF86EFAC), width: 1.5),
+      ),
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: const [
+              Icon(Icons.check_circle, color: Color(0xFF16A34A), size: 18),
+              SizedBox(width: 6),
+              Text(
+                'Cheque Detected',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF15803D),
+                ),
+              ),
+              Spacer(),
+            ],
+          ),
+          const SizedBox(height: 10),
+          const Divider(color: Color(0xFFBBF7D0), height: 1),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              if (info.chequeNumber != null)
+                _infoChip(Icons.tag, 'Cheque No', info.chequeNumber!),
+              if (info.bankName != null)
+                _infoChip(Icons.account_balance, 'Bank', info.bankName!),
+              if (info.branchName != null)
+                _infoChip(Icons.location_on_outlined, 'Branch', info.branchName!),
+              if (info.date != null)
+                _infoChip(Icons.calendar_today_outlined, 'Date', info.date!),
+              if (info.amount != null)
+                _infoChip(Icons.currency_rupee, 'Amount', info.amount!),
+              if (info.payeeName != null)
+                _infoChip(Icons.person_outline, 'Payee', info.payeeName!),
+              if (info.drawerName != null)
+                _infoChip(Icons.person_2_outlined, 'Drawer', info.drawerName!),
+              if (info.accountNumber != null)
+                _infoChip(Icons.account_box_outlined, 'A/C No', info.accountNumber!),
+              if (info.ifscCode != null)
+                _infoChip(Icons.code, 'IFSC', info.ifscCode!),
+              if (info.micrCode != null)
+                _infoChip(Icons.qr_code_outlined, 'MICR', info.micrCode!),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _infoChip(IconData icon, String label, String value) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFBBF7D0)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: const Color(0xFF16A34A)),
+          const SizedBox(width: 5),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 10,
+                  color: Color(0xFF6B7280),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFF111827),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -926,11 +1454,334 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
       final imageBytes = await pickedImage.readAsBytes();
       if (!mounted) return;
 
+      // Show loading state while Gemini analyzes the image
       setState(() {
+        _isAnalyzingCheque = true;
+        _chequeInfo = null;
+        _chequeManualOverride = false;
+        _chequePreloaded = false;
+        _lastChequeImageBytes = imageBytes;
+        _chequeNumberController.clear();
+        _chequeDateController.clear();
         _paymentDetails = _paymentDetails.copyWith(
           chequeImageName: pickedImage.name,
           chequeImageBytes: imageBytes,
           existingChequeImageUrl: null,
+          chequeNumber: null,
+          chequeDate: null,
+        );
+      });
+
+      await _runChequeAnalysis(imageBytes);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isAnalyzingCheque = false);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to pick cheque image: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _runChequeAnalysis(List<int> imageBytes) async {
+    final result = await _chequeAnalysisService.analyzeCheque(imageBytes);
+    if (!mounted) return;
+
+    if (result.isNotACheque) {
+      // Clearly not a cheque — clear image AND cheque number, block user
+      setState(() {
+        _isAnalyzingCheque = false;
+        _chequeInfo = null;
+        _chequeManualOverride = false;
+        _lastChequeImageBytes = null;
+        _chequeNumberController.clear();
+        _chequeDateController.clear();
+        _paymentDetails = _paymentDetails.copyWith(
+          chequeImageName: null,
+          chequeImageBytes: null,
+          chequeNumber: null,
+          chequeDate: null,
+        );
+      });
+      _showNotChequeDialog(
+        'The selected image does not appear to be a bank cheque.\nPlease upload a valid cheque image.',
+      );
+      return;
+    }
+
+    if (result.isChequeNumberUnreadable) {
+      // Cheque is valid but cheque number is blurred/cropped — clear image AND cheque number, block user
+      setState(() {
+        _isAnalyzingCheque = false;
+        _chequeInfo = null;
+        _chequeManualOverride = false;
+        _lastChequeImageBytes = null;
+        _chequeNumberController.clear();
+        _chequeDateController.clear();
+        _paymentDetails = _paymentDetails.copyWith(
+          chequeImageName: null,
+          chequeImageBytes: null,
+          chequeNumber: null,
+          chequeDate: null,
+        );
+      });
+      _showNotChequeDialog(
+        result.errorMessage ??
+            'Cheque number is not clearly visible.\n\nPlease make sure the bottom portion of the cheque is fully visible, not blurred or cropped, and upload again.',
+      );
+      return;
+    }
+
+    if (result.isServerError ||
+        result.status == ChequeAnalysisStatus.unknownError) {
+      // Server busy or unknown error — keep image, show retry/manual option
+      setState(() {
+        _isAnalyzingCheque = false;
+        _chequeInfo = result; // store so UI can show retry card
+      });
+      return;
+    }
+
+    // Success — auto-fill fields
+    setState(() {
+      _isAnalyzingCheque = false;
+      _chequeInfo = result;
+      _chequeManualOverride = false;
+
+      if (result.chequeNumber != null) {
+        _chequeNumberController.text = result.chequeNumber!;
+        _paymentDetails = _paymentDetails.copyWith(chequeNumber: result.chequeNumber);
+      }
+
+      if (result.date != null) {
+        _chequeDateController.text = result.date!;
+        try {
+          final parts = result.date!.split('/');
+          if (parts.length == 3) {
+            final parsed = DateTime(
+              int.parse(parts[2]),
+              int.parse(parts[1]),
+              int.parse(parts[0]),
+            );
+            _paymentDetails = _paymentDetails.copyWith(chequeDate: parsed);
+          }
+        } catch (_) {}
+      }
+    });
+  }
+
+  void _showNotChequeDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: const [
+            Icon(Icons.error_outline, color: Colors.red, size: 24),
+            SizedBox(width: 8),
+            Text('Not a Cheque', style: TextStyle(fontSize: 18)),
+          ],
+        ),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK', style: TextStyle(color: AppColors.primaryColor)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRtgsImageUploadSection() {
+    final hasNewRtgsImage = _paymentDetails.rtgsImageBytes != null && _paymentDetails.rtgsImageBytes!.isNotEmpty;
+    final hasExistingRtgsImage = _paymentDetails.existingRtgsImageUrl != null &&
+        _paymentDetails.existingRtgsImageUrl!.isNotEmpty;
+    final hasRtgsImage = hasNewRtgsImage || hasExistingRtgsImage;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        RichText(
+          text: TextSpan(
+            style: TextStyle(
+              fontSize: kIsWeb ? 15 : 14,
+              fontWeight: FontWeight.w600,
+              color: AppColors.headingTextColor,
+            ),
+            children: const [
+              TextSpan(text: 'RTGS Slip '),
+              TextSpan(
+                text: '*',
+                style: TextStyle(color: Colors.red),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        InkWell(
+          onTap: _showRtgsImageSourceDialog,
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.textFieldBGColor,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: AppColors.dropDownBorderColor),
+            ),
+            child: hasRtgsImage
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: hasNewRtgsImage
+                            ? Image.memory(
+                                Uint8List.fromList(_paymentDetails.rtgsImageBytes!),
+                                width: double.infinity,
+                                height: 180,
+                                fit: BoxFit.cover,
+                              )
+                            : Image.network(
+                                _paymentDetails.existingRtgsImageUrl!,
+                                width: double.infinity,
+                                height: 180,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => Container(
+                                  width: double.infinity,
+                                  height: 180,
+                                  color: AppColors.textFieldBGColor,
+                                  alignment: Alignment.center,
+                                  child: const Text(
+                                    'Unable to load RTGS slip image',
+                                    style: TextStyle(color: Colors.red),
+                                  ),
+                                ),
+                              ),
+                      ),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: _showRtgsImageSourceDialog,
+                          icon: const Icon(Icons.refresh, size: 18),
+                          label: const Text('Replace Image'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primaryColor,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
+                : Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryColor.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          Icons.receipt_long_outlined,
+                          color: AppColors.primaryColor,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Upload RTGS slip',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.headingTextColor,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Take a photo or choose one from the gallery',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppColors.headingTextColor.withValues(alpha: 0.7),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Icon(
+                        Icons.upload,
+                        color: AppColors.primaryColor,
+                      ),
+                    ],
+                  ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showRtgsImageSourceDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Upload RTGS Slip'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt, color: AppColors.primaryColor),
+              title: const Text('Camera'),
+              subtitle: const Text('Capture image from camera'),
+              onTap: () {
+                Navigator.of(context).pop();
+                Future.microtask(() => _pickRtgsImage(ImageSource.camera));
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library, color: AppColors.primaryColor),
+              title: const Text('Gallery'),
+              subtitle: const Text('Select image from gallery'),
+              onTap: () {
+                Navigator.of(context).pop();
+                Future.microtask(() => _pickRtgsImage(ImageSource.gallery));
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickRtgsImage(ImageSource source) async {
+    try {
+      final pickedImage = await _imagePicker.pickImage(
+        source: source,
+        imageQuality: 85,
+      );
+
+      if (pickedImage == null) return;
+
+      final imageBytes = await pickedImage.readAsBytes();
+      if (!mounted) return;
+
+      setState(() {
+        _paymentDetails = _paymentDetails.copyWith(
+          rtgsImageName: pickedImage.name,
+          rtgsImageBytes: imageBytes,
+          existingRtgsImageUrl: null,
         );
       });
     } catch (e) {
@@ -938,7 +1789,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed to pick cheque image: $e'),
+          content: Text('Failed to pick RTGS slip image: $e'),
           backgroundColor: Colors.red,
         ),
       );

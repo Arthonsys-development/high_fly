@@ -31,6 +31,12 @@ class BookingRequestModel {
   final List<String>? documents;
   final String? chequeImageName;
   final List<int>? chequeImageBytes;
+  final String? rtgsImageName;
+  final List<int>? rtgsImageBytes;
+  final String? loanBankName;
+  final String? loanBankKey;
+  final String? loanAmount;
+  final String? pricePerSqYd;
 
   const BookingRequestModel({
     required this.plot,
@@ -65,6 +71,12 @@ class BookingRequestModel {
     this.documents,
     this.chequeImageName,
     this.chequeImageBytes,
+    this.rtgsImageName,
+    this.rtgsImageBytes,
+    this.loanBankName,
+    this.loanBankKey,
+    this.loanAmount,
+    this.pricePerSqYd,
   });
 
   Map<String, dynamic> toJson() {
@@ -100,6 +112,11 @@ class BookingRequestModel {
       if (holdId != null) 'hold_id': holdId,
       if (documents != null && documents!.isNotEmpty) 'documents': documents,
       if (chequeImageName != null) 'cheque_copy_name': chequeImageName,
+      if (rtgsImageName != null) 'rtgs_image_name': rtgsImageName,
+      if (loanBankName != null && loanBankName!.isNotEmpty) 'loan_bank_name': loanBankName,
+      if (loanBankKey != null && loanBankKey!.isNotEmpty) 'loan_bank_key': loanBankKey,
+      if (loanAmount != null && loanAmount!.isNotEmpty) 'loan_amount': loanAmount,
+      if (pricePerSqYd != null && pricePerSqYd!.isNotEmpty) 'price_per_sq_yd': pricePerSqYd,
     };
   }
 

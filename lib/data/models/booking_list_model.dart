@@ -29,6 +29,7 @@ class BookingListModel {
   final String chequeNumber;
   final String? chequeDate;
   final String? chequeCopy;
+  final String? rtgsImage;
   final String paymentDetails;
   final String panCard;
   final String aadharCard;
@@ -55,6 +56,13 @@ class BookingListModel {
   final String bookedAt;
   final List<BookingDocument> documents;
   final int documentCount;
+  final String? pricePerSqYd;
+  final String? loanBankName;
+  final String? loanBankKey;
+  final String? loanAmount;
+  final String? saleableSize;
+  final bool plcApplied;
+  final double? plcPercentage;
 
   const BookingListModel({
     required this.id,
@@ -84,6 +92,7 @@ class BookingListModel {
     required this.chequeNumber,
     this.chequeDate,
     this.chequeCopy,
+    this.rtgsImage,
     required this.paymentDetails,
     required this.panCard,
     required this.aadharCard,
@@ -110,6 +119,13 @@ class BookingListModel {
     required this.bookedAt,
     required this.documents,
     required this.documentCount,
+    this.pricePerSqYd,
+    this.loanBankName,
+    this.loanBankKey,
+    this.loanAmount,
+    this.saleableSize,
+    this.plcApplied = false,
+    this.plcPercentage,
   });
 
   factory BookingListModel.fromJson(Map<String, dynamic> json) {
@@ -163,6 +179,7 @@ class BookingListModel {
       chequeNumber: json['cheque_number'] ?? '',
       chequeDate: json['cheque_date'],
       chequeCopy: json['cheque_copy']?.toString(),
+      rtgsImage: json['rtgs_image']?.toString(),
       paymentDetails: json['payment_details'] ?? '',
       panCard: json['pan_card'] ?? '',
       aadharCard: json['aadhar_card'] ?? '',
@@ -189,6 +206,15 @@ class BookingListModel {
       bookedAt: json['booked_at'] ?? '',
       documents: documents,
       documentCount: json['document_count'] ?? documents.length,
+      pricePerSqYd: json['price_per_sq_yd']?.toString(),
+      loanBankName: json['loan_bank_name']?.toString(),
+      loanBankKey: json['loan_bank_key']?.toString(),
+      loanAmount: json['loan_amount']?.toString(),
+      saleableSize: json['saleable_size']?.toString(),
+      plcApplied: json['plc_applied'] == true || json['plc_applied'] == 'true',
+      plcPercentage: json['plc_percentage'] != null
+          ? double.tryParse(json['plc_percentage'].toString())
+          : null,
     );
   }
 
@@ -221,6 +247,7 @@ class BookingListModel {
       'cheque_number': chequeNumber,
       'cheque_date': chequeDate,
       'cheque_copy': chequeCopy,
+      'rtgs_image': rtgsImage,
       'payment_details': paymentDetails,
       'pan_card': panCard,
       'aadhar_card': aadharCard,
@@ -247,6 +274,13 @@ class BookingListModel {
       'booked_at': bookedAt,
       'document': documents.map((doc) => doc.toJson()).toList(),
       'document_count': documentCount,
+      if (pricePerSqYd != null) 'price_per_sq_yd': pricePerSqYd,
+      if (loanBankName != null) 'loan_bank_name': loanBankName,
+      if (loanBankKey != null) 'loan_bank_key': loanBankKey,
+      if (loanAmount != null) 'loan_amount': loanAmount,
+      if (saleableSize != null) 'saleable_size': saleableSize,
+      'plc_applied': plcApplied,
+      if (plcPercentage != null) 'plc_percentage': plcPercentage,
     };
   }
 }

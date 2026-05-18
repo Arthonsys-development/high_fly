@@ -8,6 +8,9 @@ class HoldListModel {
   final String? plotArea;
   final String? plotPrice;
   final String? plotFacing;
+  final bool plc;
+  final bool plcApplied;
+  final double? plcPercentage;
   final Project? project;
   final String agentName;
   final String? agentEmail;
@@ -40,6 +43,7 @@ class HoldListModel {
   final int customer;
   final List<HoldDocument> documents;
   final int documentCount;
+  final String? saleableSize;
 
   const HoldListModel({
     required this.id,
@@ -48,6 +52,9 @@ class HoldListModel {
     this.plotArea,
     this.plotPrice,
     this.plotFacing,
+    this.plc = false,
+    this.plcApplied = false,
+    this.plcPercentage,
     this.project,
     required this.agentName,
     this.agentEmail,
@@ -80,6 +87,7 @@ class HoldListModel {
     required this.customer,
     required this.documents,
     required this.documentCount,
+    this.saleableSize,
   });
 
   factory HoldListModel.fromJson(Map<String, dynamic> json) {
@@ -105,6 +113,19 @@ class HoldListModel {
       }
     }
     
+    double? parseDouble(dynamic v) {
+      if (v == null) return null;
+      if (v is num) return v.toDouble();
+      return double.tryParse(v.toString());
+    }
+
+    bool parseBool(dynamic v) {
+      if (v == null) return false;
+      if (v is bool) return v;
+      final s = v.toString().toLowerCase().trim();
+      return s == 'true' || s == '1' || s == 'yes';
+    }
+
     return HoldListModel(
       id: json['id'] ?? 0,
       plotCode: json['plot_code'] ?? '',
@@ -112,6 +133,9 @@ class HoldListModel {
       plotArea: json['plot_area']?.toString(),
       plotPrice: json['plot_price']?.toString(),
       plotFacing: json['plot_facing']?.toString(),
+      plc: parseBool(json['plc']),
+      plcApplied: parseBool(json['plc_applied']),
+      plcPercentage: parseDouble(json['plc_percentage']),
       project: project,
       agentName: json['agent_name'] ?? '',
       agentEmail: json['agent_email']?.toString(),
@@ -144,6 +168,7 @@ class HoldListModel {
       customer: json['customer'] ?? 0,
       documents: documents,
       documentCount: json['document_count'] ?? documents.length,
+      saleableSize: json['saleable_size']?.toString(),
     );
   }
 
@@ -155,6 +180,9 @@ class HoldListModel {
       'plot_area': plotArea,
       'plot_price': plotPrice,
       'plot_facing': plotFacing,
+      'plc': plc,
+      'plc_applied': plcApplied,
+      if (plcPercentage != null) 'plc_percentage': plcPercentage,
       'project': project?.toJson(),
       'agent_name': agentName,
       'agent_email': agentEmail,
@@ -187,6 +215,7 @@ class HoldListModel {
       'customer': customer,
       'document': documents.map((doc) => doc.toJson()).toList(),
       'document_count': documentCount,
+      if (saleableSize != null) 'saleable_size': saleableSize,
     };
   }
 }

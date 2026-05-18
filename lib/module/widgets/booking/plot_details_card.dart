@@ -75,13 +75,13 @@ class PlotDetailsCard extends StatelessWidget {
                     ),
                   _DetailItem(
                     showPlcBreakup ? 'Price (with PLC):' : 'Price:',
-                    '₹${plot.effectivePrice.toInt()}',
+                    '₹${plot.effectivePrice.toStringAsFixed(2)}',
                     isHighlighted: true,
                   ),
                   if (showPlcBreakup)
                     _DetailItem(
                       'Base Price:',
-                      '₹${plot.price.toInt()}',
+                      '₹${plot.price.toStringAsFixed(2)}',
                     ),
                 ]),
               ),

@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:highfly/config/constant/app_strings.dart';
 import '../../../config/constant/app_colors.dart';
 import '../../../config/constant/const_assets.dart';
-import '../../../config/routes.dart';
 import '../../../data/models/booking_summary_model.dart';
+import '../../../data/models/payment_model.dart';
 import '../../../data/repository/booking_api_repository.dart';
 import '../../../data/models/request_models/booking_request_model.dart';
 import '../../../data/models/request_models/hold_request_model.dart';
@@ -29,6 +28,7 @@ class ReviewConfirmSection extends StatefulWidget {
   final bool isHoldFlow; // New parameter to distinguish between booking and hold flows
  // final int agentId; // Agent ID for API calls
   final VoidCallback? onResetForm; // Callback to reset form data
+  final VoidCallback? onSuccess; // Callback invoked after successful API call
   final List<DocumentFileData>? documentFiles; // File data for web uploads
 
   const ReviewConfirmSection({
@@ -41,6 +41,7 @@ class ReviewConfirmSection extends StatefulWidget {
     this.isHoldFlow = false,
   //  this.agentId = 1, // Default agent ID, should be passed from parent
     this.onResetForm, // Callback to reset form data
+    this.onSuccess, // Callback invoked after successful API call
     this.documentFiles, // File data for web uploads
   });
 
@@ -75,28 +76,9 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
       // Call project API after successful booking/hold creation
       await _callProjectApi();
       
-      // Show success message and reset form
+      // Navigate to success step
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(widget.isHoldFlow 
-              ? 'Plot hold created successfully!' 
-              : 'Booking created successfully!'),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 2),
-          ),
-        );
-        
-        // Reset form data and navigate to starting step
-        Future.delayed(const Duration(seconds: 2), () {
-          if (mounted) {
-            // Call the reset form callback if provided
-            widget.onResetForm?.call();
-            
-            // Navigate to dashboard
-            context.go(Routes.dashboardScreen);
-          }
-        });
+        widget.onSuccess?.call();
       }
     } catch (e) {
       if (mounted) {
@@ -128,8 +110,7 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
     
     if (summary.selectedPlot == null || 
         summary.selectedCustomer == null || 
-        summary.paymentDetails == null || 
-        summary.bankDetails == null) {
+        summary.paymentDetails == null) {
       throw Exception('Missing required data for booking');
     }
 
@@ -143,7 +124,9 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
       customerAddress: summary.selectedCustomer!.location ?? '',
       bookingType: summary.paymentDetails!.paymentTypeKey,
       bookingAmount: summary.paymentDetails!.paymentAmount,
-      totalAmount: summary.paymentDetails!.paymentAmount, // Assuming same as booking amount
+      totalAmount: summary.paymentDetails!.totalAmount.isNotEmpty
+          ? summary.paymentDetails!.totalAmount
+          : summary.paymentDetails!.paymentAmount,
       paymentMode: summary.paymentDetails!.paymentMethodKey,
       paymentReference: _generatePaymentReference(),
       chequeNumber: summary.paymentDetails!.chequeNumber ?? '',
@@ -151,12 +134,12 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
       paymentDetails: _generatePaymentDetails(),
       panCard: summary.paymentDetails!.panNumber,
       aadharCard: summary.paymentDetails!.aadharNumber,
-      accountHolderName: summary.bankDetails!.accountHolderName ?? '',
-      branchName: summary.bankDetails!.branchName ?? '',
-      accountNumber: summary.bankDetails!.accountNumber ?? '',
-      ifscCode: summary.bankDetails!.ifscCode ?? '',
-      accountType: summary.bankDetails!.accountType ?? '',
-      bankContactNumber: summary.bankDetails!.contactNumber ?? '',
+      accountHolderName: summary.bankDetails?.accountHolderName ?? '',
+      branchName: summary.bankDetails?.branchName ?? '',
+      accountNumber: summary.bankDetails?.accountNumber ?? '',
+      ifscCode: summary.bankDetails?.ifscCode ?? '',
+      accountType: summary.bankDetails?.accountType ?? '',
+      bankContactNumber: summary.bankDetails?.contactNumber ?? '',
       status: 'completed',
       remarks: summary.paymentDetails!.additionalNotes,
       salaryIndividual: summary.paymentDetails!.isSalariedIndividual,
@@ -164,7 +147,15 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
       form16APath: summary.paymentDetails!.form16APath,
       chequeImageName: summary.paymentDetails!.chequeImageName,
       chequeImageBytes: summary.paymentDetails!.chequeImageBytes,
+      rtgsImageName: summary.paymentDetails!.rtgsImageName,
+      rtgsImageBytes: summary.paymentDetails!.rtgsImageBytes,
       documents: summary.documents,
+      loanBankName: summary.paymentDetails!.loanBankName,
+      loanBankKey: summary.paymentDetails!.loanBankKey,
+      loanAmount: summary.paymentDetails!.loanAmount,
+      pricePerSqYd: summary.paymentDetails!.pricePerSqYd.isNotEmpty
+          ? summary.paymentDetails!.pricePerSqYd
+          : null,
     );
 
     // Prepare document files for web upload
@@ -192,8 +183,7 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
     
     if (summary.selectedPlot == null || 
         summary.selectedCustomer == null || 
-        summary.holdDetails == null || 
-        summary.bankDetails == null) {
+        summary.holdDetails == null) {
       throw Exception('Missing required data for hold');
     }
 
@@ -214,12 +204,12 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
       holdAmount: 0.0, // Default hold amount, should be configurable
       paymentMode: 'rtgs', // Default payment mode for holds
       paymentReference: _generatePaymentReference(),
-      accountHolderName: summary.bankDetails!.accountHolderName ?? '',
-      branchName: summary.bankDetails!.branchName ?? '',
-      accountNumber: summary.bankDetails!.accountNumber ?? '',
-      ifscCode: summary.bankDetails!.ifscCode ?? '',
-      accountType: summary.bankDetails!.accountType ?? '',
-      bankContactNumber: summary.bankDetails!.contactNumber ?? '',
+      accountHolderName: summary.bankDetails?.accountHolderName ?? '',
+      branchName: summary.bankDetails?.branchName ?? '',
+      accountNumber: summary.bankDetails?.accountNumber ?? '',
+      ifscCode: summary.bankDetails?.ifscCode ?? '',
+      accountType: summary.bankDetails?.accountType ?? '',
+      bankContactNumber: summary.bankDetails?.contactNumber ?? '',
       holdUntil: holdUntilString,
       remarks: summary.holdDetails!.additionalNotes ?? '',
       documents: summary.documents,
@@ -244,8 +234,12 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
   }
 
   String _generatePaymentReference() {
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
-    return 'REF$timestamp';
+    final paymentDetails = widget.bookingSummary.paymentDetails;
+    if (paymentDetails?.paymentMethodKey == 'upi' &&
+        (paymentDetails?.upiTransactionId ?? '').isNotEmpty) {
+      return paymentDetails!.upiTransactionId!;
+    }
+    return '';
   }
 
   String _generatePaymentDetails() {
@@ -317,38 +311,64 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
           'Area',
           '${widget.bookingSummary.selectedPlot?.area ?? '-'} sq mtr',
         ),
-        _buildInfoRow(
-          'Price',
-          '₹${widget.bookingSummary.selectedPlot?.price ?? '-'}',
-        ),
+        // _buildInfoRow(
+        //   'Price',
+        //   '₹${widget.bookingSummary.selectedPlot?.price ?? '-'}',
+        // ),
       ],
     );
     
+    final paymentDetails = widget.bookingSummary.paymentDetails;
     final paymentCard = !widget.isHoldFlow
         ? _buildInfoCard(
             icon: IconsAssets.cardIcon,
             iconColor: AppColors.primaryColor,
             title: 'Payment Information',
             children: [
-              _buildInfoRow(
-                'Amount',
-                '₹${widget.bookingSummary.paymentDetails?.paymentAmount ?? '-'}',
+              
+              if (paymentDetails?.pricePerSqYd.isNotEmpty == true)
+                _buildInfoRow(
+                  'Price (per Sq Yd)',
+                  '₹${paymentDetails!.pricePerSqYd}',
+                ),
+              if (paymentDetails?.totalAmount.isNotEmpty == true)
+                _buildInfoRow(
+                  'Total Amount',
+                  '₹${paymentDetails!.totalAmount}',
+                ),
+                _buildInfoRow(
+                'Booking Amount',
+                '₹${paymentDetails?.paymentAmount ?? '-'}',
               ),
               _buildInfoRow(
                 'Method',
-                widget.bookingSummary.paymentDetails?.paymentMethod ?? '-',
+                paymentDetails?.paymentMethod ?? '-',
               ),
               _buildInfoRow(
                 'Payment Type',
-                widget.bookingSummary.paymentDetails?.paymentType ?? '-',
+                paymentDetails?.paymentType ?? '-',
               ),
+              if (paymentDetails?.paymentTypeKey == PaymentType.finance &&
+                  paymentDetails?.loanBankName != null &&
+                  paymentDetails!.loanBankName!.isNotEmpty)
+                _buildInfoRow(
+                  'Loan Bank',
+                  paymentDetails.loanBankName!,
+                ),
+              if (paymentDetails?.paymentTypeKey == PaymentType.finance &&
+                  paymentDetails?.loanAmount != null &&
+                  paymentDetails!.loanAmount!.isNotEmpty)
+                _buildInfoRow(
+                  'Loan Amount',
+                  '₹${paymentDetails.loanAmount!}',
+                ),
               _buildInfoRow(
                 'PAN',
-                _formatPAN(widget.bookingSummary.paymentDetails?.panNumber),
+                _formatPAN(paymentDetails?.panNumber),
               ),
               _buildInfoRow(
                 'Aadhar',
-                _formatAadhar(widget.bookingSummary.paymentDetails?.aadharNumber),
+                _formatAadhar(paymentDetails?.aadharNumber),
               ),
             ],
           )
@@ -358,37 +378,39 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
         ? _buildHoldDetailsCard()
         : null;
     
-    final bankCard = _buildInfoCard(
-      icon: IconsAssets.bankIcon,
-      iconColor: Colors.brown,
-      title: 'Bank Details',
-      children: [
-        _buildInfoRow(
-          'Account Holder Name',
-          widget.bookingSummary.bankDetails?.accountHolderName ?? '-',
-        ),
-        _buildInfoRow(
-          'Branch Name',
-          widget.bookingSummary.bankDetails?.branchName ?? '-',
-        ),
-        _buildInfoRow(
-          'Account Number',
-          _formatAccountNumber(widget.bookingSummary.bankDetails?.accountNumber),
-        ),
-        _buildInfoRow(
-          'IFSC Code',
-          widget.bookingSummary.bankDetails?.ifscCode ?? '-',
-        ),
-        _buildInfoRow(
-          'Account Type',
-          widget.bookingSummary.bankDetails?.accountType ?? '-',
-        ),
-        _buildInfoRow(
-          'Contact Number',
-          widget.bookingSummary.bankDetails?.contactNumber ?? '-',
-        ),
-      ],
-    );
+    final bankCard = widget.bookingSummary.bankDetails != null
+        ? _buildInfoCard(
+            icon: IconsAssets.bankIcon,
+            iconColor: Colors.brown,
+            title: 'Bank Details',
+            children: [
+              _buildInfoRow(
+                'Account Holder Name',
+                widget.bookingSummary.bankDetails?.accountHolderName ?? '-',
+              ),
+              _buildInfoRow(
+                'Branch Name',
+                widget.bookingSummary.bankDetails?.branchName ?? '-',
+              ),
+              _buildInfoRow(
+                'Account Number',
+                _formatAccountNumber(widget.bookingSummary.bankDetails?.accountNumber),
+              ),
+              _buildInfoRow(
+                'IFSC Code',
+                widget.bookingSummary.bankDetails?.ifscCode ?? '-',
+              ),
+              _buildInfoRow(
+                'Account Type',
+                widget.bookingSummary.bankDetails?.accountType ?? '-',
+              ),
+              _buildInfoRow(
+                'Contact Number',
+                widget.bookingSummary.bankDetails?.contactNumber ?? '-',
+              ),
+            ],
+          )
+        : null;
     
     final documentsCard = widget.bookingSummary.documents != null && 
                           widget.bookingSummary.documents!.isNotEmpty
@@ -474,45 +496,32 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
     required Widget plotCard,
     required Widget? paymentCard,
     required Widget? holdCard,
-    required Widget bankCard,
+    required Widget? bankCard,
     required Widget? documentsCard,
     required double spacing,
   }) {
     return Column(
       children: [
-        // First row: Customer and Plot cards side by side
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: customerCard,
-            ),
+            Expanded(child: customerCard),
             SizedBox(width: spacing),
-            Expanded(
-              child: plotCard,
-            ),
+            Expanded(child: plotCard),
           ],
         ),
-        
         SizedBox(height: spacing),
-        
-        // Second row: Payment/Hold and Bank cards side by side
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (paymentCard != null || holdCard != null) ...[
-              Expanded(
-                child: paymentCard ?? holdCard!,
-              ),
+              Expanded(child: paymentCard ?? holdCard!),
               SizedBox(width: spacing),
             ],
-            Expanded(
-              child: bankCard,
-            ),
+            if (bankCard != null)
+              Expanded(child: bankCard),
           ],
         ),
-        
-        // Third row: Documents card (full width if exists)
         if (documentsCard != null) ...[
           SizedBox(height: spacing),
           documentsCard,
@@ -526,7 +535,7 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
     required Widget plotCard,
     required Widget? paymentCard,
     required Widget? holdCard,
-    required Widget bankCard,
+    required Widget? bankCard,
     required Widget? documentsCard,
     required double spacing,
   }) {
@@ -543,8 +552,10 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
           SizedBox(height: spacing),
           holdCard,
         ],
-        SizedBox(height: spacing),
-        bankCard,
+        if (bankCard != null) ...[
+          SizedBox(height: spacing),
+          bankCard,
+        ],
         if (documentsCard != null) ...[
           SizedBox(height: spacing),
           documentsCard,

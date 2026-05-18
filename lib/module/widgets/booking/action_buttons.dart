@@ -48,48 +48,52 @@ class ActionButtons extends StatelessWidget {
     final borderRadius = kIsWeb ? 8.0 : 4.0;
     final borderWidth = kIsWeb ? 1.5 : 1.0;
 
-    return ElevatedButton(
-      onPressed: isPreviousEnabled ? onPrevious : null,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.white,
-        foregroundColor: AppColors.lightGreyColor,
-        elevation: kIsWeb ? 1 : 0,
-        padding: EdgeInsets.symmetric(
-          vertical: kIsWeb ? 12 : 8,
-          horizontal: kIsWeb ? 16 : 12,
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(borderRadius),
-          side: BorderSide(
-            color: isPreviousEnabled 
-                ? AppColors.lightGreyBorderColor 
-                : AppColors.lightGreyBorderColor.withValues(alpha: 0.5),
-            width: borderWidth,
+    return Semantics(
+      label: 'Previous',
+      button: true,
+      child: ElevatedButton(
+        onPressed: isPreviousEnabled ? onPrevious : null,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.white,
+          foregroundColor: AppColors.lightGreyColor,
+          elevation: kIsWeb ? 1 : 0,
+          padding: EdgeInsets.symmetric(
+            vertical: kIsWeb ? 12 : 8,
+            horizontal: kIsWeb ? 16 : 12,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(borderRadius),
+            side: BorderSide(
+              color: isPreviousEnabled 
+                  ? AppColors.lightGreyBorderColor 
+                  : AppColors.lightGreyBorderColor.withValues(alpha: 0.5),
+              width: borderWidth,
+            ),
           ),
         ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.arrow_back_sharp,
-            size: iconSize,
-            color: isPreviousEnabled 
-                ? AppColors.lightGreyColor 
-                : AppColors.lightGreyColor.withValues(alpha: 0.5),
-          ),
-          SizedBox(width: kIsWeb ? 10 : 8),
-          Text(
-            'Previous',
-            style: TextStyle(
-              fontSize: fontSize,
-              fontWeight: FontWeight.w600,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.arrow_back_sharp,
+              size: iconSize,
               color: isPreviousEnabled 
                   ? AppColors.lightGreyColor 
                   : AppColors.lightGreyColor.withValues(alpha: 0.5),
             ),
-          ),
-        ],
+            SizedBox(width: kIsWeb ? 10 : 8),
+            Text(
+              'Previous',
+              style: TextStyle(
+                fontSize: fontSize,
+                fontWeight: FontWeight.w600,
+                color: isPreviousEnabled 
+                    ? AppColors.lightGreyColor 
+                    : AppColors.lightGreyColor.withValues(alpha: 0.5),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -99,42 +103,46 @@ class ActionButtons extends StatelessWidget {
     final fontSize = kIsWeb ? 16.0 : 16.0;
     final borderRadius = kIsWeb ? 8.0 : 4.0;
 
-    return ElevatedButton(
-      onPressed: isNextEnabled ? onNext : null,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: isNextEnabled 
-            ? AppColors.primaryColor 
-            : AppColors.primaryColor.withValues(alpha: 0.5),
-        foregroundColor: Colors.white,
-        elevation: kIsWeb ? 2 : 0,
-        padding: EdgeInsets.symmetric(
-          vertical: kIsWeb ? 12 : 8,
-          horizontal: kIsWeb ? 20 : 12,
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(borderRadius),
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            nextButtonText ?? 'Next',
-            style: TextStyle(
-              fontSize: fontSize,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
-            ),
+    return Semantics(
+      label: nextButtonText ?? 'Next',
+      button: true,
+      child: ElevatedButton(
+        onPressed: isNextEnabled ? onNext : null,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: isNextEnabled 
+              ? AppColors.primaryColor 
+              : AppColors.primaryColor.withValues(alpha: 0.5),
+          foregroundColor: Colors.white,
+          elevation: kIsWeb ? 2 : 0,
+          padding: EdgeInsets.symmetric(
+            vertical: kIsWeb ? 12 : 8,
+            horizontal: kIsWeb ? 20 : 12,
           ),
-
-          SizedBox(width: kIsWeb ? 10 : 8),
-          if(nextButtonText == "Next")
-            Icon(
-              Icons.arrow_forward_sharp,
-              size: iconSize,
-              color: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(borderRadius),
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              nextButtonText ?? 'Next',
+              style: TextStyle(
+                fontSize: fontSize,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
             ),
-        ],
+
+            SizedBox(width: kIsWeb ? 10 : 8),
+            if(nextButtonText == "Next")
+              Icon(
+                Icons.arrow_forward_sharp,
+                size: iconSize,
+                color: Colors.white,
+              ),
+          ],
+        ),
       ),
     );
   }

@@ -4,13 +4,12 @@ import 'package:highfly/config/constant/app_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:highfly/config/constant/const_assets.dart';
 import 'package:highfly/module/providers/projects_provider.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:highfly/module/providers/notification_provider.dart';
+import 'package:highfly/module/widgets/notification_bottom_sheet.dart';
 import 'package:go_router/go_router.dart';
 import 'package:highfly/config/routes.dart';
 import 'package:highfly/data/models/response_model/project_response_model.dart';
 import 'package:highfly/module/screens/profile/profile_screen.dart';
-import 'package:highfly/data/repository/auth_api_repository.dart';
 
 import '../../utils/responsive.dart';
 import '../../widgets/dashboard_side_menu.dart';
@@ -21,6 +20,7 @@ import '../bookings/bookings_list_screen.dart';
 import '../bookings/webview_screen.dart';
 import '../../providers/analytics_provider.dart';
 import '../../providers/booking_navigation_provider.dart';
+import '../../providers/hold_status_provider.dart';
 // Conditional import for web image widget
 import '../visitors/web_image_widget.dart' if (dart.library.io) '../visitors/web_image_widget_stub.dart';
 
@@ -47,6 +47,74 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
     setState(() {
       selectedMenuIndex = index;
     });
+  }
+
+  Future<void> _navigateToHoldOrShowDialog(Project project) async {
+    try {
+      final holdStatus = await ref.read(holdStatusProvider.future);
+      if (!mounted) return;
+      if (holdStatus.isHoldOn) {
+        _showHoldBlockedDialog(holdStatus.data.holdStartDate, holdStatus.data.holdOffDate);
+      } else {
+        ref.read(bookingNavigationProvider.notifier).navigateToBooking(project, 1);
+        setState(() {
+          selectedMenuIndex = 2;
+        });
+      }
+    } catch (_) {
+      if (!mounted) return;
+      ref.read(bookingNavigationProvider.notifier).navigateToBooking(project, 1);
+      setState(() {
+        selectedMenuIndex = 2;
+      });
+    }
+  }
+
+  String _formatHoldDate(String isoDate) {
+    if (isoDate.isEmpty) return '';
+    try {
+      final dt = DateTime.parse(isoDate);
+      const months = [
+        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      ];
+      return '${dt.day} ${months[dt.month - 1]} ${dt.year}';
+    } catch (_) {
+      return isoDate;
+    }
+  }
+
+  void _showHoldBlockedDialog(String startDate, String endDate) {
+    final formattedStart = _formatHoldDate(startDate);
+    final formattedEnd = _formatHoldDate(endDate);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: const [
+            Icon(Icons.block, color: Colors.red, size: 28),
+            SizedBox(width: 10),
+            Text('Hold Unavailable'),
+          ],
+        ),
+        content: Text(
+          'Holding plots has been temporarily disabled by the admin'
+          '${formattedStart.isNotEmpty
+              ? (formattedStart == formattedEnd
+                  ? ' on $formattedStart'
+                  : ' from $formattedStart${formattedEnd.isNotEmpty ? ' to $formattedEnd' : ''}')
+              : ''}.'
+          '\n\nPlease try again after the hold period ends.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 
   void toggleSideMenu() {
@@ -150,83 +218,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
         ),
       );
     }
-  }
-
-  void _showLogoutConfirmationDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          title: const Text(
-            'Logout',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: AppColors.primaryTextColor,
-            ),
-          ),
-          content: const Text(
-            'Are you sure you want to logout?',
-            style: TextStyle(
-              fontSize: 14,
-              color: AppColors.secondaryTextColor,
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text(
-                'Cancel',
-                style: TextStyle(
-                  color: AppColors.secondaryTextColor,
-                ),
-              ),
-            ),
-            TextButton(
-              onPressed: () async {
-                Navigator.of(dialogContext).pop();
-                try {
-                  // Call logout API
-                  final authRepository = AuthApiRepository();
-                  final result = await authRepository.logout();
-                  
-                  if (result['success'] == true) {
-                    debugPrint('Logout API call successful');
-                  } else {
-                    debugPrint('Logout API call failed: ${result['message']}');
-                    // Continue with logout even if API call fails
-                  }
-                } catch (e) {
-                  debugPrint('Error calling logout API: $e');
-                  // Continue with logout even if API call fails
-                }
-                
-                // Sign out from Firebase
-                await FirebaseAuth.instance.signOut();
-                // Clear access token from secure storage
-                const secureStorage = FlutterSecureStorage();
-                await secureStorage.deleteAll();
-                // Navigate back to sign in screen
-                if (mounted) {
-                  context.go(Routes.signIn);
-                }
-              },
-              child: const Text(
-                'Logout',
-                style: TextStyle(
-                  color: AppColors.primaryColor,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
   }
 
   List<Project> _filterProjects(List<Project> projects, String query) {
@@ -340,12 +331,46 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
               color: AppColors.primaryTextColor,
             ),
           ),
-          // const Spacer(),
-          // Sign out button
-          IconButton(
-            icon: const Icon(Icons.logout, color: AppColors.primaryColor),
-            onPressed: () {
-              _showLogoutConfirmationDialog(context);
+          Consumer(
+            builder: (context, ref, _) {
+              final notifState = ref.watch(notificationControllerProvider);
+              final unread = notifState.unreadCount;
+              return Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.notifications_outlined,
+                        color: AppColors.primaryColor),
+                    onPressed: () => NotificationBottomSheet.show(context),
+                  ),
+                  if (false) // only temporarily disable notification badge
+                //  if (unread > 0)
+                    Positioned(
+                      right: 6,
+                      top: 6,
+                      child: Container(
+                        padding: const EdgeInsets.all(3),
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 16,
+                          minHeight: 16,
+                        ),
+                        child: Text(
+                          unread > 99 ? '99+' : '$unread',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                ],
+              );
             },
           ),
         ],
@@ -1363,14 +1388,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                 const SizedBox(width: 8),
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: () {
-                      // Set booking navigation with project and Hold tab (index 1)
-                      ref.read(bookingNavigationProvider.notifier).navigateToBooking(project, 1);
-                      // Switch to booking tab in dashboard
-                      setState(() {
-                        selectedMenuIndex = 2;
-                      });
-                    },
+                    onPressed: () => _navigateToHoldOrShowDialog(project),
                     icon: const Icon(Icons.access_time, size: 18),
                     label: const Text('Hold'),
                     style: ElevatedButton.styleFrom(
@@ -1541,10 +1559,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                             child: Material(
                               color: Colors.transparent,
                               child: InkWell(
-                                onTap: () {
-                                  ref.read(bookingNavigationProvider.notifier).navigateToBooking(project, 1);
-                                  onMenuItemSelected(2);
-                                },
+                                onTap: () => _navigateToHoldOrShowDialog(project),
                                 borderRadius: BorderRadius.circular(8),
                                 child: Padding(
                                   padding: const EdgeInsets.symmetric(
@@ -1850,10 +1865,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
                                     child: Material(
                                       color: Colors.transparent,
                                       child: InkWell(
-                                        onTap: () {
-                                          ref.read(bookingNavigationProvider.notifier).navigateToBooking(project, 1);
-                                          onMenuItemSelected(2);
-                                        },
+                                        onTap: () => _navigateToHoldOrShowDialog(project),
                                         borderRadius: BorderRadius.circular(8),
                                         child: Padding(
                                           padding: const EdgeInsets.symmetric(

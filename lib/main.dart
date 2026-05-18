@@ -4,10 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
-import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode, defaultTargetPlatform, TargetPlatform;
-import 'package:flutter/foundation.dart' as foundation;
+import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
+import 'dart:ui';
 
 import 'config/constant/app_strings.dart';
 import 'config/routes.dart';
@@ -55,6 +55,28 @@ void _handleNotificationTap(RemoteMessage message) {
 
 
 Future<void> main() async {
+  // Ensure binding is initialized before any plugin/Sentry work.
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Capture framework/async errors very early (before Sentry init completes).
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.presentError(details);
+    try {
+      Sentry.captureException(details.exception, stackTrace: details.stack);
+    } catch (_) {
+      // Ignore if Sentry isn't ready yet.
+    }
+  };
+
+  PlatformDispatcher.instance.onError = (error, stackTrace) {
+    try {
+      Sentry.captureException(error, stackTrace: stackTrace);
+    } catch (_) {
+      // Ignore if Sentry isn't ready yet.
+    }
+    return false;
+  };
+
   // Initialize Sentry for error tracking and monitoring
   await SentryFlutter.init(
     (options) {
@@ -74,18 +96,12 @@ Future<void> main() async {
       debugPrint('🔍 Sentry initialized successfully');
     },
     appRunner: () async {
-      // Override debugPrint to suppress logs in release mode (especially for web)
-      // This prevents logs from appearing in the browser console in production
-      if (!kDebugMode) {
-        // In release mode, suppress all debugPrint output
-        foundation.debugPrint = (String? message, {int? wrapWidth}) {
-          // Do nothing - suppress all logs in release mode
-          return;
-        };
-      }
+      // NOTE: Do not fully suppress logs in release mode.
+      // It can hide startup errors and looks like the app is "stuck on splash".
       
       // Add comprehensive error handling
       try {
+        // Binding already initialized in main(), but keep this safe.
         WidgetsFlutterBinding.ensureInitialized();
         debugPrint('🔥 App: WidgetsFlutterBinding initialized');
       } catch (e) {
@@ -105,7 +121,10 @@ Future<void> main() async {
       // Initialize plugins
       try {
         // This helps ensure all plugins are properly initialized
-        await Permission.camera.status;
+        await Permission.camera.status.timeout(
+          const Duration(seconds: 3),
+          onTimeout: () => PermissionStatus.denied,
+        );
         debugPrint('🔥 App: Plugins initialized');
       } catch (e) {
         debugPrint('🔥 App: Plugin initialization warning: $e');
@@ -143,15 +162,19 @@ Future<void> main() async {
       try {
         if (!kIsWeb) {
           // Initialize notification service for foreground notifications
-          await NotificationService().initialize();
+          await NotificationService()
+              .initialize()
+              .timeout(const Duration(seconds: 8));
           
           // Request permission for notifications (iOS specific)
           if (defaultTargetPlatform == TargetPlatform.iOS) {
-            await FirebaseMessaging.instance.requestPermission(
-              alert: true,
-              badge: true,
-              sound: true,
-            );
+            await FirebaseMessaging.instance
+                .requestPermission(
+                  alert: true,
+                  badge: true,
+                  sound: true,
+                )
+                .timeout(const Duration(seconds: 8));
           }
           
           // Set the background messaging handler early, before other initialization
@@ -189,7 +212,9 @@ Future<void> main() async {
           });
 
           // Check if app was opened from a notification (terminated state)
-          RemoteMessage? initialMessage = await FirebaseMessaging.instance.getInitialMessage();
+          RemoteMessage? initialMessage = await FirebaseMessaging.instance
+              .getInitialMessage()
+              .timeout(const Duration(seconds: 5), onTimeout: () => null);
           if (initialMessage != null) {
             debugPrint('🔔 App opened from TERMINATED state via notification');
             debugPrint('🔔 Message data: ${initialMessage.data}');
@@ -199,7 +224,9 @@ Future<void> main() async {
           }
           
           // Get the FCM token
-          final String? token = await FirebaseMessaging.instance.getToken();
+          final String? token = await FirebaseMessaging.instance
+              .getToken()
+              .timeout(const Duration(seconds: 8), onTimeout: () => null);
           if (token != null) {
             debugPrint('🔔 FCM Registration Token: $token');
           } else {
@@ -224,7 +251,9 @@ Future<void> main() async {
         final analytics = FirebaseAnalytics.instance;
         debugPrint('🔥 Firebase Analytics initialized successfully');
         // Set analytics collection enabled (it's enabled by default)
-        await analytics.setAnalyticsCollectionEnabled(true);
+        await analytics
+            .setAnalyticsCollectionEnabled(true)
+            .timeout(const Duration(seconds: 5));
       } catch (e) {
         debugPrint('🔥 Firebase Analytics initialization error: $e');
         Sentry.captureException(e, stackTrace: StackTrace.current);

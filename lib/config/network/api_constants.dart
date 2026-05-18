@@ -8,6 +8,7 @@ class ApiConstants {
   static const String visits = 'agents/visits/';
   static const String createVisits = 'agents/visits/create/';
   static const String notificationRegisterDevice = 'agents/notifications/register-device/';
+  static const String notifications = 'agents/notifications/';
   static const String profileData = 'agents/profile/';
   
   // Customer Endpoints
@@ -28,4 +29,7 @@ class ApiConstants {
 
   // Organization Endpoints
   static const String organization = 'organization/';
+
+  // Admin Endpoints
+  static const String holdStatus = 'admin/hold-status/';
 }

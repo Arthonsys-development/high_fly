@@ -374,13 +374,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           isMandatory: true,
           maxLength: 30,
           controller: _fullNameController,
-          enabled: state.isEditing,
+          enabled: false,
           onChanged: (value) {
             ref.read(profileProvider.notifier).updateField('fullName', value);
           },
-          onEditPressed: state.isEditing ? null : () {
-            ref.read(profileProvider.notifier).toggleEditMode();
-          },
+          // onEditPressed: state.isEditing ? null : () {
+          //   ref.read(profileProvider.notifier).toggleEditMode();
+          // },
           isReadOnly: !state.isEditing,
         ),
         if (_fullNameError != null) ...[
@@ -424,14 +424,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           titleText: 'Team Leader Name',
           isMandatory: /*state.profile?.teamLeaderName?.isNotEmpty ??*/ false,
           controller: _teamLeaderNameController,
-          enabled: state.isEditing,
+          enabled: false,
           maxLength: 30,
           onChanged: (value) {
             ref.read(profileProvider.notifier).updateField('teamLeaderName', value);
           },
-          onEditPressed: state.isEditing ? null : () {
-            ref.read(profileProvider.notifier).toggleEditMode();
-          },
+          // onEditPressed: state.isEditing ? null : () {
+          //   ref.read(profileProvider.notifier).toggleEditMode();
+          // },
           isReadOnly: !state.isEditing,
         ),
         if (_teamLeaderNameError != null) ...[

@@ -6,6 +6,7 @@ import 'package:highfly/data/models/response_model/project_response_model.dart';
 import '../../global/widgets/common_app_bar.dart';
 import '../bookings/webview_screen.dart';
 import '../../utils/responsive.dart';
+import 'project_gallery_screen.dart';
 // Conditional import for web image widget
 import '../visitors/web_image_widget.dart' if (dart.library.io) '../visitors/web_image_widget_stub.dart';
 
@@ -94,8 +95,13 @@ class ProjectDetailScreen extends StatelessWidget {
         _buildProjectDetails(context),
         const SizedBox(height: 24),
         // Map Charts Section
-        if (project.mapCharts != null && project.mapCharts!.files.isNotEmpty)
+        if (project.mapCharts != null && project.mapCharts!.files.isNotEmpty) ...[
           _buildMapChartsSectionWeb(context),
+          const SizedBox(height: 24),
+        ],
+        // Gallery Button
+        if (project.galleryFiles.isNotEmpty)
+          _buildGalleryButton(context),
       ],
     );
   }
@@ -110,8 +116,12 @@ class ProjectDetailScreen extends StatelessWidget {
         const SizedBox(height: 24),
         _buildLocationSection(context),
         const SizedBox(height: 24),
-        if (project.mapCharts != null && project.mapCharts!.files.isNotEmpty)
+        if (project.mapCharts != null && project.mapCharts!.files.isNotEmpty) ...[
           _buildMapChartsSection(context),
+          const SizedBox(height: 24),
+        ],
+        if (project.galleryFiles.isNotEmpty)
+          _buildGalleryButton(context),
       ],
     );
   }
@@ -1067,6 +1077,89 @@ class ProjectDetailScreen extends StatelessWidget {
                   ],
                 ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGalleryButton(BuildContext context) {
+    final isMobile = Responsive.isMobile(context);
+    final fileCount = project.galleryFiles.length;
+
+    return Container(
+      padding: EdgeInsets.all(isMobile ? 20 : 24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withValues(alpha: 0.1),
+            spreadRadius: 1,
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.primaryColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(
+              Icons.photo_library_outlined,
+              color: AppColors.primaryColor,
+              size: 28,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Gallery',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primaryTextColor,
+                  ),
+                ),
+                Text(
+                  '$fileCount ${fileCount == 1 ? 'file' : 'files'} available',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: AppColors.secondaryTextColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          ElevatedButton.icon(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => ProjectGalleryScreen(
+                    projectName: project.name,
+                    galleryFiles: project.galleryFiles,
+                  ),
+                ),
+              );
+            },
+            icon: const Icon(Icons.arrow_forward, size: 16),
+            label: const Text('View Gallery'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primaryColor,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
           ),
         ],

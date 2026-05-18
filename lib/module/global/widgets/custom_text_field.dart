@@ -67,6 +67,12 @@ class CustomTextField extends StatelessWidget {
         counterText: '',
         prefixIcon: prefixIcon,
         counter: null,
+        errorStyle: TextStyle(
+          color: const Color(0xFFEF4444),
+          fontSize: kIsWeb ? 12.5 : 12,
+          fontWeight: FontWeight.w500,
+        ),
+        errorMaxLines: 2,
         hintStyle: TextStyle(
           color: const Color.fromARGB(255, 178, 178, 178), // Placeholder color
           fontSize: kIsWeb ? 15 : 14,

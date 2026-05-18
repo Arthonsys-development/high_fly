@@ -31,10 +31,6 @@ target 'Runner' do
   use_frameworks!
   # Note: use_frameworks! is required for reCAPTCHA Enterprise SDK
 
-  # Add Firebase dependencies explicitly
-  pod 'Firebase/Auth'
-  pod 'Firebase/Core'
-  
   # Flutter plugins (including recaptcha_enterprise_flutter) are installed here
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
   target 'RunnerTests' do

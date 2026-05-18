@@ -1,18 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../config/constant/const_assets.dart';
 import '../../../data/models/hold_details_model.dart';
+import '../../../data/models/response_model/profile_model.dart';
+import '../../providers/profile_provider.dart';
 import '../../global/widgets/custom_text_field.dart';
 import 'header_icon_widget.dart';
 import 'action_buttons.dart';
 
-class HoldDetailsSection extends StatefulWidget {
+class HoldDetailsSection extends ConsumerStatefulWidget {
   final String title;
   final VoidCallback? onPrevious;
   final Function(HoldDetails?)? onNext;
   final String? nextButtonText;
   final HoldDetails? initialHoldDetails;
+  final double? saleableSize;
 
   const HoldDetailsSection({
     super.key,
@@ -21,13 +25,14 @@ class HoldDetailsSection extends StatefulWidget {
     this.onNext,
     this.nextButtonText,
     this.initialHoldDetails,
+    this.saleableSize,
   });
 
   @override
-  State<HoldDetailsSection> createState() => _HoldDetailsSectionState();
+  ConsumerState<HoldDetailsSection> createState() => _HoldDetailsSectionState();
 }
 
-class _HoldDetailsSectionState extends State<HoldDetailsSection> {
+class _HoldDetailsSectionState extends ConsumerState<HoldDetailsSection> {
   late HoldDetails _holdDetails;
   late TextEditingController _associateNameController;
   late TextEditingController _reraNumberController;
@@ -35,6 +40,33 @@ class _HoldDetailsSectionState extends State<HoldDetailsSection> {
   late TextEditingController _clientAadharController;
   late TextEditingController _additionalNotesController;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  ProviderSubscription<ProfileState>? _profileSubscription;
+  bool _didRequestProfileLoad = false;
+
+  void _prefillFromCurrentUser(ProfileResponseData? profile) {
+    if (profile == null) return;
+
+    final rera = profile.reraNumber?.trim() ?? '';
+    final teamLeader = profile.teamLeaderName?.trim() ?? '';
+
+    var changed = false;
+
+    if (_reraNumberController.text.trim().isEmpty && rera.isNotEmpty) {
+      _reraNumberController.text = rera;
+      _holdDetails = _holdDetails.copyWith(reraNumber: rera);
+      changed = true;
+    }
+
+    if (_teamLeaderController.text.trim().isEmpty && teamLeader.isNotEmpty) {
+      _teamLeaderController.text = teamLeader;
+      _holdDetails = _holdDetails.copyWith(teamLeaderName: teamLeader);
+      changed = true;
+    }
+
+    if (changed && mounted) {
+      setState(() {});
+    }
+  }
 
   @override
   void initState() {
@@ -63,10 +95,28 @@ class _HoldDetailsSectionState extends State<HoldDetailsSection> {
     _additionalNotesController = TextEditingController(
       text: _holdDetails.additionalNotes
     );
+
+    // Prefill from current user's profile (without overriding existing values)
+    _profileSubscription = ref.listenManual<ProfileState>(profileProvider, (previous, next) {
+      _prefillFromCurrentUser(next.profile);
+    });
+
+    // In case profile is already loaded before this widget mounts
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final state = ref.read(profileProvider);
+      _prefillFromCurrentUser(state.profile);
+
+      // If profile isn't loaded in this flow, fetch it once.
+      if (state.profile == null && !state.isLoading && !_didRequestProfileLoad) {
+        _didRequestProfileLoad = true;
+        ref.read(profileProvider.notifier).loadProfile();
+      }
+    });
   }
 
   @override
   void dispose() {
+    _profileSubscription?.close();
     _associateNameController.dispose();
     _reraNumberController.dispose();
     _teamLeaderController.dispose();
@@ -76,15 +126,13 @@ class _HoldDetailsSectionState extends State<HoldDetailsSection> {
   }
 
   String? _validateClientAadhar(String? value) {
-    // Since the field is optional, only validate if user has entered something
-    if (value == null || value.isEmpty) {
-      return null; // Empty is valid since field is optional
-    }
-    // If entered, must be exactly 12 digits
-    if (value.length != 12) {
-      return 'Aadhar number must be exactly 12 digits';
-    }
-    return null; // Valid
+    // if (value == null || value.isEmpty) {
+    //   return 'Aadhar number is required';
+    // }
+    // if (value.length != 12) {
+    //   return 'Aadhar number must be exactly 12 digits';
+    // }
+    return null;
   }
 
   @override
@@ -110,7 +158,36 @@ class _HoldDetailsSectionState extends State<HoldDetailsSection> {
             ),
             
             SizedBox(height: largeSpacing),
-            
+
+            // Saleable size info banner (read-only context)
+            if (widget.saleableSize != null && widget.saleableSize! > 0) ...[
+              Container(
+                width: double.infinity,
+                constraints: kIsWeb ? const BoxConstraints(maxWidth: 800) : null,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF0F9FF),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFBAE6FD)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.straighten_outlined, size: 16, color: Color(0xFF0284C7)),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Saleable Size: ${widget.saleableSize!.toStringAsFixed(widget.saleableSize! % 1 == 0 ? 0 : 2)} sq yd',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF0369A1),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: largeSpacing),
+            ],
+
             // Web: Clean form layout with max width, Mobile: Stacked layout
             if (kIsWeb)
               Center(

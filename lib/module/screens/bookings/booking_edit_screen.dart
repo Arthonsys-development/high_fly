@@ -5,7 +5,6 @@ import 'package:highfly/data/models/bank_details_model.dart';
 import 'package:highfly/data/repository/booking_api_repository.dart';
 import '../../global/widgets/common_app_bar.dart';
 import '../../widgets/booking/payment_details_section.dart';
-import '../../widgets/booking/bank_details_section.dart';
 
 class BookingEditScreen extends StatefulWidget {
   final BookingListModel booking;
@@ -17,7 +16,6 @@ class BookingEditScreen extends StatefulWidget {
 }
 
 class _BookingEditScreenState extends State<BookingEditScreen> {
-  int _currentStep = 0; // 0: Payment Details, 1: Bank Details
   PaymentDetails? _paymentDetails;
   BankDetails? _bankDetails;
   bool _isLoading = false;
@@ -81,6 +79,15 @@ class _BookingEditScreenState extends State<BookingEditScreen> {
       chequeNumber: widget.booking.chequeNumber.isNotEmpty ? widget.booking.chequeNumber : null,
       chequeDate: _parseChequeDate(widget.booking.chequeDate),
       existingChequeImageUrl: widget.booking.chequeCopy,
+      existingRtgsImageUrl: widget.booking.rtgsImage,
+      pricePerSqYd: widget.booking.pricePerSqYd ?? '',
+      totalAmount: widget.booking.totalAmount,
+      loanBankName: widget.booking.loanBankName,
+      loanBankKey: widget.booking.loanBankKey,
+      loanAmount: widget.booking.loanAmount,
+      upiTransactionId: paymentModeKey == PaymentMethod.upi && widget.booking.paymentReference.isNotEmpty
+          ? widget.booking.paymentReference
+          : null,
     );
     
     _bankDetails = BankDetails(
@@ -94,7 +101,7 @@ class _BookingEditScreenState extends State<BookingEditScreen> {
   }
 
   Future<void> _submitUpdate() async {
-    if (_paymentDetails == null || _bankDetails == null) {
+    if (_paymentDetails == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please fill all required fields'),
@@ -116,9 +123,14 @@ class _BookingEditScreenState extends State<BookingEditScreen> {
         
         // Payment Details Section fields
         'booking_amount': _paymentDetails!.paymentAmount.isNotEmpty ? _paymentDetails!.paymentAmount : '',
-        'total_amount': _paymentDetails!.paymentAmount.isNotEmpty ? _paymentDetails!.paymentAmount : '',
+        'total_amount': _paymentDetails!.totalAmount.isNotEmpty ? _paymentDetails!.totalAmount : '',
+        if (_paymentDetails!.pricePerSqYd.isNotEmpty)
+          'price_per_sq_yd': _paymentDetails!.pricePerSqYd,
         'payment_mode': _paymentDetails!.paymentMethodKey.isNotEmpty ? _paymentDetails!.paymentMethodKey : '',
-        'payment_reference': widget.booking.paymentReference.isNotEmpty ? widget.booking.paymentReference : '',
+        'payment_reference': (_paymentDetails!.paymentMethodKey == PaymentMethod.upi &&
+                (_paymentDetails!.upiTransactionId ?? '').isNotEmpty)
+            ? _paymentDetails!.upiTransactionId!
+            : (widget.booking.paymentReference.isNotEmpty ? widget.booking.paymentReference : ''),
         'booking_type': _paymentDetails!.paymentTypeKey.isNotEmpty ? _paymentDetails!.paymentTypeKey : '',
         'pan_card': _paymentDetails!.panNumber.isNotEmpty ? _paymentDetails!.panNumber : '',
         'aadhar_card': _paymentDetails!.aadharNumber.isNotEmpty ? _paymentDetails!.aadharNumber : '',
@@ -132,12 +144,22 @@ class _BookingEditScreenState extends State<BookingEditScreen> {
           'cheque_copy_bytes': _paymentDetails!.chequeImageBytes!,
         if (_paymentDetails!.chequeImageName != null && _paymentDetails!.chequeImageName!.isNotEmpty)
           'cheque_copy_name': _paymentDetails!.chequeImageName!,
+        if (_paymentDetails!.rtgsImageBytes != null && _paymentDetails!.rtgsImageBytes!.isNotEmpty)
+          'rtgs_image_bytes': _paymentDetails!.rtgsImageBytes!,
+        if (_paymentDetails!.rtgsImageName != null && _paymentDetails!.rtgsImageName!.isNotEmpty)
+          'rtgs_image_name': _paymentDetails!.rtgsImageName!,
         
         // File paths (will be converted to MultipartFile in repository)
         if (_paymentDetails!.salarySlipPath != null && _paymentDetails!.salarySlipPath!.isNotEmpty)
           'salary_slip_path': _paymentDetails!.salarySlipPath!,
         if (_paymentDetails!.form16APath != null && _paymentDetails!.form16APath!.isNotEmpty)
           'form_16a_path': _paymentDetails!.form16APath!,
+        if (_paymentDetails!.loanAmount != null && _paymentDetails!.loanAmount!.isNotEmpty)
+          'loan_amount': _paymentDetails!.loanAmount!,
+        if (_paymentDetails!.loanBankName != null && _paymentDetails!.loanBankName!.isNotEmpty)
+          'loan_bank_name': _paymentDetails!.loanBankName!,
+        if (_paymentDetails!.loanBankKey != null && _paymentDetails!.loanBankKey!.isNotEmpty)
+          'loan_bank_key': _paymentDetails!.loanBankKey!,
         
         // Bank Details Section fields
         'account_holder_name': _bankDetails!.accountHolderName?.isNotEmpty == true ? _bankDetails!.accountHolderName : '',
@@ -205,39 +227,25 @@ class _BookingEditScreenState extends State<BookingEditScreen> {
   }
 
   Widget _buildCurrentStep() {
-    if (_currentStep == 0) {
-      // Payment Details Section
-      return PaymentDetailsSection(
-        title: "Payment Details",
-        paymentAmount: widget.booking.bookingAmount,
-        nextButtonText: "Next",
-        initialPaymentDetails: _paymentDetails,
-        onNext: (paymentDetails) {
-          setState(() {
-            _paymentDetails = paymentDetails;
-            _currentStep = 1; // Move to bank details
-          });
-        },
-      );
-    } else {
-      // Bank Details Section
-      return BankDetailsSection(
-        title: "Bank Details",
-        nextButtonText: "Submit",
-        initialBankDetails: _bankDetails,
-        onPrevious: () {
-          setState(() {
-            _currentStep = 0; // Go back to payment details
-          });
-        },
-        onNext: (bankDetails) {
-          setState(() {
-            _bankDetails = bankDetails;
-          });
-          _submitUpdate();
-        },
-      );
-    }
+    final saleableSizeVal = widget.booking.saleableSize != null
+        ? double.tryParse(widget.booking.saleableSize!)
+        : null;
+
+    return PaymentDetailsSection(
+      title: "Payment Details",
+      paymentAmount: widget.booking.bookingAmount,
+      nextButtonText: "Submit",
+      initialPaymentDetails: _paymentDetails,
+      saleableSize: saleableSizeVal,
+      plcApplied: widget.booking.plcApplied,
+      plcPercentage: widget.booking.plcPercentage,
+      onNext: (paymentDetails) {
+        setState(() {
+          _paymentDetails = paymentDetails;
+        });
+        _submitUpdate();
+      },
+    );
   }
 }
 

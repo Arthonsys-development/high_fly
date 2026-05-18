@@ -216,10 +216,18 @@ class _HoldDetailScreenState extends ConsumerState<HoldDetailScreen> {
                       _buildDetailRow('Project', hold.project!.name),
                     if (hold.plotSize != null && hold.plotSize!.isNotEmpty)
                       _buildDetailRow('Plot Size', hold.plotSize!),
+                    if (hold.saleableSize != null && hold.saleableSize!.isNotEmpty)
+                      _buildDetailRow('Saleable Size', '${hold.saleableSize} sq yd'),
                     if (hold.plotArea != null && hold.plotArea!.isNotEmpty)
                       _buildDetailRow('Plot Area', '${hold.plotArea} sq mtr'),
-                    if (hold.plotPrice != null && hold.plotPrice!.isNotEmpty)
-                      _buildDetailRow('Plot Price', '₹${hold.plotPrice}'),
+                    // if (hold.plotPrice != null && hold.plotPrice!.isNotEmpty)
+                    //   _buildDetailRow('Plot Price', '₹${hold.plotPrice}'),
+                    if (hold.plc || hold.plcApplied)
+                      _buildDetailRow('PLC', hold.plc ? 'Yes' : 'No'),
+                    if (hold.plc || hold.plcApplied)
+                      _buildDetailRow('PLC Applied', hold.plcApplied ? 'Yes' : 'No'),
+                    if (hold.plcApplied && hold.plcPercentage != null && hold.plcPercentage! > 0)
+                      _buildDetailRow('PLC %', '${hold.plcPercentage}'),
                     if (hold.plotFacing != null && hold.plotFacing!.isNotEmpty)
                       _buildDetailRow('Plot Facing', hold.plotFacing!),
                   //  _buildDetailRow('Hold Amount', '₹${hold.holdAmount}'),
@@ -297,17 +305,17 @@ class _HoldDetailScreenState extends ConsumerState<HoldDetailScreen> {
                   ]),
                   SizedBox(height: isDesktopWeb ? 32 : 24),*/
 
-                  // Bank Details Section
-                  _buildSectionTitle('Bank Details'),
-                  _buildDetailCard([
-                    _buildDetailRow('Account Holder Name', hold.accountHolderName),
-                    _buildDetailRow('Branch Name', hold.branchName),
-                    _buildDetailRow('Account Number', hold.accountNumber),
-                    _buildDetailRow('IFSC Code', hold.ifscCode),
-                    _buildDetailRow('Account Type', hold.accountType),
-                    _buildDetailRow('Bank Contact', hold.bankContactNumber),
-                  ]),
-                  SizedBox(height: isDesktopWeb ? 32 : 24),
+                  // // Bank Details Section
+                  // _buildSectionTitle('Bank Details'),
+                  // _buildDetailCard([
+                  //   _buildDetailRow('Account Holder Name', hold.accountHolderName),
+                  //   _buildDetailRow('Branch Name', hold.branchName),
+                  //   _buildDetailRow('Account Number', hold.accountNumber),
+                  //   _buildDetailRow('IFSC Code', hold.ifscCode),
+                  //   _buildDetailRow('Account Type', hold.accountType),
+                  //   _buildDetailRow('Bank Contact', hold.bankContactNumber),
+                  // ]),
+                  // SizedBox(height: isDesktopWeb ? 32 : 24),
 
                   // Remarks Section
                   if (hold.remarks.isNotEmpty) ...[
