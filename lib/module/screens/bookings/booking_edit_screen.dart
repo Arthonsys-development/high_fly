@@ -239,6 +239,7 @@ class _BookingEditScreenState extends State<BookingEditScreen> {
       saleableSize: saleableSizeVal,
       plcApplied: widget.booking.plcApplied,
       plcPercentage: widget.booking.plcPercentage,
+      expectedPayName: widget.booking.project?.payName,
       onNext: (paymentDetails) {
         setState(() {
           _paymentDetails = paymentDetails;

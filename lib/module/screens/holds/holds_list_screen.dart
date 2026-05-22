@@ -73,7 +73,7 @@ class _HoldsListScreenState extends ConsumerState<HoldsListScreen>
       // Apply search filter
       if (_searchQuery.isNotEmpty) {
         final projectName = hold.project?.name ?? '';
-        final matchesSearch = hold.plotCode.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+        final matchesSearch = hold.matchesPlotSearch(_searchQuery) ||
                              hold.customerName.toLowerCase().contains(_searchQuery.toLowerCase()) ||
                              hold.customerPhone.contains(_searchQuery) ||
                              hold.statusDisplay.toLowerCase().contains(_searchQuery.toLowerCase()) ||
@@ -1083,7 +1083,9 @@ class _HoldsListScreenState extends ConsumerState<HoldsListScreen>
                 children: [
                   Expanded(
                     child: Text(
-                      'Plot: ${hold.plotCode}',
+                      hold.hasMultiplePlots
+                          ? 'Plots: ${hold.displayPlotLabel}'
+                          : 'Plot: ${hold.displayPlotLabel}',
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,

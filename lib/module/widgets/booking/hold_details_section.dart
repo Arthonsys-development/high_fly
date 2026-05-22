@@ -160,33 +160,33 @@ class _HoldDetailsSectionState extends ConsumerState<HoldDetailsSection> {
             SizedBox(height: largeSpacing),
 
             // Saleable size info banner (read-only context)
-            if (widget.saleableSize != null && widget.saleableSize! > 0) ...[
-              Container(
-                width: double.infinity,
-                constraints: kIsWeb ? const BoxConstraints(maxWidth: 800) : null,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF0F9FF),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: const Color(0xFFBAE6FD)),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.straighten_outlined, size: 16, color: Color(0xFF0284C7)),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Saleable Size: ${widget.saleableSize!.toStringAsFixed(widget.saleableSize! % 1 == 0 ? 0 : 2)} sq yd',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: Color(0xFF0369A1),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(height: largeSpacing),
-            ],
+            // if (widget.saleableSize != null && widget.saleableSize! > 0) ...[
+            //   Container(
+            //     width: double.infinity,
+            //     constraints: kIsWeb ? const BoxConstraints(maxWidth: 800) : null,
+            //     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            //     decoration: BoxDecoration(
+            //       color: const Color(0xFFF0F9FF),
+            //       borderRadius: BorderRadius.circular(8),
+            //       border: Border.all(color: const Color(0xFFBAE6FD)),
+            //     ),
+            //     // child: Row(
+            //     //   children: [
+            //     //     const Icon(Icons.straighten_outlined, size: 16, color: Color(0xFF0284C7)),
+            //     //     const SizedBox(width: 8),
+            //     //     Text(
+            //     //       'Saleable Size: ${widget.saleableSize!.toStringAsFixed(widget.saleableSize! % 1 == 0 ? 0 : 2)} sq yd',
+            //     //       style: const TextStyle(
+            //     //         fontSize: 13,
+            //     //         fontWeight: FontWeight.w500,
+            //     //         color: Color(0xFF0369A1),
+            //     //       ),
+            //     //     ),
+            //     //   ],
+            //     // ),
+            //   ),
+            //   SizedBox(height: largeSpacing),
+            // ],
 
             // Web: Clean form layout with max width, Mobile: Stacked layout
             if (kIsWeb)

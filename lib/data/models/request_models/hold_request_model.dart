@@ -1,5 +1,5 @@
 class HoldRequestModel {
-  final int plot;
+  final List<int> plotIds;
   final int customer;
   final int agent;
   final String customerName;
@@ -22,7 +22,7 @@ class HoldRequestModel {
   final List<String>? documents;
 
   const HoldRequestModel({
-    required this.plot,
+    required this.plotIds,
     required this.customer,
     required this.agent,
     required this.customerName,
@@ -45,9 +45,11 @@ class HoldRequestModel {
     this.documents,
   });
 
+  // plot_ids + documents: see BookingApiRepository.createHold — JSON body when
+  // possible; multipart uses jsonEncode(plot_ids) and file parts for documents.
   Map<String, dynamic> toJson() {
     return {
-      'plot': plot,
+      'plot_ids': plotIds,
       'customer': customer,
       'agent': agent,
       'customer_name': customerName,
@@ -69,5 +71,12 @@ class HoldRequestModel {
       'remarks': remarks,
       if (documents != null && documents!.isNotEmpty) 'documents': documents,
     };
+  }
+
+  Map<String, dynamic> toFormData() {
+    final formData = toJson();
+    formData.remove('documents');
+    formData.remove('plot_ids');
+    return formData;
   }
 }

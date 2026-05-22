@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:highfly/config/constant/app_colors.dart';
 import 'package:highfly/data/models/hold_list_model.dart';
 import 'package:highfly/data/models/hold_document_model.dart' as hold_document_model;
+import '../../widgets/booking/plot_details_card.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../providers/holds_provider.dart';
 import '../../utils/responsive.dart';
@@ -210,31 +211,63 @@ class _HoldDetailScreenState extends ConsumerState<HoldDetailScreen> {
 
                   // Plot Information Section
                   _buildSectionTitle('Plot Information'),
-                  _buildDetailCard([
-                    _buildDetailRow('Plot No.', hold.plotCode),
-                    if (hold.project != null)
-                      _buildDetailRow('Project', hold.project!.name),
-                    if (hold.plotSize != null && hold.plotSize!.isNotEmpty)
-                      _buildDetailRow('Plot Size', hold.plotSize!),
-                    if (hold.saleableSize != null && hold.saleableSize!.isNotEmpty)
-                      _buildDetailRow('Saleable Size', '${hold.saleableSize} sq yd'),
-                    if (hold.plotArea != null && hold.plotArea!.isNotEmpty)
-                      _buildDetailRow('Plot Area', '${hold.plotArea} sq mtr'),
-                    // if (hold.plotPrice != null && hold.plotPrice!.isNotEmpty)
-                    //   _buildDetailRow('Plot Price', '₹${hold.plotPrice}'),
-                    if (hold.plc || hold.plcApplied)
-                      _buildDetailRow('PLC', hold.plc ? 'Yes' : 'No'),
-                    if (hold.plc || hold.plcApplied)
-                      _buildDetailRow('PLC Applied', hold.plcApplied ? 'Yes' : 'No'),
-                    if (hold.plcApplied && hold.plcPercentage != null && hold.plcPercentage! > 0)
-                      _buildDetailRow('PLC %', '${hold.plcPercentage}'),
-                    if (hold.plotFacing != null && hold.plotFacing!.isNotEmpty)
-                      _buildDetailRow('Plot Facing', hold.plotFacing!),
-                  //  _buildDetailRow('Hold Amount', '₹${hold.holdAmount}'),
-                    _buildDetailRow('Hold Until', hold.holdUntil),
-                    _buildDetailRow('Created At', hold.createdAt),
-                    _buildDetailRow('Updated At', hold.updatedAt),
-                  ]),
+                  if (hold.plotDetails.isNotEmpty) ...[
+                    PlotDetailsCard(
+                      selectedPlots: hold.plotDetails
+                          .map(
+                            (p) => p.toPlot(
+                              projectId: hold.project?.id.toString(),
+                            ),
+                          )
+                          .toList(),
+                      selectedProjectName: hold.project?.name ??
+                          hold.plotDetails.first.projectName,
+                    ),
+                    SizedBox(height: isDesktopWeb ? 16 : 12),
+                    _buildDetailCard([
+                      _buildDetailRow('Hold Until', hold.holdUntil),
+                      _buildDetailRow('Created At', hold.createdAt),
+                      _buildDetailRow('Updated At', hold.updatedAt),
+                      // if (hold.plc || hold.plcApplied) ...[
+                      //   _buildDetailRow('PLC', hold.plc ? 'Yes' : 'No'),
+                      //   _buildDetailRow(
+                      //       'PLC Applied', hold.plcApplied ? 'Yes' : 'No'),
+                      //   if (hold.plcApplied &&
+                      //       hold.plcPercentage != null &&
+                      //       hold.plcPercentage! > 0)
+                      //     _buildDetailRow('PLC %', '${hold.plcPercentage}'),
+                      // ],
+                    ]),
+                  ] else
+                    _buildDetailCard([
+                      _buildDetailRow('Plot No.', hold.plotCode),
+                      if (hold.project != null)
+                        _buildDetailRow('Project', hold.project!.name),
+                      if (hold.plotSize != null && hold.plotSize!.isNotEmpty)
+                        _buildDetailRow('Plot Size', hold.plotSize!),
+                      if (hold.saleableSize != null &&
+                          hold.saleableSize!.isNotEmpty)
+                        _buildDetailRow(
+                            'Saleable Size', '${hold.saleableSize} sq yd'),
+                      if (hold.plotArea != null && hold.plotArea!.isNotEmpty)
+                        _buildDetailRow(
+                            'Plot Area', '${hold.plotArea} sq mtr'),
+                      if (hold.plc || hold.plcApplied)
+                        _buildDetailRow('PLC', hold.plc ? 'Yes' : 'No'),
+                      if (hold.plc || hold.plcApplied)
+                        _buildDetailRow(
+                            'PLC Applied', hold.plcApplied ? 'Yes' : 'No'),
+                      if (hold.plcApplied &&
+                          hold.plcPercentage != null &&
+                          hold.plcPercentage! > 0)
+                        _buildDetailRow('PLC %', '${hold.plcPercentage}'),
+                      if (hold.plotFacing != null &&
+                          hold.plotFacing!.isNotEmpty)
+                        _buildDetailRow('Plot Facing', hold.plotFacing!),
+                      _buildDetailRow('Hold Until', hold.holdUntil),
+                      _buildDetailRow('Created At', hold.createdAt),
+                      _buildDetailRow('Updated At', hold.updatedAt),
+                    ]),
                   SizedBox(height: isDesktopWeb ? 32 : 24),
 
                   // Customer Information and Hold Details in a row for desktop web

@@ -1,5 +1,6 @@
 import 'response_model/project_response_model.dart';
 import 'hold_document_model.dart';
+import 'hold_plot_detail_model.dart';
 
 class HoldListModel {
   final int id;
@@ -39,6 +40,8 @@ class HoldListModel {
   final String holdUntil;
   final String remarks;
   final int plot;
+  final List<int> plotIds;
+  final List<HoldPlotDetail> plotDetails;
   final int agent;
   final int customer;
   final List<HoldDocument> documents;
@@ -83,12 +86,69 @@ class HoldListModel {
     required this.holdUntil,
     required this.remarks,
     required this.plot,
+    this.plotIds = const [],
+    this.plotDetails = const [],
     required this.agent,
     required this.customer,
     required this.documents,
     required this.documentCount,
     this.saleableSize,
   });
+
+  /// All plot IDs for this hold (multi-plot aware).
+  List<int> get allPlotIds {
+    if (plotIds.isNotEmpty) return plotIds;
+    if (plotDetails.isNotEmpty) {
+      return plotDetails.map((p) => p.id).where((id) => id > 0).toList();
+    }
+    if (plot > 0) return [plot];
+    return const [];
+  }
+
+  bool get hasMultiplePlots => plotDetails.length > 1 || allPlotIds.length > 1;
+
+  /// Label for list cards: single code, comma-separated codes, or count.
+  String get displayPlotLabel {
+    if (plotDetails.isNotEmpty) {
+      if (plotDetails.length == 1) return plotDetails.first.plotCode;
+      final codes = plotDetails.map((p) => p.plotCode).where((c) => c.isNotEmpty);
+      if (codes.isNotEmpty) {
+        return '${plotDetails.length} plots (${codes.join(', ')})';
+      }
+      return '${plotDetails.length} plots';
+    }
+    return plotCode;
+  }
+
+  String? get aggregatedPlotPrice {
+    if (plotDetails.isEmpty) return plotPrice;
+    double sum = 0;
+    for (final p in plotDetails) {
+      sum += double.tryParse(p.price) ?? 0;
+    }
+    return sum > 0 ? sum.toStringAsFixed(2) : plotPrice;
+  }
+
+  double? get combinedSaleableSizeSqYd {
+    if (plotDetails.isNotEmpty) {
+      double sum = 0;
+      for (final p in plotDetails) {
+        sum += double.tryParse(p.sizeSqYd) ?? 0;
+      }
+      if (sum > 0) return sum;
+    }
+    if (saleableSize != null) return double.tryParse(saleableSize!);
+    return null;
+  }
+
+  bool matchesPlotSearch(String query) {
+    final q = query.toLowerCase();
+    if (plotCode.toLowerCase().contains(q)) return true;
+    for (final p in plotDetails) {
+      if (p.plotCode.toLowerCase().contains(q)) return true;
+    }
+    return false;
+  }
 
   factory HoldListModel.fromJson(Map<String, dynamic> json) {
     // Parse project if it exists
@@ -124,6 +184,26 @@ class HoldListModel {
       if (v is bool) return v;
       final s = v.toString().toLowerCase().trim();
       return s == 'true' || s == '1' || s == 'yes';
+    }
+
+    List<int> plotIds = [];
+    if (json['plot_ids'] is List) {
+      plotIds = (json['plot_ids'] as List)
+          .map((e) => e is int ? e : int.tryParse(e.toString()) ?? 0)
+          .where((id) => id > 0)
+          .toList();
+    }
+
+    List<HoldPlotDetail> plotDetails = [];
+    if (json['plot_details'] is List) {
+      try {
+        plotDetails = (json['plot_details'] as List)
+            .whereType<Map<String, dynamic>>()
+            .map(HoldPlotDetail.fromJson)
+            .toList();
+      } catch (_) {
+        plotDetails = [];
+      }
     }
 
     return HoldListModel(
@@ -164,6 +244,8 @@ class HoldListModel {
       holdUntil: json['hold_until'] ?? '',
       remarks: json['remarks'] ?? '',
       plot: json['plot'] ?? 0,
+      plotIds: plotIds,
+      plotDetails: plotDetails,
       agent: json['agent'] ?? 0,
       customer: json['customer'] ?? 0,
       documents: documents,
@@ -211,6 +293,22 @@ class HoldListModel {
       'hold_until': holdUntil,
       'remarks': remarks,
       'plot': plot,
+      'plot_ids': plotIds,
+      'plot_details': plotDetails
+          .map((p) => {
+                'id': p.id,
+                'plot_code': p.plotCode,
+                'project_name': p.projectName,
+                'size_sq_yd': p.sizeSqYd,
+                'total_area': p.totalArea,
+                'price': p.price,
+                'price_per_sq_yd': p.pricePerSqYd,
+                'price_with_plc': p.priceWithPlc,
+                'facing': p.facing,
+                'status': p.status,
+                'status_display': p.statusDisplay,
+              })
+          .toList(),
       'agent': agent,
       'customer': customer,
       'document': documents.map((doc) => doc.toJson()).toList(),

@@ -1,5 +1,5 @@
 class BookingRequestModel {
-  final int plot;
+  final List<int> plotIds;
   final int agent;
   final int customer;
   final String customerName;
@@ -39,7 +39,7 @@ class BookingRequestModel {
   final String? pricePerSqYd;
 
   const BookingRequestModel({
-    required this.plot,
+    required this.plotIds,
     required this.agent,
     required this.customer,
     required this.customerName,
@@ -81,7 +81,7 @@ class BookingRequestModel {
 
   Map<String, dynamic> toJson() {
     return {
-      'plot': plot,
+      'plot_ids': plotIds,
       'agent': agent,
       'customer': customer,
       'customer_name': customerName,
@@ -120,16 +120,15 @@ class BookingRequestModel {
     };
   }
 
-  // Convert to FormData for multipart requests
+  // Convert to FormData for multipart requests.
+  // Note: plot_ids and documents are excluded here; repository adds plot_ids
+  // as a JSON array string (jsonEncode) and attaches document files separately.
+  // When no files are sent, the repository POSTs application/json via toJson()
+  // so plot_ids is a real JSON array.
   Map<String, dynamic> toFormData() {
     final formData = toJson();
-    
-    // Remove documents from JSON as they will be handled as multipart files separately
     formData.remove('documents');
-    
-    // Keep file paths in FormData as they are local file paths
-    // The backend will handle these as file references
-    
+    formData.remove('plot_ids');
     return formData;
   }
 }

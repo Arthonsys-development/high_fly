@@ -3,12 +3,14 @@ class Project {
   final String name;
   final List<Plot> plots;
   final int availablePlotCount;
+  final String? payName;
 
   const Project({
     required this.id,
     required this.name,
     required this.plots,
     this.availablePlotCount = 0,
+    this.payName,
   });
 
   factory Project.fromJson(Map<String, dynamic> json) {
@@ -27,6 +29,7 @@ class Project {
       name: (json['name'] ?? json['project_name'] ?? '').toString(),
       plots: parsedPlots,
       availablePlotCount: _parseInt(json['available_plot_count']) ?? 0,
+      payName: _parsePayName(json['pay_name'] ?? json['payName']),
     );
   }
 
@@ -36,7 +39,14 @@ class Project {
       'name': name,
       'plots': plots.map((plot) => plot.toJson()).toList(),
       'available_plot_count': availablePlotCount,
+      'pay_name': payName,
     };
+  }
+
+  static String? _parsePayName(dynamic value) {
+    if (value == null) return null;
+    final trimmed = value.toString().trim();
+    return trimmed.isEmpty ? null : trimmed;
   }
 
   static int? _parseInt(dynamic value) {
@@ -180,13 +190,27 @@ class Plot {
 
   double get effectivePrice => priceWithPlc ?? price;
 
+  /// Sum of [effectivePrice] for each plot (plot card "Combined Total").
+  static double combinedEffectiveTotal(List<Plot> plots) {
+    return plots.fold<double>(0, (sum, plot) => sum + plot.effectivePrice);
+  }
+
+  /// Formatted amount string for API/payment fields (no currency symbol).
+  static String formatCombinedTotalAmount(List<Plot> plots) {
+    final combinedTotal = combinedEffectiveTotal(plots);
+    if (combinedTotal == 0) return '';
+    return combinedTotal % 1 == 0
+        ? combinedTotal.toStringAsFixed(0)
+        : combinedTotal.toStringAsFixed(2);
+  }
+
   String get displayText =>
-      '$plotNumber - ${area.toInt()} - ₹${effectivePrice.toInt()}';
+      '$plotNumber - ${area.toStringAsFixed(2)} - ₹${effectivePrice.toStringAsFixed(2)}';
   String get displayTextOnPopup {
     final dimensionLabel = dimensions.isNotEmpty
         ? dimensions
-        : '${area.toInt()}';
-    return '$dimensionLabel - ${area.toInt()} - ₹${effectivePrice.toInt()}';
+        : '${area.toStringAsFixed(2)}';
+    return '$dimensionLabel - ${area.toStringAsFixed(2)} - ₹${effectivePrice.toStringAsFixed(2)}';
   }
 
   static double? _parseDouble(dynamic value) {

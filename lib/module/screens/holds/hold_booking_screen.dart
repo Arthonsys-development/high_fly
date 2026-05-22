@@ -64,7 +64,7 @@ class _HoldBookingScreenState extends State<HoldBookingScreen> {
 
       // Use bank details from the hold
       final request = BookingRequestModel(
-        plot: widget.hold.plot,
+        plotIds: widget.hold.allPlotIds,
         agent: int.parse(agentId),
         customer: widget.hold.customer,
         customerName: widget.hold.customerName,
@@ -166,19 +166,18 @@ class _HoldBookingScreenState extends State<HoldBookingScreen> {
   }
 
   Widget _buildCurrentStep() {
-    final saleableSizeVal = widget.hold.saleableSize != null
-        ? double.tryParse(widget.hold.saleableSize!)
-        : null;
+    final saleableSizeVal = widget.hold.combinedSaleableSizeSqYd;
 
     // Only Payment Details Step - bank details are already in the hold
     return PaymentDetailsSection(
       title: "Payment Details",
-      paymentAmount: widget.hold.plotPrice ?? widget.hold.holdAmount,
+      paymentAmount: widget.hold.aggregatedPlotPrice ?? widget.hold.holdAmount,
       nextButtonText: "Submit",
       initialPaymentDetails: _paymentDetails,
       saleableSize: saleableSizeVal,
       plcApplied: widget.hold.plcApplied,
       plcPercentage: widget.hold.plcPercentage,
+      expectedPayName: widget.hold.project?.payName,
       onNext: (paymentDetails) {
         setState(() {
           _paymentDetails = paymentDetails;

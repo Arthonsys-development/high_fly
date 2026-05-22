@@ -4,14 +4,14 @@ import '../../../data/models/project_model.dart';
 
 class PlotSelectionDialog extends StatefulWidget {
   final List<Plot> plots;
-  final String? selectedPlotId;
-  final Function(Plot?) onPlotSelected;
+  final Set<String> selectedPlotIds;
+  final Function(List<Plot>) onPlotsSelected;
 
   const PlotSelectionDialog({
     super.key,
     required this.plots,
-    this.selectedPlotId,
-    required this.onPlotSelected,
+    required this.selectedPlotIds,
+    required this.onPlotsSelected,
   });
 
   @override
@@ -21,12 +21,13 @@ class PlotSelectionDialog extends StatefulWidget {
 class _PlotSelectionDialogState extends State<PlotSelectionDialog> {
   final TextEditingController _searchController = TextEditingController();
   List<Plot> _filteredPlots = [];
+  late Set<String> _selectedIds;
 
   @override
   void initState() {
     super.initState();
-    // Filter to show only "Available" status plots
-    _filteredPlots = widget.plots.where((plot) => 
+    _selectedIds = Set<String>.from(widget.selectedPlotIds);
+    _filteredPlots = widget.plots.where((plot) =>
       plot.status.toLowerCase() == 'available'
     ).toList();
   }
@@ -39,22 +40,38 @@ class _PlotSelectionDialogState extends State<PlotSelectionDialog> {
 
   void _filterPlots(String query) {
     setState(() {
-      // Always filter to show only "Available" status plots first
-      final availablePlots = widget.plots.where((plot) => 
+      final availablePlots = widget.plots.where((plot) =>
         plot.status.toLowerCase() == 'available'
       ).toList();
-      
+
       if (query.isEmpty) {
         _filteredPlots = availablePlots;
       } else {
         final normalizedQuery = query.toLowerCase();
         _filteredPlots = availablePlots.where((plot) {
-          final remarkText = plot.remark.toLowerCase();
           return plot.plotNumber.toLowerCase().contains(normalizedQuery) ||
-              remarkText.contains(normalizedQuery);
+              plot.remark.toLowerCase().contains(normalizedQuery);
         }).toList();
       }
     });
+  }
+
+  void _togglePlot(Plot plot) {
+    setState(() {
+      if (_selectedIds.contains(plot.id)) {
+        _selectedIds.remove(plot.id);
+      } else {
+        _selectedIds.add(plot.id);
+      }
+    });
+  }
+
+  void _confirm() {
+    final selectedPlots = widget.plots
+        .where((p) => _selectedIds.contains(p.id))
+        .toList();
+    widget.onPlotsSelected(selectedPlots);
+    Navigator.of(context).pop();
   }
 
   @override
@@ -62,7 +79,7 @@ class _PlotSelectionDialogState extends State<PlotSelectionDialog> {
     return Dialog(
       backgroundColor: Colors.transparent,
       child: Container(
-        constraints: const BoxConstraints(maxHeight: 400),
+        constraints: const BoxConstraints(maxHeight: 520),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
@@ -77,6 +94,7 @@ class _PlotSelectionDialogState extends State<PlotSelectionDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // Header
             Container(
               padding: const EdgeInsets.all(20),
               decoration: const BoxDecoration(
@@ -92,7 +110,7 @@ class _PlotSelectionDialogState extends State<PlotSelectionDialog> {
                   Row(
                     children: [
                       const Text(
-                        'Select Plot',
+                        'Select Plots',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -100,6 +118,24 @@ class _PlotSelectionDialogState extends State<PlotSelectionDialog> {
                         ),
                       ),
                       const Spacer(),
+                      if (_selectedIds.isNotEmpty)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryColor.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            '${_selectedIds.length} selected',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.primaryColor,
+                            ),
+                          ),
+                        ),
+                      const SizedBox(width: 8),
                       IconButton(
                         onPressed: () => Navigator.of(context).pop(),
                         icon: const Icon(
@@ -109,7 +145,7 @@ class _PlotSelectionDialogState extends State<PlotSelectionDialog> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   TextField(
                     controller: _searchController,
                     onChanged: _filterPlots,
@@ -167,6 +203,8 @@ class _PlotSelectionDialogState extends State<PlotSelectionDialog> {
                 ],
               ),
             ),
+
+            // Plot list
             Flexible(
               child: _filteredPlots.isEmpty
                   ? const Center(
@@ -205,37 +243,39 @@ class _PlotSelectionDialogState extends State<PlotSelectionDialog> {
                       itemCount: _filteredPlots.length,
                       itemBuilder: (context, index) {
                         final plot = _filteredPlots[index];
-                        final isSelected = plot.id == widget.selectedPlotId;
-                        
+                        final isSelected = _selectedIds.contains(plot.id);
+
                         return Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                          margin: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 4),
                           decoration: BoxDecoration(
-                            color: isSelected 
-                                ? AppColors.primaryColor.withValues(alpha: 0.1)
+                            color: isSelected
+                                ? AppColors.primaryColor.withValues(alpha: 0.08)
                                 : Colors.white,
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                              color: isSelected 
-                                  ? AppColors.primaryColor 
+                              color: isSelected
+                                  ? AppColors.primaryColor
                                   : AppColors.lightGreyBorderColor,
                               width: isSelected ? 2 : 1,
                             ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.05),
-                                blurRadius: 4,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
                           ),
-                          child: ListTile(
+                          child: CheckboxListTile(
+                            value: isSelected,
+                            onChanged: (_) => _togglePlot(plot),
+                            activeColor: AppColors.primaryColor,
+                            controlAffinity: ListTileControlAffinity.leading,
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 4),
                             title: Text(
-                              "Plot No. ${plot.plotNumber}",
+                              'Plot No. ${plot.plotNumber}',
                               style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                                color: isSelected 
-                                    ? AppColors.primaryColor 
+                                fontSize: 15,
+                                fontWeight: isSelected
+                                    ? FontWeight.w600
+                                    : FontWeight.normal,
+                                color: isSelected
+                                    ? AppColors.primaryColor
                                     : AppColors.headingTextColor,
                               ),
                             ),
@@ -245,38 +285,66 @@ class _PlotSelectionDialogState extends State<PlotSelectionDialog> {
                                 Text(
                                   plot.displayTextOnPopup,
                                   style: const TextStyle(
-                                    fontSize: 14,
+                                    fontSize: 13,
                                     color: AppColors.darkGreyColor,
                                   ),
                                 ),
                                 if (plot.remark.isNotEmpty) ...[
-                                  const SizedBox(height: 4),
+                                  const SizedBox(height: 2),
                                   Text(
                                     plot.remark,
                                     style: const TextStyle(
-                                      fontSize: 13,
+                                      fontSize: 12,
                                       color: AppColors.textColor,
                                     ),
                                   ),
                                 ],
                               ],
                             ),
-                            trailing: isSelected
-                                ? const Icon(
-                                    Icons.check_circle,
-                                    color: AppColors.primaryColor,
-                                  )
-                                : null,
-                            onTap: () {
-                              widget.onPlotSelected(plot);
-                              Navigator.of(context).pop();
-                            },
                           ),
                         );
                       },
                     ),
             ),
-            SizedBox(height: 16),
+
+            // Done button
+            Container(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+              decoration: const BoxDecoration(
+                border: Border(
+                  top: BorderSide(
+                    color: AppColors.lightGreyBorderColor,
+                    width: 1,
+                  ),
+                ),
+              ),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _selectedIds.isEmpty ? null : _confirm,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryColor,
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor:
+                        AppColors.primaryColor.withValues(alpha: 0.4),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: Text(
+                    _selectedIds.isEmpty
+                        ? 'Select at least one plot'
+                        : 'Confirm ${_selectedIds.length} Plot${_selectedIds.length > 1 ? 's' : ''}',
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),

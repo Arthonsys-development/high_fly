@@ -11,6 +11,8 @@ enum ChequeAnalysisStatus {
   notACheque,
   /// Image is a cheque but the cheque number is blurred / cropped / unreadable
   chequeNumberUnreadable,
+  /// Cheque payee name does not match the project's required pay_name
+  payNameMismatch,
   /// Gemini API server is temporarily unavailable (503 / overload)
   serverUnavailable,
   /// API key missing or invalid
@@ -52,6 +54,7 @@ class ChequeInfo {
   bool get isServerError => status == ChequeAnalysisStatus.serverUnavailable;
   bool get isNotACheque => status == ChequeAnalysisStatus.notACheque;
   bool get isChequeNumberUnreadable => status == ChequeAnalysisStatus.chequeNumberUnreadable;
+  bool get isPayNameMismatch => status == ChequeAnalysisStatus.payNameMismatch;
 }
 
 class ChequeAnalysisService {
@@ -98,7 +101,28 @@ Respond with ONLY this JSON (no markdown, no code block):
 }
 ''';
 
-  Future<ChequeInfo> analyzeCheque(List<int> imageBytes) async {
+  String _buildPrompt({String? expectedPayName}) {
+    final trimmedPayName = expectedPayName?.trim();
+    if (trimmedPayName == null || trimmedPayName.isEmpty) {
+      return _prompt;
+    }
+
+    return '''
+$_prompt
+
+TASK 3 — Payee name verification (REQUIRED)
+The required payee name for this project is: "$trimmedPayName"
+Read the payee name printed on the "Pay" line of the cheque.
+Set "pay_name_matches" to true ONLY if the payee on the cheque clearly refers to the same entity as the required name (allow minor spelling differences, abbreviations, extra prefixes like M/s, Pvt Ltd, or word order changes).
+Set "pay_name_matches" to false if the payee is a clearly different person/company, the Pay line is blank/unreadable, or you cannot confirm a match.
+Add "pay_name_matches": true or false to your JSON response.
+''';
+  }
+
+  Future<ChequeInfo> analyzeCheque(
+    List<int> imageBytes, {
+    String? expectedPayName,
+  }) async {
     final apiKey = dotenv.env['GEMINI_API_KEY'] ?? '';
     if (apiKey.isEmpty || apiKey == 'your_gemini_api_key_here') {
       debugPrint('⚠️ ChequeAnalysis: GEMINI_API_KEY not set in .env file');
@@ -109,6 +133,7 @@ Respond with ONLY this JSON (no markdown, no code block):
     }
 
     final model = GenerativeModel(model: _modelName, apiKey: apiKey);
+    final prompt = _buildPrompt(expectedPayName: expectedPayName);
 
     for (int attempt = 1; attempt <= _maxRetries; attempt++) {
       try {
@@ -116,14 +141,14 @@ Respond with ONLY this JSON (no markdown, no code block):
 
         final response = await model.generateContent([
           Content.multi([
-            TextPart(_prompt),
+            TextPart(prompt),
             DataPart('image/jpeg', Uint8List.fromList(imageBytes)),
           ]),
         ]);
 
         final text = (response.text ?? '').trim();
         debugPrint('🤖 ChequeAnalysis response: $text');
-        return _parseResponse(text);
+        return _parseResponse(text, expectedPayName: expectedPayName);
       } catch (e) {
         final errStr = e.toString();
         debugPrint('❌ ChequeAnalysis attempt $attempt error: $errStr');
@@ -175,7 +200,7 @@ Respond with ONLY this JSON (no markdown, no code block):
     );
   }
 
-  ChequeInfo _parseResponse(String text) {
+  ChequeInfo _parseResponse(String text, {String? expectedPayName}) {
     try {
       final cleaned = text
           .replaceAll(RegExp(r'^```(?:json)?\s*', multiLine: true), '')
@@ -228,6 +253,20 @@ Respond with ONLY this JSON (no markdown, no code block):
       }
 
       final chequeNumber = rawChequeNumber;
+
+      final trimmedExpectedPayName = expectedPayName?.trim();
+      if (trimmedExpectedPayName != null && trimmedExpectedPayName.isNotEmpty) {
+        final payNameMatches = json['pay_name_matches'];
+        final matches = payNameMatches == true || payNameMatches == 'true';
+        if (!matches) {
+          return ChequeInfo(
+            status: ChequeAnalysisStatus.payNameMismatch,
+            payeeName: _asString(json['payee_name']),
+            errorMessage:
+                'The payee name on the cheque does not match the required payee name "$trimmedExpectedPayName".\n\nPlease upload a cheque made out to the correct payee.',
+          );
+        }
+      }
 
       return ChequeInfo(
         status: ChequeAnalysisStatus.success,

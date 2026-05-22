@@ -13,9 +13,53 @@ import '../models/booking_list_model.dart';
 
 // Conditional import for File - only available on mobile platforms
 import 'dart:io' if (dart.library.html) 'file_stub.dart' show File;
+import 'dart:convert' show jsonEncode;
 
 class BookingApiRepository {
   final ApiClient _apiClient = ApiClient();
+
+  /// True when booking create must use multipart (binary file parts).
+  bool _createBookingNeedsMultipart(
+    BookingRequestModel request,
+    List<Map<String, dynamic>>? documentFiles,
+  ) {
+    if (request.chequeImageBytes != null && request.chequeImageBytes!.isNotEmpty) {
+      return true;
+    }
+    if (request.rtgsImageBytes != null && request.rtgsImageBytes!.isNotEmpty) {
+      return true;
+    }
+    if (documentFiles != null && documentFiles.isNotEmpty) {
+      return true;
+    }
+    if (request.documents != null && request.documents!.isNotEmpty) {
+      return true;
+    }
+    if (!kIsWeb) {
+      final slip = request.salarySlipPath;
+      if (slip != null && slip.isNotEmpty && !slip.startsWith('http')) {
+        return true;
+      }
+      final f16 = request.form16APath;
+      if (f16 != null && f16.isNotEmpty && !f16.startsWith('http')) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  bool _createHoldNeedsMultipart(
+    HoldRequestModel request,
+    List<Map<String, dynamic>>? documentFiles,
+  ) {
+    if (documentFiles != null && documentFiles.isNotEmpty) {
+      return true;
+    }
+    if (request.documents != null && request.documents!.isNotEmpty) {
+      return true;
+    }
+    return false;
+  }
 
   /// Extract error message from DioException response
   /// Handles various error response formats:
@@ -79,6 +123,24 @@ class BookingApiRepository {
     List<Map<String, dynamic>>? documentFiles,
   }) async {
     try {
+      if (request.plotIds.isEmpty) {
+        throw Exception('plot_ids is required: select at least one plot.');
+      }
+      // JSON body (plot_ids as native array) when no file uploads — matches API examples.
+      if (!_createBookingNeedsMultipart(request, documentFiles)) {
+        debugPrint('createBooking JSON plot_ids=${request.plotIds}');
+        final response = await _apiClient.post(
+          ApiConstants.plotBookings,
+          data: request.toJson(),
+        );
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          return BookingResponseModel.fromJson(response.data);
+        }
+        throw Exception('Failed to create booking: ${response.statusMessage}');
+      }
+
+      debugPrint('createBooking multipart plot_ids=${request.plotIds} (plot_ids as JSON string)');
+
       // Create FormData for multipart request
       final Map<String, dynamic> formDataMap = {...request.toFormData()};
       
@@ -166,44 +228,55 @@ class BookingApiRepository {
           contentType: contentType != null ? MediaType.parse(contentType) : null,
         );
       }
-      
-      // Create FormData manually to ensure proper array handling for documents
-      final formData = FormData();
-      
-      // Track which file keys we have so we can skip corresponding path fields
-      final hasSalarySlipFile = formDataMap.containsKey('salary_slip') && formDataMap['salary_slip'] is MultipartFile;
-      final hasForm16AFile = formDataMap.containsKey('form_16a') && formDataMap['form_16a'] is MultipartFile;
-      final hasChequeImageFile = formDataMap.containsKey('cheque_copy') && formDataMap['cheque_copy'] is MultipartFile;
-      final hasRtgsImageFile = formDataMap.containsKey('rtgs_image') && formDataMap['rtgs_image'] is MultipartFile;
-      
-      // Add all form fields from formDataMap
-      for (var entry in formDataMap.entries) {
-        // Skip documents key as we'll add files separately
-        if (entry.key == 'documents') continue;
-        
-        // Skip path fields if we have the actual file
-        if (entry.key == 'salary_slip_path' && hasSalarySlipFile) {
-          continue;
-        }
-        if (entry.key == 'form_16a_path' && hasForm16AFile) {
-          continue;
-        }
-        if (entry.key == 'cheque_copy_name' && hasChequeImageFile) {
-          continue;
-        }
-        if (entry.key == 'rtgs_image_name' && hasRtgsImageFile) {
-          continue;
-        }
-        
-        // Handle MultipartFile entries (salary_slip, form_16a) - add as files
-        if (entry.value is MultipartFile) {
-          formData.files.add(MapEntry(entry.key, entry.value as MultipartFile));
-        } else {
-          formData.fields.add(MapEntry(entry.key, entry.value.toString()));
-        }
+
+      // Drop path-only fields when the real multipart file is attached
+      final hasSalarySlipFile =
+          formDataMap.containsKey('salary_slip') && formDataMap['salary_slip'] is MultipartFile;
+      final hasForm16AFile =
+          formDataMap.containsKey('form_16a') && formDataMap['form_16a'] is MultipartFile;
+      final hasChequeImageFile =
+          formDataMap.containsKey('cheque_copy') && formDataMap['cheque_copy'] is MultipartFile;
+      final hasRtgsImageFile =
+          formDataMap.containsKey('rtgs_image') && formDataMap['rtgs_image'] is MultipartFile;
+      if (hasSalarySlipFile) {
+        formDataMap.remove('salary_slip_path');
       }
-      
-      // Handle documents array - add all documents with the same key "documents" to form an array
+      if (hasForm16AFile) {
+        formDataMap.remove('form_16a_path');
+      }
+      if (hasChequeImageFile) {
+        formDataMap.remove('cheque_copy_name');
+      }
+      if (hasRtgsImageFile) {
+        formDataMap.remove('rtgs_image_name');
+      }
+      formDataMap.remove('documents');
+
+      // // Single form field whose value is a JSON array string, e.g. "[14,15]"
+      // formDataMap['plot_ids'] = jsonEncode(request.plotIds);
+
+      // debugPrint('📤 createBooking: formDataMap[plot_ids] ${formDataMap['plot_ids']} document files for web upload');
+
+
+      // final formData = FormData.fromMap(formDataMap, ListFormat.multi);
+
+     // Create formData
+      final formData = FormData.fromMap(
+        formDataMap,
+        ListFormat.multi,
+      );
+
+      // Send plot_ids as indexed array
+      for (int i = 0; i < request.plotIds.length; i++) {
+        formData.fields.add(
+          MapEntry('plot_ids[$i]', request.plotIds[i].toString()),
+        );
+      }
+
+      debugPrint('📤 plot_ids=${request.plotIds}');
+     
+     
+         // Handle documents array - add all documents with the same key "documents" to form an array
       if (kIsWeb && documentFiles != null && documentFiles.isNotEmpty) {
         debugPrint('📤 createBooking: Processing ${documentFiles.length} document files for web upload');
         // On web, use file bytes from documentFiles
@@ -317,27 +390,40 @@ class BookingApiRepository {
     }
   }
 
-  /// Create a new plot hold with multipart/form-data
-  /// [documentFiles] is optional list of file data (bytes + names) for web uploads
+  /// Create a new plot hold — POST [ApiConstants.plotHoldsCreate] with `plot_ids` array.
+  /// Uses `application/json` when no document uploads; multipart when files are attached.
   Future<HoldResponseModel> createHold(
     HoldRequestModel request, {
     List<Map<String, dynamic>>? documentFiles,
   }) async {
     try {
-      // Create FormData for multipart request
-      final Map<String, dynamic> formDataMap = {...request.toJson()};
-      
-      // Create FormData manually to ensure proper array handling for documents
-      final formData = FormData();
-      
-      // Add all form fields from formDataMap
-      for (var entry in formDataMap.entries) {
-        // Skip documents key as we'll add files separately
-        if (entry.key == 'documents') continue;
-        
-        formData.fields.add(MapEntry(entry.key, entry.value.toString()));
+      if (request.plotIds.isEmpty) {
+        throw Exception('plot_ids is required: select at least one plot.');
       }
-      
+
+      if (!_createHoldNeedsMultipart(request, documentFiles)) {
+        debugPrint('createHold JSON plot_ids=${request.plotIds}');
+        final response = await _apiClient.post(
+          ApiConstants.plotHoldsCreate,
+          data: request.toJson(),
+        );
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          return HoldResponseModel.fromJson(response.data);
+        }
+        throw Exception('Failed to create hold: ${response.statusMessage}');
+      }
+
+      debugPrint('createHold multipart plot_ids=${request.plotIds} (plot_ids as JSON string)');
+
+      // Create FormData for multipart request
+      final Map<String, dynamic> formDataMap = {...request.toFormData()};
+
+      formDataMap.remove('documents');
+      formDataMap['plot_ids'] = request.plotIds;
+
+      final formData = FormData.fromMap(formDataMap, ListFormat.multi);
+      debugPrint('createHold multipart formData=${formData}');
+
       // Handle documents array - add all documents with the same key "documents" to form an array
       if (kIsWeb && documentFiles != null && documentFiles.isNotEmpty) {
         debugPrint('📤 createHold: Processing ${documentFiles.length} document files for web upload');
@@ -430,10 +516,10 @@ class BookingApiRepository {
       }
       
       final response = await _apiClient.postMultipart(
-        ApiConstants.plotHolds,
+        ApiConstants.plotHoldsCreate,
         data: formData,
       );
-      
+
       if (response.statusCode == 200 || response.statusCode == 201) {
         return HoldResponseModel.fromJson(response.data);
       } else {

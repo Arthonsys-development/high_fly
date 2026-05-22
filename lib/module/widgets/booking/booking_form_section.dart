@@ -18,10 +18,10 @@ class BookingFormSection extends StatefulWidget {
   final String title;
   final List<local_model.Project> projects;
   final VoidCallback? onPrevious;
-  final Function(local_model.Project?, local_model.Plot?)? onNext;
+  final Function(local_model.Project?, List<local_model.Plot>)? onNext;
   final String? nextButtonText;
   final local_model.Project? initialProject;
-  final local_model.Plot? initialPlot;
+  final List<local_model.Plot>? initialPlots;
   final VoidCallback? onRefreshProjects;
   final bool isRefreshingProjects;
 
@@ -33,7 +33,7 @@ class BookingFormSection extends StatefulWidget {
     this.onNext,
     this.nextButtonText,
     this.initialProject,
-    this.initialPlot,
+    this.initialPlots,
     this.onRefreshProjects,
     this.isRefreshingProjects = false,
   });
@@ -44,7 +44,7 @@ class BookingFormSection extends StatefulWidget {
 
 class _BookingFormSectionState extends State<BookingFormSection> {
   local_model.Project? _selectedProject;
-  local_model.Plot? _selectedPlot;
+  List<local_model.Plot> _selectedPlots = [];
   final TextEditingController _projectController = TextEditingController();
   final TextEditingController _plotController = TextEditingController();
   List<local_model.Plot> _availablePlots = [];
@@ -54,19 +54,17 @@ class _BookingFormSectionState extends State<BookingFormSection> {
   @override
   void initState() {
     super.initState();
-    // Initialize with provided values if available
     if (widget.initialProject != null) {
       _selectedProject = widget.initialProject;
       _projectController.text = widget.initialProject!.name;
-      // Fetch plots for the initial project
       _fetchPlotsForProject(
         widget.initialProject!,
         preserveExistingSelection: true,
       );
     }
-    if (widget.initialPlot != null) {
-      _selectedPlot = widget.initialPlot;
-      _plotController.text = widget.initialPlot!.displayText;
+    if (widget.initialPlots != null && widget.initialPlots!.isNotEmpty) {
+      _selectedPlots = List.from(widget.initialPlots!);
+      _plotController.text = _buildPlotDisplayText(_selectedPlots);
     }
   }
 
@@ -77,20 +75,27 @@ class _BookingFormSectionState extends State<BookingFormSection> {
     super.dispose();
   }
 
+  String _buildPlotDisplayText(List<local_model.Plot> plots) {
+    if (plots.isEmpty) return '';
+    if (plots.length == 1) return plots.first.displayText;
+    return '${plots.length} plots selected (${plots.map((p) => p.plotNumber).join(', ')})';
+  }
+
   Future<void> _fetchPlotsForProject(
     local_model.Project project, {
     bool preserveExistingSelection = false,
   }) async {
-    // Store the current selected plot before clearing (only when we need to preserve it)
-    final previousPlot =
-        preserveExistingSelection ? _selectedPlot ?? widget.initialPlot : null;
-    
+    final previousPlots = preserveExistingSelection
+        ? List<local_model.Plot>.from(_selectedPlots.isNotEmpty
+            ? _selectedPlots
+            : widget.initialPlots ?? [])
+        : <local_model.Plot>[];
+
     setState(() {
       _isLoadingPlots = true;
       _availablePlots = [];
-      // Clear plot selection unless explicitly preserving it (e.g., initial load)
       if (!preserveExistingSelection) {
-        _selectedPlot = null;
+        _selectedPlots = [];
         _plotController.clear();
       }
     });
@@ -98,47 +103,39 @@ class _BookingFormSectionState extends State<BookingFormSection> {
     try {
       final apiRepository = AuthApiRepository();
       final result = await apiRepository.getPlotsByProjectId(project.id);
-      
+
       if (result['success']) {
-        // Convert API Plot models to local Plot models
         final apiPlots = result['data'] as List<Plot>;
         final localPlots = apiPlots.map((plot) => plot.toLocalModel()).toList();
-        
-        // If we preserved a previous plot, try to find it in the loaded plots
-        local_model.Plot? plotToSelect;
-        if (previousPlot != null) {
-          try {
-            plotToSelect = localPlots.firstWhere(
-              (plot) => plot.id == previousPlot.id,
-            );
-          } catch (e) {
-            // If not found, fall back to the stored plot so UI keeps showing it
-            plotToSelect = previousPlot;
+
+        List<local_model.Plot> plotsToSelect = [];
+        if (previousPlots.isNotEmpty) {
+          for (final prev in previousPlots) {
+            try {
+              plotsToSelect.add(localPlots.firstWhere((p) => p.id == prev.id));
+            } catch (_) {
+              plotsToSelect.add(prev);
+            }
           }
         }
-        
+
         setState(() {
           _availablePlots = localPlots;
           _isLoadingPlots = false;
-          // Restore the selected plot if it exists
-          if (plotToSelect != null) {
-            _selectedPlot = plotToSelect;
-            _plotController.text = plotToSelect.displayText;
+          if (plotsToSelect.isNotEmpty) {
+            _selectedPlots = plotsToSelect;
+            _plotController.text = _buildPlotDisplayText(_selectedPlots);
           }
         });
       } else {
-        setState(() {
-          _isLoadingPlots = false;
-        });
-        debugPrint("Error loading plots: ${result['message']}");
+        setState(() => _isLoadingPlots = false);
+        debugPrint('Error loading plots: ${result['message']}');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error loading plots: ${result['message']}')),
         );
       }
     } catch (e) {
-      setState(() {
-        _isLoadingPlots = false;
-      });
+      setState(() => _isLoadingPlots = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error loading plots: $e')),
       );
@@ -149,7 +146,7 @@ class _BookingFormSectionState extends State<BookingFormSection> {
   Widget build(BuildContext context) {
     final spacing = kIsWeb ? 32.0 : 24.0;
     final largeSpacing = kIsWeb ? 48.0 : 40.0;
-    
+
     return SingleChildScrollView(
       padding: EdgeInsets.only(
         top: kIsWeb ? 24 : 20,
@@ -158,12 +155,11 @@ class _BookingFormSectionState extends State<BookingFormSection> {
       child: Column(
         children: [
           SizedBox(height: kIsWeb ? 24 : 20),
-          
-          // Header with icon
+
           HeaderIconWidget(
             icon: IconsAssets.projectIcon,
-            title: 'Select Project & Plot',
-            subtitle: 'Choose a project, then select a plot',
+            title: 'Select Project & Plots',
+            subtitle: 'Choose a project, then select one or more plots',
           ),
 
           if (widget.onRefreshProjects != null) ...[
@@ -203,9 +199,9 @@ class _BookingFormSectionState extends State<BookingFormSection> {
               ),
             ),
           ],
-          
+
           SizedBox(height: largeSpacing),
-          
+
           // Project selection field
           GestureDetector(
             onTap: _showProjectSelectionDialog,
@@ -223,23 +219,23 @@ class _BookingFormSectionState extends State<BookingFormSection> {
               ),
             ),
           ),
-          
+
           SizedBox(height: spacing),
-          
-          // Plot selection field - only visible after project selection
+
+          // Plot selection field
           if (_selectedProject != null) ...[
             GestureDetector(
               onTap: _availablePlots.isEmpty && !_isLoadingPlots
                   ? null
                   : _showPlotSelectionDialog,
               child: CustomTextField(
-                titleText: 'Available Plot',
+                titleText: 'Available Plots',
                 controller: _plotController,
                 hintText: _isLoadingPlots
                     ? 'Loading plots...'
                     : _availablePlots.isEmpty
                         ? 'No plots available'
-                        : 'Select Plot',
+                        : 'Select Plots (multiple allowed)',
                 isMandatory: true,
                 borderRadius: 6,
                 enabled: false,
@@ -258,8 +254,7 @@ class _BookingFormSectionState extends State<BookingFormSection> {
             ),
             SizedBox(height: kIsWeb ? 36 : 32),
           ],
-          
-          // Helper message when no project is selected
+
           if (_selectedProject == null) ...[
             Container(
               width: double.infinity,
@@ -296,16 +291,15 @@ class _BookingFormSectionState extends State<BookingFormSection> {
             ),
             SizedBox(height: kIsWeb ? 36 : 32),
           ],
-          
-          // Plot details card
+
+          // Plot details card — shows all selected plots
           PlotDetailsCard(
-            selectedPlot: _selectedPlot,
+            selectedPlots: _selectedPlots.isEmpty ? null : _selectedPlots,
             selectedProjectName: _selectedProject?.name,
           ),
-          
+
           SizedBox(height: largeSpacing),
-          
-          // Action buttons
+
           ActionButtons(
             onPrevious: widget.onPrevious,
             onNext: _canProceed() ? _handleNext : null,
@@ -313,7 +307,7 @@ class _BookingFormSectionState extends State<BookingFormSection> {
             isNextEnabled: _canProceed(),
             nextButtonText: widget.nextButtonText,
           ),
-          
+
           SizedBox(height: kIsWeb ? 24 : 20),
         ],
       ),
@@ -321,28 +315,23 @@ class _BookingFormSectionState extends State<BookingFormSection> {
   }
 
   bool _canProceed() {
-    // Can proceed only if project is selected and plot is selected (when plot field is visible)
     if (_selectedProject == null) return false;
-    return _selectedPlot != null;
+    return _selectedPlots.isNotEmpty;
   }
 
-  /// Handle next button tap with guest user check
   Future<void> _handleNext() async {
-    // Check if user is a guest
     final isGuest = await _secureStorage.read(key: SharedPreferenceStrings.isGuest);
     if (isGuest == 'true') {
-      debugPrint('Guest user attempting to proceed with booking/hold - showing alert');
       if (mounted) {
         GuestAlertHelper.showGuestAlert(
           context,
-          message: 'Guest users cannot book or hold plots. Please sign in with your phone number to access all features.',
+          message:
+              'Guest users cannot book or hold plots. Please sign in with your phone number to access all features.',
         );
       }
       return;
     }
-
-    // Proceed with the callback if user is not a guest
-    widget.onNext?.call(_selectedProject, _selectedPlot);
+    widget.onNext?.call(_selectedProject, _selectedPlots);
   }
 
   void _showProjectSelectionDialog() {
@@ -352,15 +341,12 @@ class _BookingFormSectionState extends State<BookingFormSection> {
         projects: widget.projects,
         selectedProjectId: _selectedProject?.id,
         onProjectSelected: (project) {
-          // Update project selection and clear current plot immediately
           setState(() {
             _selectedProject = project;
-            _selectedPlot = null;
+            _selectedPlots = [];
             _projectController.text = project?.name ?? '';
             _plotController.clear();
           });
-
-          // Fetch plots for the selected project (no preservation)
           if (project != null) {
             _fetchPlotsForProject(project);
           }
@@ -371,16 +357,16 @@ class _BookingFormSectionState extends State<BookingFormSection> {
 
   void _showPlotSelectionDialog() {
     if (_selectedProject == null || _availablePlots.isEmpty) return;
-    
+
     showDialog(
       context: context,
       builder: (context) => PlotSelectionDialog(
         plots: _availablePlots,
-        selectedPlotId: _selectedPlot?.id,
-        onPlotSelected: (plot) {
+        selectedPlotIds: _selectedPlots.map((p) => p.id).toSet(),
+        onPlotsSelected: (plots) {
           setState(() {
-            _selectedPlot = plot;
-            _plotController.text = plot?.displayText ?? '';
+            _selectedPlots = plots;
+            _plotController.text = _buildPlotDisplayText(plots);
           });
         },
       ),

@@ -11,6 +11,7 @@ import '../../utils/responsive.dart';
 import 'webview_screen.dart';
 import 'booking_edit_screen.dart';
 import 'booking_document_management_screen.dart';
+import '../../widgets/booking/plot_details_card.dart';
 // Conditional import for web image widget
 import '../visitors/web_image_widget.dart' if (dart.library.io) '../visitors/web_image_widget_stub.dart';
 
@@ -219,28 +220,59 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
 
             // Plot Information Section
             _buildSectionTitle('Plot Information'),
-            _buildDetailCard([
-              _buildDetailRow('Plot No.', booking.plotCode),
-              if (booking.project != null)
-                _buildDetailRow('Project', booking.project!.name),
-              if (booking.plotSize != null && booking.plotSize!.isNotEmpty)
-                _buildDetailRow('Plot Size', booking.plotSize!),
-              if (booking.saleableSize != null && booking.saleableSize!.isNotEmpty)
-                _buildDetailRow('Saleable Size', '${booking.saleableSize} sq yd'),
-              if (booking.plotArea != null && booking.plotArea!.isNotEmpty)
-                _buildDetailRow('Plot Area', '${booking.plotArea} sq mtr'),
-              // if (booking.plotPrice != null && booking.plotPrice!.isNotEmpty)
-              //   _buildDetailRow('Plot Price', '₹${booking.plotPrice}'),
-              if (booking.plotFacing != null && booking.plotFacing!.isNotEmpty)
-                _buildDetailRow('Plot Facing', booking.plotFacing!),
-              _buildDetailRow('Payment Type', bookingTypeDisplay),
-              if (booking.pricePerSqYd != null && booking.pricePerSqYd!.isNotEmpty)
-                _buildDetailRow('Price (per Sq Yd)', '₹${booking.pricePerSqYd}'),
-              _buildDetailRow('Total Amount', '₹${booking.totalAmount}'),
-              _buildDetailRow('Booking Amount', '₹${booking.bookingAmount}'),
-             // _buildDetailRow('Booking Date', booking.bookingDate),
-              _buildDetailRow('Booked At', booking.bookedAt),
-            ]),
+            if (booking.plotDetails.isNotEmpty) ...[
+              PlotDetailsCard(
+                selectedPlots: booking.plotDetails
+                    .map(
+                      (p) => p.toPlot(
+                        projectId: booking.project?.id.toString(),
+                      ),
+                    )
+                    .toList(),
+                selectedProjectName: booking.project?.name ??
+                    booking.plotDetails.first.projectName,
+              ),
+              SizedBox(height: isDesktopWeb ? 16 : 12),
+              _buildDetailCard([
+                _buildDetailRow('Payment Type', bookingTypeDisplay),
+                _buildDetailRow(
+                    'Total Amount', '₹${booking.displayTotalAmount}'),
+                _buildDetailRow('Booking Amount', '₹${booking.bookingAmount}'),
+                _buildDetailRow('Booked At', booking.bookedAt),
+                // if (booking.plcApplied &&
+                //     booking.plcPercentage != null &&
+                //     booking.plcPercentage! > 0)
+                //   _buildDetailRow('PLC %', '${booking.plcPercentage}'),
+              ]),
+            ] else
+              _buildDetailCard([
+                _buildDetailRow('Plot No.', booking.plotCode),
+                if (booking.project != null)
+                  _buildDetailRow('Project', booking.project!.name),
+                if (booking.plotSize != null && booking.plotSize!.isNotEmpty)
+                  _buildDetailRow('Plot Size', booking.plotSize!),
+                if (booking.saleableSize != null &&
+                    booking.saleableSize!.isNotEmpty)
+                  _buildDetailRow(
+                      'Saleable Size', '${booking.saleableSize} sq yd'),
+                if (booking.plotArea != null && booking.plotArea!.isNotEmpty)
+                  _buildDetailRow('Plot Area', '${booking.plotArea} sq mtr'),
+                if (booking.plotFacing != null &&
+                    booking.plotFacing!.isNotEmpty)
+                  _buildDetailRow('Plot Facing', booking.plotFacing!),
+                _buildDetailRow('Payment Type', bookingTypeDisplay),
+                if (booking.pricePerSqYd != null &&
+                    booking.pricePerSqYd!.isNotEmpty)
+                  _buildDetailRow(
+                      'Price (per Sq Yd)', '₹${booking.pricePerSqYd}'),
+                _buildDetailRow('Total Amount', '₹${booking.totalAmount}'),
+                _buildDetailRow('Booking Amount', '₹${booking.bookingAmount}'),
+                _buildDetailRow('Booked At', booking.bookedAt),
+                if (booking.plcApplied &&
+                    booking.plcPercentage != null &&
+                    booking.plcPercentage! > 0)
+                  _buildDetailRow('PLC %', '${booking.plcPercentage}'),
+              ]),
             SizedBox(height: isDesktopWeb ? 32 : 24),
 
             // Customer Information and Payment Information in a row for desktop web

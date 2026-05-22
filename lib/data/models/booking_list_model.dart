@@ -1,5 +1,6 @@
 import 'response_model/project_response_model.dart';
 import 'booking_document_model.dart';
+import 'hold_plot_detail_model.dart';
 
 class BookingListModel {
   final int id;
@@ -49,6 +50,9 @@ class BookingListModel {
   final String? cancellationReason;
   final String remarks;
   final int plot;
+  final int? groupId;
+  final List<int> plotIds;
+  final List<HoldPlotDetail> plotDetails;
   final int agent;
   final int customer;
   final String? cancelledBy;
@@ -112,6 +116,9 @@ class BookingListModel {
     this.cancellationReason,
     required this.remarks,
     required this.plot,
+    this.groupId,
+    this.plotIds = const [],
+    this.plotDetails = const [],
     required this.agent,
     required this.customer,
     this.cancelledBy,
@@ -127,6 +134,49 @@ class BookingListModel {
     this.plcApplied = false,
     this.plcPercentage,
   });
+
+  List<int> get allPlotIds {
+    if (plotIds.isNotEmpty) return plotIds;
+    if (plotDetails.isNotEmpty) {
+      return plotDetails.map((p) => p.id).where((id) => id > 0).toList();
+    }
+    if (plot > 0) return [plot];
+    return const [];
+  }
+
+  bool get hasMultiplePlots => plotDetails.length > 1 || allPlotIds.length > 1;
+
+  String get displayPlotLabel {
+    if (plotDetails.isNotEmpty) {
+      if (plotDetails.length == 1) return plotDetails.first.plotCode;
+      final codes = plotDetails.map((p) => p.plotCode).where((c) => c.isNotEmpty);
+      if (codes.isNotEmpty) {
+        return '${plotDetails.length} plots (${codes.join(', ')})';
+      }
+      return '${plotDetails.length} plots';
+    }
+    return plotCode;
+  }
+
+  String get displayTotalAmount {
+    if (plotDetails.length > 1) {
+      double sum = 0;
+      for (final p in plotDetails) {
+        sum += double.tryParse(p.priceWithPlc) ?? double.tryParse(p.price) ?? 0;
+      }
+      if (sum > 0) return sum.toStringAsFixed(2);
+    }
+    return totalAmount;
+  }
+
+  bool matchesPlotSearch(String query) {
+    final q = query.toLowerCase();
+    if (plotCode.toLowerCase().contains(q)) return true;
+    for (final p in plotDetails) {
+      if (p.plotCode.toLowerCase().contains(q)) return true;
+    }
+    return false;
+  }
 
   factory BookingListModel.fromJson(Map<String, dynamic> json) {
     // Parse project if it exists
@@ -148,6 +198,26 @@ class BookingListModel {
             .toList();
       } catch (e) {
         documents = [];
+      }
+    }
+
+    List<int> plotIds = [];
+    if (json['plot_ids'] is List) {
+      plotIds = (json['plot_ids'] as List)
+          .map((e) => e is int ? e : int.tryParse(e.toString()) ?? 0)
+          .where((id) => id > 0)
+          .toList();
+    }
+
+    List<HoldPlotDetail> plotDetails = [];
+    if (json['plot_details'] is List) {
+      try {
+        plotDetails = (json['plot_details'] as List)
+            .whereType<Map<String, dynamic>>()
+            .map(HoldPlotDetail.fromJson)
+            .toList();
+      } catch (_) {
+        plotDetails = [];
       }
     }
     
@@ -199,6 +269,11 @@ class BookingListModel {
       cancellationReason: json['cancellation_reason'],
       remarks: json['remarks'] ?? '',
       plot: json['plot'] ?? 0,
+      groupId: json['group_id'] is int
+          ? json['group_id'] as int
+          : int.tryParse('${json['group_id']}'),
+      plotIds: plotIds,
+      plotDetails: plotDetails,
       agent: json['agent'] ?? 0,
       customer: json['customer'] ?? 0,
       cancelledBy: json['cancelled_by']?.toString(),
@@ -267,6 +342,23 @@ class BookingListModel {
       'cancellation_reason': cancellationReason,
       'remarks': remarks,
       'plot': plot,
+      if (groupId != null) 'group_id': groupId,
+      'plot_ids': plotIds,
+      'plot_details': plotDetails
+          .map((p) => {
+                'id': p.id,
+                'plot_code': p.plotCode,
+                'project_name': p.projectName,
+                'size_sq_yd': p.sizeSqYd,
+                'total_area': p.totalArea,
+                'price': p.price,
+                'price_per_sq_yd': p.pricePerSqYd,
+                'price_with_plc': p.priceWithPlc,
+                'facing': p.facing,
+                'status': p.status,
+                'status_display': p.statusDisplay,
+              })
+          .toList(),
       'agent': agent,
       'customer': customer,
       'cancelled_by': cancelledBy,

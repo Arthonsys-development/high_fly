@@ -105,17 +105,16 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
 
   Future<void> _createBooking() async {
       String agentId = await _secureStorage.read(key: SharedPreferenceStrings.id) ?? '';
-    //print("agentId for booking: $agentId");
     final summary = widget.bookingSummary;
     
-    if (summary.selectedPlot == null || 
+    if (summary.selectedPlots == null || summary.selectedPlots!.isEmpty ||
         summary.selectedCustomer == null || 
         summary.paymentDetails == null) {
       throw Exception('Missing required data for booking');
     }
 
     final request = BookingRequestModel(
-      plot: int.parse(summary.selectedPlot!.id),
+      plotIds: summary.selectedPlots!.map((p) => int.parse(p.id)).toList(),
       agent: int.parse(agentId),
       customer: summary.selectedCustomer!.id,
       customerName: summary.selectedCustomer!.name,
@@ -178,10 +177,9 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
 
   Future<void> _createHold() async {
     String agentId = await _secureStorage.read(key: SharedPreferenceStrings.id) ?? '';
-   // print("agentId for hold: $agentId");
     final summary = widget.bookingSummary;
     
-    if (summary.selectedPlot == null || 
+    if (summary.selectedPlots == null || summary.selectedPlots!.isEmpty ||
         summary.selectedCustomer == null || 
         summary.holdDetails == null) {
       throw Exception('Missing required data for hold');
@@ -192,7 +190,7 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
     final holdUntilString = holdUntil.toIso8601String();
 
     final request = HoldRequestModel(
-      plot: int.parse(summary.selectedPlot!.id),
+      plotIds: summary.selectedPlots!.map((p) => int.parse(p.id)).toList(),
       customer: summary.selectedCustomer!.id,
       agent: int.parse(agentId),
       customerName: summary.selectedCustomer!.name,
@@ -294,27 +292,31 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
       ],
     );
     
+    final selectedPlots = widget.bookingSummary.selectedPlots ?? [];
     final plotCard = _buildInfoCard(
       icon: IconsAssets.locationIcon,
       iconColor: Colors.red,
-      title: 'Plot Information',
+      title: selectedPlots.length > 1
+          ? 'Plot Information (${selectedPlots.length} plots)'
+          : 'Plot Information',
       children: [
-        _buildInfoRow(
-          'Plot',
-          widget.bookingSummary.selectedPlot?.plotNumber ?? '-',
-        ),
         _buildInfoRow(
           'Project',
           widget.bookingSummary.selectedProject?.name ?? '-',
         ),
-        _buildInfoRow(
-          'Area',
-          '${widget.bookingSummary.selectedPlot?.area ?? '-'} sq mtr',
-        ),
-        // _buildInfoRow(
-        //   'Price',
-        //   '₹${widget.bookingSummary.selectedPlot?.price ?? '-'}',
-        // ),
+        if (selectedPlots.length == 1) ...[
+          _buildInfoRow('Plot', selectedPlots.first.plotNumber),
+          _buildInfoRow('Area', '${selectedPlots.first.area.toInt()} sq mtr'),
+        ] else ...[
+          ...selectedPlots.asMap().entries.map((entry) {
+            final idx = entry.key + 1;
+            final p = entry.value;
+            return _buildInfoRow(
+              'Plot $idx',
+              'No. ${p.plotNumber}  |  ${p.area.toInt()} sq mtr',
+            );
+          }),
+        ],
       ],
     );
     

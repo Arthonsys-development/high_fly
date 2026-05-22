@@ -71,7 +71,7 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
       // Apply search filter
       if (_searchQuery.isNotEmpty) {
         final projectName = booking.project?.name ?? '';
-        final matchesSearch = booking.plotCode.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+        final matchesSearch = booking.matchesPlotSearch(_searchQuery) ||
                              booking.customerName.toLowerCase().contains(_searchQuery.toLowerCase()) ||
                              booking.customerPhone.contains(_searchQuery) ||
                              booking.statusDisplay.toLowerCase().contains(_searchQuery.toLowerCase()) ||
@@ -1087,7 +1087,9 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
                 children: [
                   Expanded(
                     child: Text(
-                      'Plot: ${booking.plotCode}',
+                      booking.hasMultiplePlots
+                          ? 'Plots: ${booking.displayPlotLabel}'
+                          : 'Plot: ${booking.displayPlotLabel}',
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
@@ -1123,7 +1125,7 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
               const SizedBox(height: 8),
               _buildInfoRow('Booking Date', booking.bookingDate),
               const SizedBox(height: 8),
-              _buildInfoRow('Amount', '₹${booking.totalAmount}'),
+              _buildInfoRow('Amount', '₹${booking.displayTotalAmount}'),
             ],
           ),
         ),

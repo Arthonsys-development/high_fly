@@ -4,50 +4,42 @@ import '../../../config/constant/app_colors.dart';
 import '../../../data/models/project_model.dart';
 
 class PlotDetailsCard extends StatelessWidget {
-  final Plot? selectedPlot;
+  final List<Plot>? selectedPlots;
   final String? selectedProjectName;
 
   const PlotDetailsCard({
     super.key,
-    this.selectedPlot,
+    this.selectedPlots,
     this.selectedProjectName,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (selectedPlot == null) {
+    if (selectedPlots == null || selectedPlots!.isEmpty) {
       return const SizedBox.shrink();
     }
 
-    final plot = selectedPlot!;
+    if (selectedPlots!.length == 1) {
+      return _buildSinglePlotCard(context, selectedPlots!.first);
+    }
+
+    return _buildMultiPlotCard(context, selectedPlots!);
+  }
+
+  Widget _buildSinglePlotCard(BuildContext context, Plot plot) {
     final saleableSize = plot.saleableSize;
     final saleableSizeValue = saleableSize ?? 0;
     final hasSaleableSize = saleableSize != null && saleableSize > 0;
     final priceWithPlc = plot.priceWithPlc;
     final showPlcBreakup =
         priceWithPlc != null && priceWithPlc > 0 && priceWithPlc != plot.price;
-    final plcLabel = plot.plcApplied ? 'PLC Applied' : 'PLC Available';
     final plc = plot.plc ? 'Yes' : 'No';
     final showPlcSummary = plot.plcApplied && plot.priceWithPlc != null;
 
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(kIsWeb ? 24 : 20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(kIsWeb ? 12 : 12),
-        border: kIsWeb ? Border.all(
-          color: const Color(0xFFE5E7EB),
-          width: 1,
-        ) : null,
-        boxShadow: kIsWeb ? [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ] : null,
-      ),
+      decoration: _cardDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -71,7 +63,7 @@ class PlotDetailsCard extends StatelessWidget {
                   if (hasSaleableSize)
                     _DetailItem(
                       'Saleable Size:',
-                      '${saleableSizeValue.toStringAsFixed(0)} sq mtr',
+                      '${saleableSizeValue.toStringAsFixed(0)} sq yd',
                     ),
                   _DetailItem(
                     showPlcBreakup ? 'Price (with PLC):' : 'Price:',
@@ -90,13 +82,9 @@ class PlotDetailsCard extends StatelessWidget {
                 child: _buildDetailColumn([
                   _DetailItem('Plot number:', plot.plotNumber),
                   _DetailItem('Facing:', plot.facing),
-                  if (plot.remark.isNotEmpty)
-                    _DetailItem('Remark:', plot.remark),
+                  if (plot.remark.isNotEmpty) _DetailItem('Remark:', plot.remark),
                   _DetailItem('Plc:', plc),
-                  /*if (plot.plc || plot.plcApplied)
-                    _DetailItem(plcLabel, plot.plc || plot.plcApplied ? 'Yes' : 'No'),*/
-                  if (plot.status.isNotEmpty)
-                    _DetailItem('Status:', plot.status),
+                  if (plot.status.isNotEmpty) _DetailItem('Status:', plot.status),
                 ]),
               ),
             ],
@@ -107,6 +95,203 @@ class PlotDetailsCard extends StatelessWidget {
           ],
         ],
       ),
+    );
+  }
+
+  Widget _buildMultiPlotCard(BuildContext context, List<Plot> plots) {
+    final totalAmount = Plot.formatCombinedTotalAmount(plots);
+    final totalStr =
+        totalAmount.isEmpty ? '' : '₹${totalAmount}';
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(kIsWeb ? 24 : 20),
+      decoration: _cardDecoration(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                'Plot Details',
+                style: TextStyle(
+                  fontSize: kIsWeb ? 18 : 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.headingTextColor,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  '${plots.length} plots',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primaryColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: kIsWeb ? 8 : 6),
+          Text(
+            selectedProjectName ?? '',
+            style: const TextStyle(
+              fontSize: 14,
+              color: AppColors.darkGreyColor,
+            ),
+          ),
+          SizedBox(height: kIsWeb ? 16 : 12),
+          ...plots.asMap().entries.map((entry) {
+            final idx = entry.key;
+            final plot = entry.value;
+            return _buildPlotRow(idx + 1, plot);
+          }),
+          if (totalStr.isNotEmpty) ...[
+            const Divider(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Combined Total:',
+                  style: TextStyle(
+                    fontSize: kIsWeb ? 15 : 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.headingTextColor,
+                  ),
+                ),
+                Text(
+                  totalStr,
+                  style: TextStyle(
+                    fontSize: kIsWeb ? 17 : 15,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primaryColor,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPlotRow(int index, Plot plot) {
+    final metaParts = <String>[
+      if (plot.area > 0) '${plot.area.toStringAsFixed(2)} sq mtr',
+      if (plot.facing.trim().isNotEmpty) '${plot.facing} facing',
+      if (plot.effectivePrice > 0)
+        '₹${plot.effectivePrice.toStringAsFixed(2)}',
+      if (plot.plcApplied && plot.plcPercentage != null && plot.plcPercentage! > 0)
+        '${plot.plcPercentage!.toStringAsFixed(2)}% PLC',
+  
+    ];
+    debugPrint('metaParts=${metaParts}');
+    debugPrint('plot.plotNumber=${plot.toJson()}');
+    debugPrint('plot.plcApplied=${plot.plcApplied}');
+    debugPrint('plot.plcPercentage=${plot.plcPercentage}');
+    debugPrint('plot.effectivePrice=${plot.effectivePrice}');
+    final metaLine = metaParts.join('  |  ');
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.primaryColor.withValues(alpha: 0.03),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.lightGreyBorderColor),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 24,
+            height: 24,
+            decoration: BoxDecoration(
+              color: AppColors.primaryColor,
+              shape: BoxShape.circle,
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              '$index',
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Plot No. ${plot.plotNumber}',
+                  style: TextStyle(
+                    fontSize: kIsWeb ? 15 : 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.headingTextColor,
+                  ),
+                ),
+                if (metaLine.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    metaLine,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: AppColors.darkGreyColor,
+                    ),
+                  ),
+                ],
+                if (plot.saleableSize != null && plot.saleableSize! > 0) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    'Saleable: ${plot.saleableSize!.toStringAsFixed(2)} sq yd',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textColor,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          Text(
+            '₹${plot.effectivePrice.toStringAsFixed(2)}',
+            style: TextStyle(
+              fontSize: kIsWeb ? 14 : 13,
+              fontWeight: FontWeight.w600,
+              color: AppColors.primaryColor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  BoxDecoration _cardDecoration() {
+    return BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(kIsWeb ? 12 : 12),
+      border: kIsWeb
+          ? Border.all(color: const Color(0xFFE5E7EB), width: 1)
+          : null,
+      boxShadow: kIsWeb
+          ? [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
+              ),
+            ]
+          : null,
     );
   }
 
@@ -218,10 +403,10 @@ class PlotDetailsCard extends StatelessWidget {
             item.value,
             style: TextStyle(
               fontSize: kIsWeb ? 17 : 16,
-              fontWeight: item.isHighlighted ? FontWeight.w600 : FontWeight.w400,
-              color: item.isHighlighted 
-                  ? AppColors.primaryColor 
-                  : AppColors.textColor,
+              fontWeight:
+                  item.isHighlighted ? FontWeight.w600 : FontWeight.w400,
+              color:
+                  item.isHighlighted ? AppColors.primaryColor : AppColors.textColor,
             ),
           ),
         ],

@@ -24,6 +24,11 @@ class PaymentDetailsSection extends StatefulWidget {
   final bool plcApplied;
   final double? plcPercentage;
   final String? pricePerSqYd;
+  /// Pre-computed total for multi-plot bookings. When provided, this value is
+  /// used as the initial total amount instead of computing from price × size.
+  final String? precomputedTotalAmount;
+  /// When set (from project pay_name), AI verifies the cheque payee matches this name.
+  final String? expectedPayName;
 
   const PaymentDetailsSection({
     super.key,
@@ -37,6 +42,8 @@ class PaymentDetailsSection extends StatefulWidget {
     this.plcApplied = false,
     this.plcPercentage,
     this.pricePerSqYd,
+    this.precomputedTotalAmount,
+    this.expectedPayName,
   });
 
   @override
@@ -132,7 +139,11 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
             : (widget.pricePerSqYd ?? '');
     _pricePerSqYdController = TextEditingController(text: resolvedPricePerSqYd);
     final initialPrice = resolvedPricePerSqYd;
-    final initialTotal = _computeTotalAmount(initialPrice);
+    final computedTotal = _computeTotalAmount(initialPrice);
+    // For multi-plot bookings a pre-computed total is passed in directly.
+    final initialTotal = (widget.precomputedTotalAmount?.isNotEmpty == true)
+        ? widget.precomputedTotalAmount!
+        : computedTotal;
     _totalAmountController = TextEditingController(
       text: widget.initialPaymentDetails?.totalAmount.isNotEmpty == true
           ? widget.initialPaymentDetails!.totalAmount
@@ -157,13 +168,13 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
 
   String _computeTotalAmount(String priceText) {
     final price = double.tryParse(priceText.trim());
-    final size = widget.saleableSize;
-    if (price == null || size == null || size == 0) return '';
+    //final size = widget.saleableSize;
+    if (price == null  ) return '';
     double effectivePrice = price;
     if (widget.plcApplied && widget.plcPercentage != null && widget.plcPercentage! > 0) {
       effectivePrice = price * (1 + widget.plcPercentage! / 100);
     }
-    final total = effectivePrice * size;
+    final total = effectivePrice;
     return total % 1 == 0 ? total.toStringAsFixed(0) : total.toStringAsFixed(2);
   }
 
@@ -1486,8 +1497,16 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
     }
   }
 
+  String? get _effectiveExpectedPayName {
+    final name = widget.expectedPayName?.trim();
+    return (name != null && name.isNotEmpty) ? name : null;
+  }
+
   Future<void> _runChequeAnalysis(List<int> imageBytes) async {
-    final result = await _chequeAnalysisService.analyzeCheque(imageBytes);
+    final result = await _chequeAnalysisService.analyzeCheque(
+      imageBytes,
+      expectedPayName: _effectiveExpectedPayName,
+    );
     if (!mounted) return;
 
     if (result.isNotACheque) {
@@ -1535,6 +1554,29 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
       return;
     }
 
+    if (result.isPayNameMismatch) {
+      setState(() {
+        _isAnalyzingCheque = false;
+        _chequeInfo = null;
+        _chequeManualOverride = false;
+        _lastChequeImageBytes = null;
+        _chequeNumberController.clear();
+        _chequeDateController.clear();
+        _paymentDetails = _paymentDetails.copyWith(
+          chequeImageName: null,
+          chequeImageBytes: null,
+          chequeNumber: null,
+          chequeDate: null,
+        );
+      });
+      _showNotChequeDialog(
+        result.errorMessage ??
+            'The payee name on the cheque does not match the required payee for this project.',
+        title: 'Payee Name Mismatch',
+      );
+      return;
+    }
+
     if (result.isServerError ||
         result.status == ChequeAnalysisStatus.unknownError) {
       // Server busy or unknown error — keep image, show retry/manual option
@@ -1573,16 +1615,16 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
     });
   }
 
-  void _showNotChequeDialog(String message) {
+  void _showNotChequeDialog(String message, {String title = 'Not a Cheque'}) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
-          children: const [
-            Icon(Icons.error_outline, color: Colors.red, size: 24),
-            SizedBox(width: 8),
-            Text('Not a Cheque', style: TextStyle(fontSize: 18)),
+          children: [
+            const Icon(Icons.error_outline, color: Colors.red, size: 24),
+            const SizedBox(width: 8),
+            Text(title, style: const TextStyle(fontSize: 18)),
           ],
         ),
         content: Text(message),

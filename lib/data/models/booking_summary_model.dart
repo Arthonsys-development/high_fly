@@ -8,7 +8,7 @@ import 'hold_details_model.dart';
 @immutable
 class BookingSummary {
   final Project? selectedProject;
-  final Plot? selectedPlot;
+  final List<Plot>? selectedPlots;
   final Customer? selectedCustomer;
   final HoldDetails? holdDetails;
   final PaymentDetails? paymentDetails;
@@ -17,7 +17,7 @@ class BookingSummary {
 
   const BookingSummary({
     this.selectedProject,
-    this.selectedPlot,
+    this.selectedPlots,
     this.selectedCustomer,
     this.holdDetails,
     this.paymentDetails,
@@ -25,34 +25,42 @@ class BookingSummary {
     this.documents,
   });
 
+  /// Convenience getter for the first (or only) selected plot.
+  Plot? get selectedPlot =>
+      selectedPlots != null && selectedPlots!.isNotEmpty ? selectedPlots!.first : null;
+
+  bool get hasMultiplePlots => (selectedPlots?.length ?? 0) > 1;
+
   BookingSummary copyWith({
     Project? selectedProject,
-    Plot? selectedPlot,
+    List<Plot>? selectedPlots,
     Customer? selectedCustomer,
     HoldDetails? holdDetails,
     PaymentDetails? paymentDetails,
     BankDetails? bankDetails,
     List<String>? documents,
   }) {
-    return (holdDetails != null) ? BookingSummary(
-      selectedProject: selectedProject ?? this.selectedProject,
-      selectedPlot: selectedPlot ?? this.selectedPlot,
-      selectedCustomer: selectedCustomer ?? this.selectedCustomer,
-      holdDetails: holdDetails,
-      bankDetails: bankDetails ?? this.bankDetails,
-      documents: documents ?? this.documents,
-    ) : BookingSummary(
-      selectedProject: selectedProject ?? this.selectedProject,
-      selectedPlot: selectedPlot ?? this.selectedPlot,
-      selectedCustomer: selectedCustomer ?? this.selectedCustomer,
-      paymentDetails: paymentDetails ?? this.paymentDetails,
-      bankDetails: bankDetails ?? this.bankDetails,
-      documents: documents ?? this.documents,
-    );
+    return (holdDetails != null)
+        ? BookingSummary(
+            selectedProject: selectedProject ?? this.selectedProject,
+            selectedPlots: selectedPlots ?? this.selectedPlots,
+            selectedCustomer: selectedCustomer ?? this.selectedCustomer,
+            holdDetails: holdDetails,
+            bankDetails: bankDetails ?? this.bankDetails,
+            documents: documents ?? this.documents,
+          )
+        : BookingSummary(
+            selectedProject: selectedProject ?? this.selectedProject,
+            selectedPlots: selectedPlots ?? this.selectedPlots,
+            selectedCustomer: selectedCustomer ?? this.selectedCustomer,
+            paymentDetails: paymentDetails ?? this.paymentDetails,
+            bankDetails: bankDetails ?? this.bankDetails,
+            documents: documents ?? this.documents,
+          );
   }
 
   @override
   String toString() {
-    return 'BookingSummary(selectedProject: $selectedProject, selectedPlot: $selectedPlot, selectedCustomer: $selectedCustomer, holdDetails: $holdDetails, paymentDetails: $paymentDetails, bankDetails: $bankDetails, documents: $documents)';
+    return 'BookingSummary(selectedProject: $selectedProject, selectedPlots: $selectedPlots, selectedCustomer: $selectedCustomer, holdDetails: $holdDetails, paymentDetails: $paymentDetails, bankDetails: $bankDetails, documents: $documents)';
   }
 }

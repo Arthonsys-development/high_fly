@@ -206,6 +206,7 @@ class Project {
   final double? latitude;
   final double? longitude;
   final String? budget;
+  final String? payName;
   final MapChart? mapCharts;
   final List<GalleryFile> galleryFiles;
 
@@ -227,6 +228,7 @@ class Project {
     this.latitude,
     this.longitude,
     this.budget,
+    this.payName,
     this.mapCharts,
     this.galleryFiles = const [],
   });
@@ -289,6 +291,8 @@ class Project {
     
     // Handle budget field
     final budget = json['budget']?.toString();
+
+    final payName = json['pay_name']?.toString().trim();
 
     // Handle latitude and longitude from location field (comma-separated)
     double? latitude;
@@ -366,6 +370,7 @@ class Project {
       latitude: latitude,
       longitude: longitude,
       budget: budget,
+      payName: payName != null && payName.isNotEmpty ? payName : null,
       mapCharts: mapCharts,
       galleryFiles: galleryFiles,
     );
@@ -396,6 +401,7 @@ class Project {
       'latitude': latitude,
       'longitude': longitude,
       'budget': budget,
+      'pay_name': payName,
       'map_charts': mapCharts?.toJson(),
       'gallery_files': galleryFiles.map((f) => f.toJson()).toList(),
     };

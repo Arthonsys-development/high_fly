@@ -19,7 +19,10 @@ class ApiConstants {
   
   // Booking Endpoints
   static const String plotBookings = 'plot-bookings/';
+  /// PATCH/legacy hold by id (e.g. plot-holds/{id}/)
   static const String plotHolds = 'plot-holds/';
+  /// POST create hold — /api/v1/projects/plots/holds/create/
+  static const String plotHoldsCreate = 'projects/plots/holds/create/';
   static const String holdsList = 'projects/plots/holds/';
   static const String bookingsList = 'projects/plots/bookings/';
   

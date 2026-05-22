@@ -34,6 +34,7 @@ extension ProjectConversion on Project {
       name: name,
       plots: [], // API doesn't provide plots directly, they might be fetched separately
       availablePlotCount: availablePlotCount ?? 0, // Pass the available plot count from API
+      payName: payName,
     );
   }
 }
@@ -52,12 +53,11 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
   final List<Customer> customers = SampleDataProvider.getSampleCustomers();
   int _currentStep = 0; // 0: Project & Plot, 1: Customer, 2: Payment, 3: Bank Details, 4: Upload Documents, 5: Review & Confirm
   int _currentHoldStep = 0; // 0: Project & Plot, 1: Customer, 2: Hold Details, 3: Bank Details, 4: Upload Documents, 5: Review & Confirm
-  String _selectedPlotPrice = '85000'; // Default price, will be updated from plot selection
   final ScrollController _scrollController = ScrollController();
   
   // Booking data to pass to review section
   local_model.Project? _selectedProject;
-  local_model.Plot? _selectedPlot;
+  List<local_model.Plot> _selectedPlots = [];
   Customer? _selectedCustomer;
   HoldDetails? _holdDetails;
   PaymentDetails? _paymentDetails;
@@ -69,7 +69,7 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
   void _resetFormData() {
     setState(() {
       _selectedProject = null;
-      _selectedPlot = null;
+      _selectedPlots = [];
       _selectedCustomer = null;
       _holdDetails = null;
       _paymentDetails = null;
@@ -78,9 +78,24 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
       _documentFiles = [];
       _currentStep = 0;
       _currentHoldStep = 0;
-      _selectedPlotPrice = '85000';
       _hasHandledNavigation = false;
     });
+  }
+
+  /// Computes total amount = Σ(effectivePrice × saleableSize) for all selected plots.
+  String _computePlotsTotalAmount(List<local_model.Plot> plots) {
+    double total = 0;
+    for (final plot in plots) {
+      final effectivePrice = plot.plcApplied && plot.plcPercentage != null
+          ? plot.price * (1 + plot.plcPercentage! / 100)
+          : plot.price;
+      final size = plot.saleableSize ?? 0;
+      total += effectivePrice * size;
+    }
+    if (total == 0) return '';
+    return total % 1 == 0
+        ? total.toStringAsFixed(0)
+        : total.toStringAsFixed(2);
   }
 
   bool _hasHandledNavigation = false;
@@ -428,15 +443,14 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
               projects: localProjects,
               nextButtonText: "Next",
               initialProject: _selectedProject,
-              initialPlot: _selectedPlot,
+              initialPlots: _selectedPlots.isEmpty ? null : _selectedPlots,
               onRefreshProjects: () =>
                   ref.read(projectsControllerProvider.notifier).loadProjects(),
               isRefreshingProjects: projectsState.isLoading,
-              onNext: (selectedProject, selectedPlot) {
+              onNext: (selectedProject, selectedPlots) {
                 setState(() {
                   _selectedProject = selectedProject;
-                  _selectedPlot = selectedPlot;
-                  _selectedPlotPrice = selectedPlot?.price.toString() ?? '85000';
+                  _selectedPlots = selectedPlots;
                   _currentStep = 1; // Move to customer selection
                 });
                 _resetScrollPosition();
@@ -467,16 +481,25 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
         );
       } else if (_currentStep == 2) {
         // Payment Details Step
+        final isMultiPlot = _selectedPlots.length > 1;
+        final singlePlot = _selectedPlots.isNotEmpty ? _selectedPlots.first : null;
+        final precomputedTotal = _selectedPlots.isNotEmpty
+            ? local_model.Plot.formatCombinedTotalAmount(_selectedPlots)
+            : null;
         return PaymentDetailsSection(
           key: Key('booking_step_$_currentStep'),
           title: actionType,
-          paymentAmount: _selectedPlotPrice,
+          paymentAmount: isMultiPlot
+              ? _computePlotsTotalAmount(_selectedPlots)
+              : (singlePlot?.price.toString() ?? ''),
           nextButtonText: "Next",
           initialPaymentDetails: _paymentDetails,
-          saleableSize: _selectedPlot?.saleableSize,
-          plcApplied: _selectedPlot?.plcApplied ?? false,
-          plcPercentage: _selectedPlot?.plcPercentage,
-          pricePerSqYd: _selectedPlot?.price.toString(),
+          saleableSize: isMultiPlot ? null : singlePlot?.saleableSize,
+          plcApplied: isMultiPlot ? false : (singlePlot?.plcApplied ?? false),
+          plcPercentage: isMultiPlot ? null : singlePlot?.plcPercentage,
+          pricePerSqYd: isMultiPlot ? null : singlePlot?.price.toString(),
+          precomputedTotalAmount: precomputedTotal,
+          expectedPayName: _selectedProject?.payName,
           onPrevious: () {
             setState(() {
               _currentStep = 1; // Go back to customer selection
@@ -485,7 +508,6 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
           onNext: (paymentDetails) {
             setState(() {
               _paymentDetails = paymentDetails;
-              // _currentStep = 3; // Move to bank details
               _currentStep = 5; // Move to review & confirm
             });
             _resetScrollPosition();
@@ -553,7 +575,6 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
               nextButtonText: actionType,
               onPrevious: () {
                 setState(() {
-                  // _currentStep = 4; // Go back to upload documents
                   _currentStep = 2; // Go back to payment details
                 });
               },
@@ -562,7 +583,7 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
               },
               bookingSummary: BookingSummary(
                 selectedProject: _selectedProject,
-                selectedPlot: _selectedPlot,
+                selectedPlots: _selectedPlots.isEmpty ? null : _selectedPlots,
                 selectedCustomer: _selectedCustomer,
                 paymentDetails: _paymentDetails,
                 bankDetails: _bankDetails,
@@ -570,7 +591,6 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
               ),
               documentFiles: kIsWeb ? _documentFiles : null,
               isHoldFlow: false,
-            //  agentId: int.parse(agentId),
               onResetForm: _resetFormData,
               onSuccess: () {
                 setState(() {
@@ -649,15 +669,14 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
               projects: localProjects,
               nextButtonText: "Next",
               initialProject: _selectedProject,
-              initialPlot: _selectedPlot,
+              initialPlots: _selectedPlots.isEmpty ? null : _selectedPlots,
               onRefreshProjects: () =>
                   ref.read(projectsControllerProvider.notifier).loadProjects(),
               isRefreshingProjects: projectsState.isLoading,
-              onNext: (selectedProject, selectedPlot) {
+              onNext: (selectedProject, selectedPlots) {
                 setState(() {
                   _selectedProject = selectedProject;
-                  _selectedPlot = selectedPlot;
-                  _selectedPlotPrice = selectedPlot?.price.toString() ?? '85000';
+                  _selectedPlots = selectedPlots;
                   _currentHoldStep = 1; // Move to customer selection
                 });
                 _resetScrollPosition();
@@ -768,8 +787,7 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
               nextButtonText: "Hold",
               onPrevious: () {
                 setState(() {
-                  // _currentHoldStep = 4; // Go back to upload documents
-                  _currentHoldStep = 2; // Go back to payment details
+                  _currentHoldStep = 2; // Go back to hold details
                 });
               },
               onNext: () {
@@ -777,16 +795,14 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
               },
               bookingSummary: BookingSummary(
                 selectedProject: _selectedProject,
-                selectedPlot: _selectedPlot,
+                selectedPlots: _selectedPlots.isEmpty ? null : _selectedPlots,
                 selectedCustomer: _selectedCustomer,
                 holdDetails: _holdDetails,
-               // paymentDetails: _paymentDetails,
                 bankDetails: _bankDetails,
                 documents: _documents.isEmpty ? null : _documents,
               ),
               documentFiles: kIsWeb ? _documentFiles : null,
               isHoldFlow: true,
-            // agentId: int.parse(agentId),
               onResetForm: _resetFormData,
               onSuccess: () {
                 setState(() {
@@ -826,7 +842,11 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
 
   Widget _buildSuccessStep({required bool isHoldFlow}) {
     final projectName = _selectedProject?.name ?? 'N/A';
-    final plotName = _selectedPlot?.plotNumber ?? 'N/A';
+    final plotName = _selectedPlots.isEmpty
+        ? 'N/A'
+        : _selectedPlots.length == 1
+            ? _selectedPlots.first.plotNumber
+            : _selectedPlots.map((p) => p.plotNumber).join(', ');
     final customerName = _selectedCustomer?.name ?? 'N/A';
 
     return Center(
