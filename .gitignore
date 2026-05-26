@@ -1,3 +1,9 @@
+# Environment files (secrets — copy from assets/env/*.example)
+assets/env/.env.dev
+assets/env/.env.prod
+.env
+.env.*
+
 # Miscellaneous
 *.class
 *.log

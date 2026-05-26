@@ -109,14 +109,10 @@ Vistarak is a cross-platform mobile and web application built with Flutter that 
 
 3. **Set up environment files**
    
-   Create environment configuration files in `assets/env/`:
-   - `.env.dev` - Development environment
-   - `.env.prod` - Production environment
-   
-   Example `.env.dev`:
-   ```env
-   ENVIRONMENT=dev
-   BASE_URL=https://your-api-url.com/api/v1/
+   Environment files are not committed to git. Copy the examples and fill in your values:
+   ```bash
+   cp assets/env/.env.dev.example assets/env/.env.dev
+   cp assets/env/.env.prod.example assets/env/.env.prod
    ```
 
 4. **Firebase Setup**

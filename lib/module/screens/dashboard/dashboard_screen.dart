@@ -21,6 +21,7 @@ import '../bookings/webview_screen.dart';
 import '../../providers/analytics_provider.dart';
 import '../../providers/booking_navigation_provider.dart';
 import '../../providers/hold_status_provider.dart';
+import '../../providers/app_config_provider.dart';
 // Conditional import for web image widget
 import '../visitors/web_image_widget.dart' if (dart.library.io) '../visitors/web_image_widget_stub.dart';
 
@@ -136,6 +137,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       if (!_isDisposed && mounted) {
         try {
           ref.read(projectsControllerProvider.notifier).loadProjects();
+          ref.read(appConfigControllerProvider.notifier).loadAppConfig();
           // Log dashboard view analytics
           final analyticsService = ref.read(analyticsProvider);
           analyticsService.logDashboardViewed();
@@ -160,6 +162,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen>
       if (!_isDisposed && mounted) {
         try {
           ref.read(projectsControllerProvider.notifier).loadProjects();
+          ref.read(appConfigControllerProvider.notifier).loadAppConfig();
         } catch (e) {
           // Silently catch any errors from accessing deactivated widget
           debugPrint('Error refreshing projects on resume: $e');

@@ -17,6 +17,7 @@ import '../../../data/providers/sample_data_provider.dart';
 import '../../providers/projects_provider.dart';
 import '../../providers/booking_navigation_provider.dart';
 import '../../providers/hold_status_provider.dart';
+import '../../providers/app_config_provider.dart';
 import '../../widgets/booking/booking_form_section.dart';
 import '../../widgets/booking/customer_selection_section.dart';
 import '../../widgets/booking/hold_details_section.dart';
@@ -65,6 +66,13 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
   List<String> _documents = [];
   List<DocumentFileData> _documentFiles = []; // Store file data for web uploads
 
+  /// Refreshes projects and app config (hold limits, max plots, etc.).
+  void _refreshScreenData() {
+    ref.read(projectsControllerProvider.notifier).loadProjects();
+    ref.read(projectsControllerProvider.notifier).loadActiveProjects();
+    ref.read(appConfigControllerProvider.notifier).loadAppConfig();
+  }
+
   // Method to reset all form data
   void _resetFormData() {
     setState(() {
@@ -80,6 +88,7 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
       _currentHoldStep = 0;
       _hasHandledNavigation = false;
     });
+    _refreshScreenData();
   }
 
   /// Computes total amount = Σ(effectivePrice × saleableSize) for all selected plots.
@@ -169,10 +178,7 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     // Always refresh projects when the screen is opened
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(projectsControllerProvider.notifier).loadProjects();
-      ref.read(projectsControllerProvider.notifier).loadActiveProjects();
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _refreshScreenData());
   }
 
   @override
@@ -593,6 +599,7 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
               isHoldFlow: false,
               onResetForm: _resetFormData,
               onSuccess: () {
+                _refreshScreenData();
                 setState(() {
                   _currentStep = 6;
                 });
@@ -668,6 +675,7 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
               title: actionType,
               projects: localProjects,
               nextButtonText: "Next",
+              isHoldFlow: true,
               initialProject: _selectedProject,
               initialPlots: _selectedPlots.isEmpty ? null : _selectedPlots,
               onRefreshProjects: () =>
@@ -805,6 +813,7 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
               isHoldFlow: true,
               onResetForm: _resetFormData,
               onSuccess: () {
+                _refreshScreenData();
                 setState(() {
                   _currentHoldStep = 6;
                 });

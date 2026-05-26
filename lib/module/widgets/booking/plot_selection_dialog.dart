@@ -6,12 +6,16 @@ class PlotSelectionDialog extends StatefulWidget {
   final List<Plot> plots;
   final Set<String> selectedPlotIds;
   final Function(List<Plot>) onPlotsSelected;
+  final int maxPlotSelect;
+  final String? limitReachedMessage;
 
   const PlotSelectionDialog({
     super.key,
     required this.plots,
     required this.selectedPlotIds,
     required this.onPlotsSelected,
+    this.maxPlotSelect = 1,
+    this.limitReachedMessage,
   });
 
   @override
@@ -57,13 +61,45 @@ class _PlotSelectionDialogState extends State<PlotSelectionDialog> {
   }
 
   void _togglePlot(Plot plot) {
-    setState(() {
-      if (_selectedIds.contains(plot.id)) {
-        _selectedIds.remove(plot.id);
-      } else {
-        _selectedIds.add(plot.id);
+    if (_selectedIds.contains(plot.id)) {
+      setState(() => _selectedIds.remove(plot.id));
+      return;
+    }
+
+    final max = widget.maxPlotSelect < 1 ? 1 : widget.maxPlotSelect;
+
+    if (max <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('You cannot hold any more plots'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    if (_selectedIds.length >= max) {
+      if (max == 1) {
+        setState(() {
+          _selectedIds
+            ..clear()
+            ..add(plot.id);
+        });
+        return;
       }
-    });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            widget.limitReachedMessage ??
+                'You can select up to $max plot${max > 1 ? 's' : ''} only',
+          ),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    setState(() => _selectedIds.add(plot.id));
   }
 
   void _confirm() {
@@ -109,15 +145,29 @@ class _PlotSelectionDialogState extends State<PlotSelectionDialog> {
                 children: [
                   Row(
                     children: [
-                      const Text(
-                        'Select Plots',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.headingTextColor,
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Select Plots',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.headingTextColor,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Select up to ${widget.maxPlotSelect < 1 ? 1 : widget.maxPlotSelect} plot${widget.maxPlotSelect == 1 ? '' : 's'}',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: AppColors.darkGreyColor,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      const Spacer(),
                       if (_selectedIds.isNotEmpty)
                         Container(
                           padding: const EdgeInsets.symmetric(
@@ -127,7 +177,7 @@ class _PlotSelectionDialogState extends State<PlotSelectionDialog> {
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
-                            '${_selectedIds.length} selected',
+                            '${_selectedIds.length}/${widget.maxPlotSelect < 1 ? 1 : widget.maxPlotSelect}',
                             style: const TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,

@@ -43,5 +43,6 @@ class SharedPreferenceStrings{
   static String phoneNumber = 'phone_number';
   static String profilePhoto = 'profile_photo';
   static String isGuest = 'is_guest';
+  static String appConfig = 'app_config';
 
 }

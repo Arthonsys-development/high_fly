@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:highfly/config/constant/const_assets.dart';
+import 'package:highfly/module/providers/app_config_provider.dart';
+import 'package:highfly/data/models/app_config_model.dart';
 import 'package:highfly/data/repository/auth_api_repository.dart';
 import '../../../data/models/project_model.dart' as local_model;
 import '../../../config/constant/app_colors.dart';
@@ -14,7 +17,7 @@ import 'plot_selection_dialog.dart';
 import '../guest_alert_helper.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-class BookingFormSection extends StatefulWidget {
+class BookingFormSection extends ConsumerStatefulWidget {
   final String title;
   final List<local_model.Project> projects;
   final VoidCallback? onPrevious;
@@ -24,6 +27,7 @@ class BookingFormSection extends StatefulWidget {
   final List<local_model.Plot>? initialPlots;
   final VoidCallback? onRefreshProjects;
   final bool isRefreshingProjects;
+  final bool isHoldFlow;
 
   const BookingFormSection({
     super.key,
@@ -36,13 +40,14 @@ class BookingFormSection extends StatefulWidget {
     this.initialPlots,
     this.onRefreshProjects,
     this.isRefreshingProjects = false,
+    this.isHoldFlow = false,
   });
 
   @override
-  State<BookingFormSection> createState() => _BookingFormSectionState();
+  ConsumerState<BookingFormSection> createState() => _BookingFormSectionState();
 }
 
-class _BookingFormSectionState extends State<BookingFormSection> {
+class _BookingFormSectionState extends ConsumerState<BookingFormSection> {
   local_model.Project? _selectedProject;
   List<local_model.Plot> _selectedPlots = [];
   final TextEditingController _projectController = TextEditingController();
@@ -66,6 +71,19 @@ class _BookingFormSectionState extends State<BookingFormSection> {
       _selectedPlots = List.from(widget.initialPlots!);
       _plotController.text = _buildPlotDisplayText(_selectedPlots);
     }
+    if (widget.isHoldFlow) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _trimPlotsToHoldLimit());
+    }
+  }
+
+  void _trimPlotsToHoldLimit() {
+    if (!widget.isHoldFlow || !mounted) return;
+    final max = _getMaxPlotSelect();
+    if (_selectedPlots.length <= max) return;
+    setState(() {
+      _selectedPlots = max > 0 ? _selectedPlots.sublist(0, max) : [];
+      _plotController.text = _buildPlotDisplayText(_selectedPlots);
+    });
   }
 
   @override
@@ -144,6 +162,7 @@ class _BookingFormSectionState extends State<BookingFormSection> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(appConfigControllerProvider);
     final spacing = kIsWeb ? 32.0 : 24.0;
     final largeSpacing = kIsWeb ? 48.0 : 40.0;
 
@@ -231,11 +250,7 @@ class _BookingFormSectionState extends State<BookingFormSection> {
               child: CustomTextField(
                 titleText: 'Available Plots',
                 controller: _plotController,
-                hintText: _isLoadingPlots
-                    ? 'Loading plots...'
-                    : _availablePlots.isEmpty
-                        ? 'No plots available'
-                        : 'Select Plots (multiple allowed)',
+                hintText: _plotFieldHintText(),
                 isMandatory: true,
                 borderRadius: 6,
                 enabled: false,
@@ -292,6 +307,11 @@ class _BookingFormSectionState extends State<BookingFormSection> {
             SizedBox(height: kIsWeb ? 36 : 32),
           ],
 
+          if (widget.isHoldFlow && _selectedProject != null) ...[
+            _buildHoldCapacityBanner(),
+            SizedBox(height: spacing),
+          ],
+
           // Plot details card — shows all selected plots
           PlotDetailsCard(
             selectedPlots: _selectedPlots.isEmpty ? null : _selectedPlots,
@@ -331,6 +351,29 @@ class _BookingFormSectionState extends State<BookingFormSection> {
       }
       return;
     }
+
+    if (widget.isHoldFlow) {
+      final max = _getMaxPlotSelect();
+      if (max <= 0) {
+        if (mounted) _showHoldLimitReachedDialog();
+        return;
+      }
+      if (_selectedPlots.length > max) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'You can hold at most $max plot${max == 1 ? '' : 's'} '
+                '(${_appConfig?.currentHoldBookings ?? 0}/${_appConfig?.maxHoldsPerAgent ?? 0} active holds)',
+              ),
+            ),
+          );
+        }
+        _trimPlotsToHoldLimit();
+        return;
+      }
+    }
+
     widget.onNext?.call(_selectedProject, _selectedPlots);
   }
 
@@ -355,18 +398,145 @@ class _BookingFormSectionState extends State<BookingFormSection> {
     );
   }
 
+  AppConfigData? get _appConfig =>
+      ref.read(appConfigControllerProvider).config?.config;
+
+  int _getMaxPlotSelect() {
+    final config = _appConfig;
+    if (widget.isHoldFlow) {
+      return config?.maxPlotsForHoldSelection ?? 1;
+    }
+    final max = config?.maxPlotSelect ?? 1;
+    return max < 1 ? 1 : max;
+  }
+
+  String _plotFieldHintText() {
+    if (_isLoadingPlots) return 'Loading plots...';
+    if (_availablePlots.isEmpty) return 'No plots available';
+    if (widget.isHoldFlow) {
+      final max = _getMaxPlotSelect();
+      if (max <= 0) return 'Hold limit reached';
+      if (max == 1) return 'Select 1 plot to hold';
+      return 'Select up to $max plots to hold';
+    }
+    final max = _getMaxPlotSelect();
+    if (max == 1) return 'Select a plot';
+    return 'Select up to $max plots';
+  }
+
+  Widget _buildHoldCapacityBanner() {
+    final config = _appConfig;
+    final current = config?.currentHoldBookings ?? 0;
+    final maxHolds = config?.maxHoldsPerAgent ?? 1;
+    final remaining = config?.remainingHoldSlots ?? 0;
+    final maxSelectable = _getMaxPlotSelect();
+
+    final Color bannerColor;
+    final IconData icon;
+    String message;
+
+    if (remaining <= 0) {
+      bannerColor = Colors.red;
+      icon = Icons.block;
+      message =
+          'You have reached the maximum of $maxHolds active hold${maxHolds == 1 ? '' : 's'} ($current/$maxHolds). '
+          'Complete or release existing holds before holding more plots.';
+    } else {
+      bannerColor = AppColors.primaryColor;
+      icon = Icons.info_outline;
+      message =
+          'Active holds: $current/$maxHolds. You can hold up to $maxSelectable more plot${maxSelectable == 1 ? '' : 's'} in this session.';
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: bannerColor.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: bannerColor.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: bannerColor, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(
+                fontSize: 13,
+                color: bannerColor,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showHoldLimitReachedDialog() {
+    final config = _appConfig;
+    final maxHolds = config?.maxHoldsPerAgent ?? 1;
+    final current = config?.currentHoldBookings ?? 0;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.block, color: Colors.red, size: 28),
+            SizedBox(width: 10),
+            Text('Hold Limit Reached'),
+          ],
+        ),
+        content: Text(
+          'You already have $current active hold${current == 1 ? '' : 's'} '
+          'and the maximum allowed is $maxHolds per agent.\n\n'
+          'Complete or release existing holds before holding more plots.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showPlotSelectionDialog() {
     if (_selectedProject == null || _availablePlots.isEmpty) return;
+
+    final maxPlotSelect = _getMaxPlotSelect();
+
+    if (widget.isHoldFlow && maxPlotSelect <= 0) {
+      _showHoldLimitReachedDialog();
+      return;
+    }
+
+    final config = _appConfig;
+    final holdLimitMessage = widget.isHoldFlow && config != null
+        ? 'You can hold up to $maxPlotSelect plot${maxPlotSelect == 1 ? '' : 's'} '
+            '(${config.currentHoldBookings}/${config.maxHoldsPerAgent} active holds used)'
+        : null;
 
     showDialog(
       context: context,
       builder: (context) => PlotSelectionDialog(
         plots: _availablePlots,
         selectedPlotIds: _selectedPlots.map((p) => p.id).toSet(),
+        maxPlotSelect: maxPlotSelect,
+        limitReachedMessage: holdLimitMessage,
         onPlotsSelected: (plots) {
+          final trimmed = plots.length > maxPlotSelect
+              ? plots.sublist(0, maxPlotSelect)
+              : plots;
           setState(() {
-            _selectedPlots = plots;
-            _plotController.text = _buildPlotDisplayText(plots);
+            _selectedPlots = trimmed;
+            _plotController.text = _buildPlotDisplayText(trimmed);
           });
         },
       ),

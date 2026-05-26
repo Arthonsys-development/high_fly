@@ -35,4 +35,5 @@ class ApiConstants {
 
   // Admin Endpoints
   static const String holdStatus = 'admin/hold-status/';
+  static const String appConfig = 'admin/app-config/';
 }

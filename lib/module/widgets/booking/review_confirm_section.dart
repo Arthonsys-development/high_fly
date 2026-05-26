@@ -200,7 +200,7 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
       teamLeaderName: summary.holdDetails!.teamLeaderName ?? '',
       clientAadhar: summary.holdDetails!.clientAadhar,
       holdAmount: 0.0, // Default hold amount, should be configurable
-      paymentMode: 'rtgs', // Default payment mode for holds
+      paymentMode: '',
       paymentReference: _generatePaymentReference(),
       accountHolderName: summary.bankDetails?.accountHolderName ?? '',
       branchName: summary.bankDetails?.branchName ?? '',
