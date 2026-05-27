@@ -78,12 +78,17 @@ class _BookingFormSectionState extends ConsumerState<BookingFormSection> {
 
   void _trimPlotsToHoldLimit() {
     if (!widget.isHoldFlow || !mounted) return;
-    final max = _getMaxPlotSelect();
-    if (_selectedPlots.length <= max) return;
+    final maxPlots = _getMaxPlotSelect();
+    if (_selectedPlots.length <= maxPlots) return;
     setState(() {
-      _selectedPlots = max > 0 ? _selectedPlots.sublist(0, max) : [];
+      _selectedPlots = _selectedPlots.sublist(0, maxPlots);
       _plotController.text = _buildPlotDisplayText(_selectedPlots);
     });
+  }
+
+  bool _canCreateNewHold() {
+    if (!widget.isHoldFlow) return true;
+    return _appConfig?.canCreateNewHold ?? true;
   }
 
   @override
@@ -353,18 +358,17 @@ class _BookingFormSectionState extends ConsumerState<BookingFormSection> {
     }
 
     if (widget.isHoldFlow) {
-      final max = _getMaxPlotSelect();
-      if (max <= 0) {
+      if (!_canCreateNewHold()) {
         if (mounted) _showHoldLimitReachedDialog();
         return;
       }
-      if (_selectedPlots.length > max) {
+      final maxPlots = _getMaxPlotSelect();
+      if (_selectedPlots.length > maxPlots) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                'You can hold at most $max plot${max == 1 ? '' : 's'} '
-                '(${_appConfig?.currentHoldBookings ?? 0}/${_appConfig?.maxHoldsPerAgent ?? 0} active holds)',
+                'You can select up to $maxPlots plot${maxPlots == 1 ? '' : 's'} per hold',
               ),
             ),
           );
@@ -404,7 +408,7 @@ class _BookingFormSectionState extends ConsumerState<BookingFormSection> {
   int _getMaxPlotSelect() {
     final config = _appConfig;
     if (widget.isHoldFlow) {
-      return config?.maxPlotsForHoldSelection ?? 1;
+      return config?.maxPlotsPerHold ?? 1;
     }
     final max = config?.maxPlotSelect ?? 1;
     return max < 1 ? 1 : max;
@@ -414,10 +418,10 @@ class _BookingFormSectionState extends ConsumerState<BookingFormSection> {
     if (_isLoadingPlots) return 'Loading plots...';
     if (_availablePlots.isEmpty) return 'No plots available';
     if (widget.isHoldFlow) {
+      if (!_canCreateNewHold()) return 'Hold booking limit reached';
       final max = _getMaxPlotSelect();
-      if (max <= 0) return 'Hold limit reached';
       if (max == 1) return 'Select 1 plot to hold';
-      return 'Select up to $max plots to hold';
+      return 'Select up to $max plots per hold';
     }
     final max = _getMaxPlotSelect();
     if (max == 1) return 'Select a plot';
@@ -428,24 +432,25 @@ class _BookingFormSectionState extends ConsumerState<BookingFormSection> {
     final config = _appConfig;
     final current = config?.currentHoldBookings ?? 0;
     final maxHolds = config?.maxHoldsPerAgent ?? 1;
-    final remaining = config?.remainingHoldSlots ?? 0;
-    final maxSelectable = _getMaxPlotSelect();
+    final remaining = config?.remainingHoldBookings ?? 0;
+    final maxPlotsPerHold = _getMaxPlotSelect();
 
     final Color bannerColor;
     final IconData icon;
     String message;
 
-    if (remaining <= 0) {
+    if (!_canCreateNewHold()) {
       bannerColor = Colors.red;
       icon = Icons.block;
       message =
-          'You have reached the maximum of $maxHolds active hold${maxHolds == 1 ? '' : 's'} ($current/$maxHolds). '
-          'Complete or release existing holds before holding more plots.';
+          'You have reached the maximum of $maxHolds hold booking${maxHolds == 1 ? '' : 's'} ($current/$maxHolds). '
+          'Complete or release an existing hold before creating a new one.';
     } else {
       bannerColor = AppColors.primaryColor;
       icon = Icons.info_outline;
       message =
-          'Active holds: $current/$maxHolds. You can hold up to $maxSelectable more plot${maxSelectable == 1 ? '' : 's'} in this session.';
+          'Hold bookings: $current/$maxHolds used ($remaining remaining). '
+          'This hold can include up to $maxPlotsPerHold plot${maxPlotsPerHold == 1 ? '' : 's'}.';
     }
 
     return Container(
@@ -493,9 +498,9 @@ class _BookingFormSectionState extends ConsumerState<BookingFormSection> {
           ],
         ),
         content: Text(
-          'You already have $current active hold${current == 1 ? '' : 's'} '
+          'You already have $current active hold booking${current == 1 ? '' : 's'} '
           'and the maximum allowed is $maxHolds per agent.\n\n'
-          'Complete or release existing holds before holding more plots.',
+          'Complete or release an existing hold before creating a new hold booking.',
         ),
         actions: [
           TextButton(
@@ -510,17 +515,15 @@ class _BookingFormSectionState extends ConsumerState<BookingFormSection> {
   void _showPlotSelectionDialog() {
     if (_selectedProject == null || _availablePlots.isEmpty) return;
 
-    final maxPlotSelect = _getMaxPlotSelect();
-
-    if (widget.isHoldFlow && maxPlotSelect <= 0) {
+    if (widget.isHoldFlow && !_canCreateNewHold()) {
       _showHoldLimitReachedDialog();
       return;
     }
 
-    final config = _appConfig;
-    final holdLimitMessage = widget.isHoldFlow && config != null
-        ? 'You can hold up to $maxPlotSelect plot${maxPlotSelect == 1 ? '' : 's'} '
-            '(${config.currentHoldBookings}/${config.maxHoldsPerAgent} active holds used)'
+    final maxPlotSelect = _getMaxPlotSelect();
+
+    final holdLimitMessage = widget.isHoldFlow
+        ? 'You can select up to $maxPlotSelect plot${maxPlotSelect == 1 ? '' : 's'} per hold booking'
         : null;
 
     showDialog(

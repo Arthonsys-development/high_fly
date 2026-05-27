@@ -21,17 +21,19 @@ class AppConfigData {
     required this.systemName,
   });
 
-  /// Plots the agent can still hold (max_holds_per_agent − current_hold_bookings).
-  int get remainingHoldSlots {
+  /// Hold bookings the agent can still create (not plot count).
+  int get remainingHoldBookings {
     final remaining = maxHoldsPerAgent - currentHoldBookings;
     return remaining > 0 ? remaining : 0;
   }
 
-  /// Max plots selectable in one hold session.
-  int get maxPlotsForHoldSelection {
-    final plotLimit = maxPlotSelect < 1 ? 1 : maxPlotSelect;
-    final holdLimit = remainingHoldSlots;
-    return plotLimit < holdLimit ? plotLimit : holdLimit;
+  /// Whether the agent can start another hold booking.
+  bool get canCreateNewHold => currentHoldBookings < maxHoldsPerAgent;
+
+  /// Max plots selectable in a single hold booking.
+  int get maxPlotsPerHold {
+    final limit = maxPlotSelect;
+    return limit < 1 ? 1 : limit;
   }
 
   factory AppConfigData.fromJson(Map<String, dynamic> json) {
