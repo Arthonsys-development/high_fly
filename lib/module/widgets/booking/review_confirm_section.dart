@@ -123,9 +123,6 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
       customerAddress: summary.selectedCustomer!.location ?? '',
       bookingType: summary.paymentDetails!.paymentTypeKey,
       bookingAmount: summary.paymentDetails!.paymentAmount,
-      totalAmount: summary.paymentDetails!.totalAmount.isNotEmpty
-          ? summary.paymentDetails!.totalAmount
-          : summary.paymentDetails!.paymentAmount,
       paymentMode: summary.paymentDetails!.paymentMethodKey,
       paymentReference: _generatePaymentReference(),
       chequeNumber: summary.paymentDetails!.chequeNumber ?? '',
@@ -152,9 +149,6 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
       loanBankName: summary.paymentDetails!.loanBankName,
       loanBankKey: summary.paymentDetails!.loanBankKey,
       loanAmount: summary.paymentDetails!.loanAmount,
-      pricePerSqYd: summary.paymentDetails!.pricePerSqYd.isNotEmpty
-          ? summary.paymentDetails!.pricePerSqYd
-          : null,
     );
 
     // Prepare document files for web upload
@@ -327,18 +321,7 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
             iconColor: AppColors.primaryColor,
             title: 'Payment Information',
             children: [
-              
-              if (paymentDetails?.pricePerSqYd.isNotEmpty == true)
-                _buildInfoRow(
-                  'Price (per Sq Yd)',
-                  '₹${paymentDetails!.pricePerSqYd}',
-                ),
-              if (paymentDetails?.totalAmount.isNotEmpty == true)
-                _buildInfoRow(
-                  'Total Amount',
-                  '₹${paymentDetails!.totalAmount}',
-                ),
-                _buildInfoRow(
+              _buildInfoRow(
                 'Booking Amount',
                 '₹${paymentDetails?.paymentAmount ?? '-'}',
               ),

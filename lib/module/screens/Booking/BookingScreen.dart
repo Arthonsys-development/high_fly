@@ -91,22 +91,6 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
     _refreshScreenData();
   }
 
-  /// Computes total amount = Σ(effectivePrice × saleableSize) for all selected plots.
-  String _computePlotsTotalAmount(List<local_model.Plot> plots) {
-    double total = 0;
-    for (final plot in plots) {
-      final effectivePrice = plot.plcApplied && plot.plcPercentage != null
-          ? plot.price * (1 + plot.plcPercentage! / 100)
-          : plot.price;
-      final size = plot.saleableSize ?? 0;
-      total += effectivePrice * size;
-    }
-    if (total == 0) return '';
-    return total % 1 == 0
-        ? total.toStringAsFixed(0)
-        : total.toStringAsFixed(2);
-  }
-
   bool _hasHandledNavigation = false;
 
   Future<void> _onTabTapped(int index) async {
@@ -448,6 +432,7 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
               title: actionType,
               projects: localProjects,
               nextButtonText: "Next",
+              hidePlotPricing: true,
               initialProject: _selectedProject,
               initialPlots: _selectedPlots.isEmpty ? null : _selectedPlots,
               onRefreshProjects: () =>
@@ -487,24 +472,13 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
         );
       } else if (_currentStep == 2) {
         // Payment Details Step
-        final isMultiPlot = _selectedPlots.length > 1;
-        final singlePlot = _selectedPlots.isNotEmpty ? _selectedPlots.first : null;
-        final precomputedTotal = _selectedPlots.isNotEmpty
-            ? local_model.Plot.formatCombinedTotalAmount(_selectedPlots)
-            : null;
         return PaymentDetailsSection(
           key: Key('booking_step_$_currentStep'),
           title: actionType,
-          paymentAmount: isMultiPlot
-              ? _computePlotsTotalAmount(_selectedPlots)
-              : (singlePlot?.price.toString() ?? ''),
+          paymentAmount: '',
           nextButtonText: "Next",
+          hidePlotPricing: true,
           initialPaymentDetails: _paymentDetails,
-          saleableSize: isMultiPlot ? null : singlePlot?.saleableSize,
-          plcApplied: isMultiPlot ? false : (singlePlot?.plcApplied ?? false),
-          plcPercentage: isMultiPlot ? null : singlePlot?.plcPercentage,
-          pricePerSqYd: isMultiPlot ? null : singlePlot?.price.toString(),
-          precomputedTotalAmount: precomputedTotal,
           expectedPayName: _selectedProject?.payName,
           onPrevious: () {
             setState(() {
@@ -676,6 +650,7 @@ class _BookingProcessorScreenState extends ConsumerState<BookingProcessorScreen>
               projects: localProjects,
               nextButtonText: "Next",
               isHoldFlow: true,
+              hidePlotPricing: true,
               initialProject: _selectedProject,
               initialPlots: _selectedPlots.isEmpty ? null : _selectedPlots,
               onRefreshProjects: () =>

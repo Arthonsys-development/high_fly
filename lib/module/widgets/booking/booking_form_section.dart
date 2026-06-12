@@ -28,6 +28,7 @@ class BookingFormSection extends ConsumerStatefulWidget {
   final VoidCallback? onRefreshProjects;
   final bool isRefreshingProjects;
   final bool isHoldFlow;
+  final bool hidePlotPricing;
 
   const BookingFormSection({
     super.key,
@@ -41,6 +42,7 @@ class BookingFormSection extends ConsumerStatefulWidget {
     this.onRefreshProjects,
     this.isRefreshingProjects = false,
     this.isHoldFlow = false,
+    this.hidePlotPricing = false,
   });
 
   @override
@@ -72,7 +74,9 @@ class _BookingFormSectionState extends ConsumerState<BookingFormSection> {
       _plotController.text = _buildPlotDisplayText(_selectedPlots);
     }
     if (widget.isHoldFlow) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => _trimPlotsToHoldLimit());
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _trimPlotsToHoldLimit(),
+      );
     }
   }
 
@@ -100,7 +104,7 @@ class _BookingFormSectionState extends ConsumerState<BookingFormSection> {
 
   String _buildPlotDisplayText(List<local_model.Plot> plots) {
     if (plots.isEmpty) return '';
-    if (plots.length == 1) return plots.first.displayText;
+    // if (plots.length == 1) return plots.first.displayText;
     return '${plots.length} plots selected (${plots.map((p) => p.plotNumber).join(', ')})';
   }
 
@@ -109,9 +113,11 @@ class _BookingFormSectionState extends ConsumerState<BookingFormSection> {
     bool preserveExistingSelection = false,
   }) async {
     final previousPlots = preserveExistingSelection
-        ? List<local_model.Plot>.from(_selectedPlots.isNotEmpty
-            ? _selectedPlots
-            : widget.initialPlots ?? [])
+        ? List<local_model.Plot>.from(
+            _selectedPlots.isNotEmpty
+                ? _selectedPlots
+                : widget.initialPlots ?? [],
+          )
         : <local_model.Plot>[];
 
     setState(() {
@@ -159,9 +165,9 @@ class _BookingFormSectionState extends ConsumerState<BookingFormSection> {
       }
     } catch (e) {
       setState(() => _isLoadingPlots = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading plots: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error loading plots: $e')));
     }
   }
 
@@ -172,10 +178,7 @@ class _BookingFormSectionState extends ConsumerState<BookingFormSection> {
     final largeSpacing = kIsWeb ? 48.0 : 40.0;
 
     return SingleChildScrollView(
-      padding: EdgeInsets.only(
-        top: kIsWeb ? 24 : 20,
-        bottom: kIsWeb ? 24 : 20,
-      ),
+      padding: EdgeInsets.only(top: kIsWeb ? 24 : 20, bottom: kIsWeb ? 24 : 20),
       child: Column(
         children: [
           SizedBox(height: kIsWeb ? 24 : 20),
@@ -206,7 +209,9 @@ class _BookingFormSectionState extends ConsumerState<BookingFormSection> {
                         color: AppColors.primaryColor,
                       ),
                 label: Text(
-                  widget.isRefreshingProjects ? 'Refreshing...' : 'Refresh Projects',
+                  widget.isRefreshingProjects
+                      ? 'Refreshing...'
+                      : 'Refresh Projects',
                   style: TextStyle(
                     fontSize: kIsWeb ? 15 : 14,
                     fontWeight: FontWeight.w500,
@@ -321,6 +326,7 @@ class _BookingFormSectionState extends ConsumerState<BookingFormSection> {
           PlotDetailsCard(
             selectedPlots: _selectedPlots.isEmpty ? null : _selectedPlots,
             selectedProjectName: _selectedProject?.name,
+            hidePlotPricing: widget.hidePlotPricing,
           ),
 
           SizedBox(height: largeSpacing),
@@ -345,7 +351,9 @@ class _BookingFormSectionState extends ConsumerState<BookingFormSection> {
   }
 
   Future<void> _handleNext() async {
-    final isGuest = await _secureStorage.read(key: SharedPreferenceStrings.isGuest);
+    final isGuest = await _secureStorage.read(
+      key: SharedPreferenceStrings.isGuest,
+    );
     if (isGuest == 'true') {
       if (mounted) {
         GuestAlertHelper.showGuestAlert(

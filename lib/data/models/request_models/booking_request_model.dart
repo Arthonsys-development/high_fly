@@ -8,7 +8,7 @@ class BookingRequestModel {
   final String customerAddress;
   final String bookingType;
   final String bookingAmount;
-  final String totalAmount;
+  final String? totalAmount;
   final String paymentMode;
   final String paymentReference;
   final String chequeNumber;
@@ -48,7 +48,7 @@ class BookingRequestModel {
     required this.customerAddress,
     required this.bookingType,
     required this.bookingAmount,
-    required this.totalAmount,
+    this.totalAmount,
     required this.paymentMode,
     required this.paymentReference,
     required this.chequeNumber,
@@ -90,7 +90,8 @@ class BookingRequestModel {
       'customer_address': customerAddress,
       'booking_type': bookingType,
       'booking_amount': bookingAmount,
-      'total_amount': totalAmount,
+      if (totalAmount != null && totalAmount!.isNotEmpty)
+        'total_amount': totalAmount,
       'payment_mode': paymentMode,
       'payment_reference': paymentReference,
       'cheque_number': chequeNumber,

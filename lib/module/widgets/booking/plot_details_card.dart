@@ -6,11 +6,13 @@ import '../../../data/models/project_model.dart';
 class PlotDetailsCard extends StatelessWidget {
   final List<Plot>? selectedPlots;
   final String? selectedProjectName;
+  final bool hidePlotPricing;
 
   const PlotDetailsCard({
     super.key,
     this.selectedPlots,
     this.selectedProjectName,
+    this.hidePlotPricing = false,
   });
 
   @override
@@ -65,16 +67,18 @@ class PlotDetailsCard extends StatelessWidget {
                       'Saleable Size:',
                       '${saleableSizeValue.toStringAsFixed(0)} sq yd',
                     ),
-                  _DetailItem(
-                    showPlcBreakup ? 'Price (with PLC):' : 'Price:',
-                    '₹${plot.effectivePrice.toStringAsFixed(2)}',
-                    isHighlighted: true,
-                  ),
-                  if (showPlcBreakup)
+                  if (!hidePlotPricing && plot.effectivePrice > 0) ...[
                     _DetailItem(
-                      'Base Price:',
-                      '₹${plot.price.toStringAsFixed(2)}',
+                      showPlcBreakup ? 'Price (with PLC):' : 'Price:',
+                      '₹${plot.effectivePrice.toStringAsFixed(2)}',
+                      isHighlighted: true,
                     ),
+                    if (showPlcBreakup && plot.price > 0)
+                      _DetailItem(
+                        'Base Price:',
+                        '₹${plot.price.toStringAsFixed(2)}',
+                      ),
+                  ],
                 ]),
               ),
               SizedBox(width: kIsWeb ? 32 : 20),
@@ -82,14 +86,16 @@ class PlotDetailsCard extends StatelessWidget {
                 child: _buildDetailColumn([
                   _DetailItem('Plot number:', plot.plotNumber),
                   _DetailItem('Facing:', plot.facing),
-                  if (plot.remark.isNotEmpty) _DetailItem('Remark:', plot.remark),
+                  if (plot.remark.isNotEmpty)
+                    _DetailItem('Remark:', plot.remark),
                   _DetailItem('Plc:', plc),
-                  if (plot.status.isNotEmpty) _DetailItem('Status:', plot.status),
+                  if (plot.status.isNotEmpty)
+                    _DetailItem('Status:', plot.status),
                 ]),
               ),
             ],
           ),
-          if (showPlcSummary) ...[
+          if (!hidePlotPricing && showPlcSummary) ...[
             SizedBox(height: kIsWeb ? 28 : 24),
             _buildPlcSummary(plot),
           ],
@@ -100,8 +106,7 @@ class PlotDetailsCard extends StatelessWidget {
 
   Widget _buildMultiPlotCard(BuildContext context, List<Plot> plots) {
     final totalAmount = Plot.formatCombinedTotalAmount(plots);
-    final totalStr =
-        totalAmount.isEmpty ? '' : '₹${totalAmount}';
+    final totalStr = totalAmount.isEmpty ? '' : '₹${totalAmount}';
 
     return Container(
       width: double.infinity,
@@ -122,8 +127,10 @@ class PlotDetailsCard extends StatelessWidget {
               ),
               const SizedBox(width: 10),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 3,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.primaryColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),
@@ -153,7 +160,7 @@ class PlotDetailsCard extends StatelessWidget {
             final plot = entry.value;
             return _buildPlotRow(idx + 1, plot);
           }),
-          if (totalStr.isNotEmpty) ...[
+          if (!hidePlotPricing && totalStr.isNotEmpty) ...[
             const Divider(height: 24),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -186,11 +193,12 @@ class PlotDetailsCard extends StatelessWidget {
     final metaParts = <String>[
       if (plot.area > 0) '${plot.area.toStringAsFixed(2)} sq mtr',
       if (plot.facing.trim().isNotEmpty) '${plot.facing} facing',
-      if (plot.effectivePrice > 0)
+      if (!hidePlotPricing && plot.effectivePrice > 0)
         '₹${plot.effectivePrice.toStringAsFixed(2)}',
-      if (plot.plcApplied && plot.plcPercentage != null && plot.plcPercentage! > 0)
+      if (plot.plcApplied &&
+          plot.plcPercentage != null &&
+          plot.plcPercentage! > 0)
         '${plot.plcPercentage!.toStringAsFixed(2)}% PLC',
-  
     ];
     debugPrint('metaParts=${metaParts}');
     debugPrint('plot.plotNumber=${plot.toJson()}');
@@ -263,14 +271,15 @@ class PlotDetailsCard extends StatelessWidget {
               ],
             ),
           ),
-          Text(
-            '₹${plot.effectivePrice.toStringAsFixed(2)}',
-            style: TextStyle(
-              fontSize: kIsWeb ? 14 : 13,
-              fontWeight: FontWeight.w600,
-              color: AppColors.primaryColor,
+          if (!hidePlotPricing && plot.effectivePrice > 0)
+            Text(
+              '₹${plot.effectivePrice.toStringAsFixed(2)}',
+              style: TextStyle(
+                fontSize: kIsWeb ? 14 : 13,
+                fontWeight: FontWeight.w600,
+                color: AppColors.primaryColor,
+              ),
             ),
-          ),
         ],
       ),
     );
@@ -403,10 +412,12 @@ class PlotDetailsCard extends StatelessWidget {
             item.value,
             style: TextStyle(
               fontSize: kIsWeb ? 17 : 16,
-              fontWeight:
-                  item.isHighlighted ? FontWeight.w600 : FontWeight.w400,
-              color:
-                  item.isHighlighted ? AppColors.primaryColor : AppColors.textColor,
+              fontWeight: item.isHighlighted
+                  ? FontWeight.w600
+                  : FontWeight.w400,
+              color: item.isHighlighted
+                  ? AppColors.primaryColor
+                  : AppColors.textColor,
             ),
           ),
         ],

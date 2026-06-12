@@ -210,7 +210,7 @@ class Plot {
     final dimensionLabel = dimensions.isNotEmpty
         ? dimensions
         : '${area.toStringAsFixed(2)}';
-    return '$dimensionLabel - ${area.toStringAsFixed(2)} - ₹${effectivePrice.toStringAsFixed(2)}';
+    return '$dimensionLabel - ${area.toStringAsFixed(2)}';
   }
 
   static double? _parseDouble(dynamic value) {

@@ -222,6 +222,7 @@ class _HoldDetailScreenState extends ConsumerState<HoldDetailScreen> {
                           .toList(),
                       selectedProjectName: hold.project?.name ??
                           hold.plotDetails.first.projectName,
+                      hidePlotPricing: true,
                     ),
                     SizedBox(height: isDesktopWeb ? 16 : 12),
                     _buildDetailCard([

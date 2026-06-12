@@ -24,11 +24,16 @@ class PaymentDetailsSection extends StatefulWidget {
   final bool plcApplied;
   final double? plcPercentage;
   final String? pricePerSqYd;
+
   /// Pre-computed total for multi-plot bookings. When provided, this value is
   /// used as the initial total amount instead of computing from price × size.
   final String? precomputedTotalAmount;
+
   /// When set (from project pay_name), AI verifies the cheque payee matches this name.
   final String? expectedPayName;
+
+  /// When true, plot price/total are not prefilled or submitted.
+  final bool hidePlotPricing;
 
   const PaymentDetailsSection({
     super.key,
@@ -44,6 +49,7 @@ class PaymentDetailsSection extends StatefulWidget {
     this.pricePerSqYd,
     this.precomputedTotalAmount,
     this.expectedPayName,
+    this.hidePlotPricing = false,
   });
 
   @override
@@ -83,14 +89,20 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
     // Initialize with provided payment details if available, otherwise use defaults
     if (widget.initialPaymentDetails != null) {
       _paymentDetails = widget.initialPaymentDetails!;
-      _selectedPaymentTypeKey = widget.initialPaymentDetails!.paymentTypeKey;
+      if (_paymentDetails.paymentTypeKey.isEmpty) {
+        _paymentDetails = _paymentDetails.copyWith(
+          paymentTypeKey: PaymentType.oneTime,
+          paymentType: PaymentType.getValue(PaymentType.oneTime),
+        );
+      }
+      _selectedPaymentTypeKey = _paymentDetails.paymentTypeKey;
     } else {
       _paymentDetails = PaymentDetails(
         paymentAmount: '',
         paymentMethod: '',
         paymentMethodKey: '',
-        paymentType: '',
-        paymentTypeKey: '',
+        paymentType: PaymentType.getValue(PaymentType.oneTime),
+        paymentTypeKey: PaymentType.oneTime,
         panNumber: '',
         aadharNumber: '',
         additionalNotes: '',
@@ -99,61 +111,74 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
         rtgsImageName: null,
         rtgsImageBytes: null,
       );
+      _selectedPaymentTypeKey = PaymentType.oneTime;
     }
-    
+
     _paymentAmountController = TextEditingController(
-      text: widget.initialPaymentDetails?.paymentAmount ?? ''
+      text: widget.initialPaymentDetails?.paymentAmount ?? '',
     );
     _panNumberController = TextEditingController(
-      text: widget.initialPaymentDetails?.panNumber ?? ''
+      text: widget.initialPaymentDetails?.panNumber ?? '',
     );
     _aadharNumberController = TextEditingController(
-      text: widget.initialPaymentDetails?.aadharNumber ?? ''
+      text: widget.initialPaymentDetails?.aadharNumber ?? '',
     );
     _additionalNotesController = TextEditingController(
-      text: widget.initialPaymentDetails?.additionalNotes ?? ''
+      text: widget.initialPaymentDetails?.additionalNotes ?? '',
     );
     _paymentMethodController = TextEditingController(
-      text: widget.initialPaymentDetails?.paymentMethod ?? ''
+      text: widget.initialPaymentDetails?.paymentMethod ?? '',
     );
     _paymentTypeController = TextEditingController(
-      text: widget.initialPaymentDetails?.paymentType ?? ''
+      text: _paymentDetails.paymentType,
     );
     _chequeNumberController = TextEditingController(
-      text: widget.initialPaymentDetails?.chequeNumber ?? ''
+      text: widget.initialPaymentDetails?.chequeNumber ?? '',
     );
     _chequeDateController = TextEditingController(
       text: widget.initialPaymentDetails?.chequeDate != null
           ? '${widget.initialPaymentDetails!.chequeDate!.day.toString().padLeft(2, '0')}/${widget.initialPaymentDetails!.chequeDate!.month.toString().padLeft(2, '0')}/${widget.initialPaymentDetails!.chequeDate!.year}'
-          : ''
+          : '',
     );
     _bankController = TextEditingController(
-      text: widget.initialPaymentDetails?.loanBankName ?? ''
+      text: widget.initialPaymentDetails?.loanBankName ?? '',
     );
     _loanAmountController = TextEditingController(
-      text: widget.initialPaymentDetails?.loanAmount ?? ''
+      text: widget.initialPaymentDetails?.loanAmount ?? '',
     );
-    final resolvedPricePerSqYd =
-        (widget.initialPaymentDetails?.pricePerSqYd.isNotEmpty == true)
-            ? widget.initialPaymentDetails!.pricePerSqYd
-            : (widget.pricePerSqYd ?? '');
+    final resolvedPricePerSqYd = widget.hidePlotPricing
+        ? ''
+        : ((widget.initialPaymentDetails?.pricePerSqYd.isNotEmpty == true)
+              ? widget.initialPaymentDetails!.pricePerSqYd
+              : (widget.pricePerSqYd ?? ''));
     _pricePerSqYdController = TextEditingController(text: resolvedPricePerSqYd);
     final initialPrice = resolvedPricePerSqYd;
-    final computedTotal = _computeTotalAmount(initialPrice);
+    final computedTotal = widget.hidePlotPricing
+        ? ''
+        : _computeTotalAmount(initialPrice);
     // For multi-plot bookings a pre-computed total is passed in directly.
-    final initialTotal = (widget.precomputedTotalAmount?.isNotEmpty == true)
-        ? widget.precomputedTotalAmount!
-        : computedTotal;
+    final initialTotal = widget.hidePlotPricing
+        ? ''
+        : ((widget.precomputedTotalAmount?.isNotEmpty == true)
+              ? widget.precomputedTotalAmount!
+              : computedTotal);
     _totalAmountController = TextEditingController(
-      text: widget.initialPaymentDetails?.totalAmount.isNotEmpty == true
-          ? widget.initialPaymentDetails!.totalAmount
-          : initialTotal,
+      text: widget.hidePlotPricing
+          ? ''
+          : (widget.initialPaymentDetails?.totalAmount.isNotEmpty == true
+                ? widget.initialPaymentDetails!.totalAmount
+                : initialTotal),
     );
-    if (resolvedPricePerSqYd.isNotEmpty &&
+    if (!widget.hidePlotPricing &&
+        resolvedPricePerSqYd.isNotEmpty &&
         (widget.initialPaymentDetails?.pricePerSqYd ?? '').isEmpty) {
-      _paymentDetails = _paymentDetails.copyWith(pricePerSqYd: resolvedPricePerSqYd);
+      _paymentDetails = _paymentDetails.copyWith(
+        pricePerSqYd: resolvedPricePerSqYd,
+      );
     }
-    if (initialTotal.isNotEmpty && (widget.initialPaymentDetails?.totalAmount ?? '').isEmpty) {
+    if (!widget.hidePlotPricing &&
+        initialTotal.isNotEmpty &&
+        (widget.initialPaymentDetails?.totalAmount ?? '').isEmpty) {
       _paymentDetails = _paymentDetails.copyWith(totalAmount: initialTotal);
     }
     _upiTransactionIdController = TextEditingController(
@@ -169,9 +194,11 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
   String _computeTotalAmount(String priceText) {
     final price = double.tryParse(priceText.trim());
     //final size = widget.saleableSize;
-    if (price == null  ) return '';
+    if (price == null) return '';
     double effectivePrice = price;
-    if (widget.plcApplied && widget.plcPercentage != null && widget.plcPercentage! > 0) {
+    if (widget.plcApplied &&
+        widget.plcPercentage != null &&
+        widget.plcPercentage! > 0) {
       effectivePrice = price * (1 + widget.plcPercentage! / 100);
     }
     final total = effectivePrice;
@@ -200,12 +227,9 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
   Widget build(BuildContext context) {
     final spacing = kIsWeb ? 24.0 : 24.0;
     final largeSpacing = kIsWeb ? 40.0 : 40.0;
-    
+
     return SingleChildScrollView(
-      padding: EdgeInsets.only(
-        top: kIsWeb ? 20 : 20,
-        bottom: kIsWeb ? 20 : 20,
-      ),
+      padding: EdgeInsets.only(top: kIsWeb ? 20 : 20, bottom: kIsWeb ? 20 : 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -215,9 +239,9 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
             title: 'Payment Details',
             subtitle: 'Enter payment information',
           ),
-          
+
           SizedBox(height: largeSpacing),
-          
+
           // Web: Clean form layout with max width, Mobile: Stacked layout
           if (kIsWeb)
             Center(
@@ -227,7 +251,6 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                   
                     // Payment Amount field (full width)
                     CustomTextField(
                       titleText: 'Booking Amount',
@@ -238,7 +261,9 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                       borderRadius: 8,
                       onChanged: (value) {
                         setState(() {
-                          _paymentDetails = _paymentDetails.copyWith(paymentAmount: value);
+                          _paymentDetails = _paymentDetails.copyWith(
+                            paymentAmount: value,
+                          );
                         });
                       },
                     ),
@@ -261,23 +286,26 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                         ),
                       ),
                     ),
-                    
+
                     SizedBox(height: spacing),
-                    
+
                     // Cheque image upload (only visible if Payment Method is cheque)
-                    if (_paymentDetails.paymentMethodKey == PaymentMethod.cheque) ...[
+                    if (_paymentDetails.paymentMethodKey ==
+                        PaymentMethod.cheque) ...[
                       _buildChequeImageUploadSection(),
                       SizedBox(height: spacing),
                     ],
 
                     // RTGS slip upload (only visible if Payment Method is RTGS/NEFT)
-                    if (_paymentDetails.paymentMethodKey == PaymentMethod.rtgs) ...[
+                    if (_paymentDetails.paymentMethodKey ==
+                        PaymentMethod.rtgs) ...[
                       _buildRtgsImageUploadSection(),
                       SizedBox(height: spacing),
                     ],
 
                     // UPI Transaction ID (only visible if Payment Method is UPI)
-                    if (_paymentDetails.paymentMethodKey == PaymentMethod.upi) ...[
+                    if (_paymentDetails.paymentMethodKey ==
+                        PaymentMethod.upi) ...[
                       CustomTextField(
                         titleText: 'UPI Transaction ID',
                         controller: _upiTransactionIdController,
@@ -286,13 +314,15 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                         borderRadius: 8,
                         onChanged: (value) {
                           setState(() {
-                            _paymentDetails = _paymentDetails.copyWith(upiTransactionId: value);
+                            _paymentDetails = _paymentDetails.copyWith(
+                              upiTransactionId: value,
+                            );
                           });
                         },
                       ),
                       SizedBox(height: spacing),
                     ],
-                    
+
                     // Payment Type radio group (full width)
                     _buildPaymentTypeRadioGroup(borderRadius: 8),
 
@@ -331,7 +361,9 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                               keyboardType: TextInputType.number,
                               onChanged: (value) {
                                 setState(() {
-                                  _paymentDetails = _paymentDetails.copyWith(loanAmount: value);
+                                  _paymentDetails = _paymentDetails.copyWith(
+                                    loanAmount: value,
+                                  );
                                 });
                               },
                             ),
@@ -339,9 +371,9 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                         ],
                       ),
                     ],
-                    
+
                     SizedBox(height: spacing),
-                    
+
                     // Two-column layout for PAN Number and Aadhar Number
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -356,7 +388,9 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                             maxLength: 10,
                             onChanged: (value) {
                               setState(() {
-                                _paymentDetails = _paymentDetails.copyWith(panNumber: value);
+                                _paymentDetails = _paymentDetails.copyWith(
+                                  panNumber: value,
+                                );
                               });
                             },
                           ),
@@ -373,18 +407,20 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                             keyboardType: TextInputType.number,
                             onChanged: (value) {
                               setState(() {
-                                _paymentDetails = _paymentDetails.copyWith(aadharNumber: value);
+                                _paymentDetails = _paymentDetails.copyWith(
+                                  aadharNumber: value,
+                                );
                               });
                             },
                           ),
                         ),
                       ],
                     ),
-                    
+
                     SizedBox(height: spacing),
-                    
+
                     // Salaried Individual checkbox (only visible if Payment Type is Finance)
-                    if (_selectedPaymentTypeKey == PaymentType.finance ) ...[
+                    if (_selectedPaymentTypeKey == PaymentType.finance) ...[
                       Row(
                         mainAxisSize: MainAxisSize.max,
                         children: [
@@ -399,26 +435,33 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                             },
                             activeColor: AppColors.textFieldBGColor,
                             checkColor: AppColors.primaryColor,
-                            fillColor: WidgetStateProperty.resolveWith<Color>(
-                                  (Set<WidgetState> states) {
+                            fillColor: WidgetStateProperty.resolveWith<Color>((
+                              Set<WidgetState> states,
+                            ) {
                               if (states.contains(WidgetState.selected)) {
                                 return AppColors.textFieldBGColor;
                               }
                               return Colors.white;
-                            },
-                            ),
+                            }),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(4),
                             ),
-                            side: WidgetStateBorderSide.resolveWith(
-                                  (Set<WidgetState> states) {
+                            side: WidgetStateBorderSide.resolveWith((
+                              Set<WidgetState> states,
+                            ) {
                               if (states.contains(WidgetState.selected)) {
-                                return const BorderSide(color: AppColors.dropDownBorderColor, width: 1.5);
+                                return const BorderSide(
+                                  color: AppColors.dropDownBorderColor,
+                                  width: 1.5,
+                                );
                               }
-                              return const BorderSide(color: AppColors.dropDownBorderColor, width: 1);
-                            },
-                            ),
-                            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              return const BorderSide(
+                                color: AppColors.dropDownBorderColor,
+                                width: 1,
+                              );
+                            }),
+                            materialTapTargetSize:
+                                MaterialTapTargetSize.shrinkWrap,
                             visualDensity: VisualDensity.compact,
                           ),
                           const SizedBox(width: 4),
@@ -433,7 +476,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                       ),
                       const SizedBox(height: 20),
                     ],
-                    
+
                     // Salary Slip field (only visible if Salaried Individual is checked)
                     if (_paymentDetails.isSalariedIndividual) ...[
                       PdfUploadWidget(
@@ -444,12 +487,14 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                         placeholderText: 'Upload salary slip (PDF only)',
                         onFileSelected: (filePath) {
                           setState(() {
-                            _paymentDetails = _paymentDetails.copyWith(salarySlipPath: filePath);
+                            _paymentDetails = _paymentDetails.copyWith(
+                              salarySlipPath: filePath,
+                            );
                           });
                         },
                       ),
                       const SizedBox(height: 24),
-                      
+
                       // Form 16A field
                       PdfUploadWidget(
                         label: 'Form 16A',
@@ -459,25 +504,30 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                         placeholderText: 'Upload form 16A for reference',
                         onFileSelected: (filePath) {
                           setState(() {
-                            _paymentDetails = _paymentDetails.copyWith(form16APath: filePath);
+                            _paymentDetails = _paymentDetails.copyWith(
+                              form16APath: filePath,
+                            );
                           });
                         },
                       ),
                       SizedBox(height: spacing),
                     ],
-                    
+
                     // Additional Notes field (full width)
                     CustomTextField(
                       titleText: 'Additional Notes',
                       controller: _additionalNotesController,
-                      hintText: 'Enter any additional notes or special instructions',
+                      hintText:
+                          'Enter any additional notes or special instructions',
                       isMandatory: false,
                       maxLines: 3,
                       borderRadius: 8,
                       maxLength: 150,
                       onChanged: (value) {
                         setState(() {
-                          _paymentDetails = _paymentDetails.copyWith(additionalNotes: value);
+                          _paymentDetails = _paymentDetails.copyWith(
+                            additionalNotes: value,
+                          );
                         });
                       },
                     ),
@@ -488,8 +538,6 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
           else
             Column(
               children: [
-                
-
                 // Payment Amount field
                 CustomTextField(
                   titleText: 'Booking Amount',
@@ -508,7 +556,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                 ),
 
                 SizedBox(height: spacing),
-                
+
                 // Payment Method field
                 GestureDetector(
                   onTap: _showPaymentMethodDialog,
@@ -526,11 +574,12 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                     ),
                   ),
                 ),
-                
+
                 SizedBox(height: spacing),
-                
+
                 // Cheque image upload (only visible if Payment Method is cheque)
-                if (_paymentDetails.paymentMethodKey == PaymentMethod.cheque) ...[
+                if (_paymentDetails.paymentMethodKey ==
+                    PaymentMethod.cheque) ...[
                   _buildChequeImageUploadSection(),
                   SizedBox(height: spacing),
                 ],
@@ -551,13 +600,15 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                     borderRadius: 6,
                     onChanged: (value) {
                       setState(() {
-                        _paymentDetails = _paymentDetails.copyWith(upiTransactionId: value);
+                        _paymentDetails = _paymentDetails.copyWith(
+                          upiTransactionId: value,
+                        );
                       });
                     },
                   ),
                   SizedBox(height: spacing),
                 ],
-                
+
                 // Payment Type radio group
                 _buildPaymentTypeRadioGroup(borderRadius: 6),
 
@@ -590,14 +641,16 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                     keyboardType: TextInputType.number,
                     onChanged: (value) {
                       setState(() {
-                        _paymentDetails = _paymentDetails.copyWith(loanAmount: value);
+                        _paymentDetails = _paymentDetails.copyWith(
+                          loanAmount: value,
+                        );
                       });
                     },
                   ),
                 ],
-                
+
                 SizedBox(height: spacing),
-                
+
                 // PAN Number field
                 CustomTextField(
                   titleText: 'PAN Number',
@@ -608,13 +661,15 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                   maxLength: 10,
                   onChanged: (value) {
                     setState(() {
-                      _paymentDetails = _paymentDetails.copyWith(panNumber: value);
+                      _paymentDetails = _paymentDetails.copyWith(
+                        panNumber: value,
+                      );
                     });
                   },
                 ),
-                
+
                 SizedBox(height: spacing),
-                
+
                 // Aadhar Number field
                 CustomTextField(
                   titleText: 'Aadhar Number',
@@ -626,13 +681,15 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                   keyboardType: TextInputType.number,
                   onChanged: (value) {
                     setState(() {
-                      _paymentDetails = _paymentDetails.copyWith(aadharNumber: value);
+                      _paymentDetails = _paymentDetails.copyWith(
+                        aadharNumber: value,
+                      );
                     });
                   },
                 ),
-                
+
                 SizedBox(height: spacing),
-                
+
                 // Salaried Individual checkbox (only visible if Payment Type is Finance)
                 if (_selectedPaymentTypeKey == PaymentType.finance) ...[
                   Row(
@@ -649,25 +706,31 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                         },
                         activeColor: AppColors.textFieldBGColor,
                         checkColor: AppColors.primaryColor,
-                        fillColor: WidgetStateProperty.resolveWith<Color>(
-                              (Set<WidgetState> states) {
+                        fillColor: WidgetStateProperty.resolveWith<Color>((
+                          Set<WidgetState> states,
+                        ) {
                           if (states.contains(WidgetState.selected)) {
                             return AppColors.textFieldBGColor;
                           }
                           return Colors.white;
-                        },
-                        ),
+                        }),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(4),
                         ),
-                        side: WidgetStateBorderSide.resolveWith(
-                              (Set<WidgetState> states) {
+                        side: WidgetStateBorderSide.resolveWith((
+                          Set<WidgetState> states,
+                        ) {
                           if (states.contains(WidgetState.selected)) {
-                            return const BorderSide(color: AppColors.dropDownBorderColor, width: 1.5);
+                            return const BorderSide(
+                              color: AppColors.dropDownBorderColor,
+                              width: 1.5,
+                            );
                           }
-                          return const BorderSide(color: AppColors.dropDownBorderColor, width: 1);
-                        },
-                        ),
+                          return const BorderSide(
+                            color: AppColors.dropDownBorderColor,
+                            width: 1,
+                          );
+                        }),
                         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         visualDensity: VisualDensity.compact,
                       ),
@@ -683,7 +746,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                   ),
                   const SizedBox(height: 20),
                 ],
-                
+
                 // Salary Slip field (only visible if Salaried Individual is checked)
                 if (_paymentDetails.isSalariedIndividual) ...[
                   PdfUploadWidget(
@@ -694,12 +757,14 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                     placeholderText: 'Upload salary slip (PDF only)',
                     onFileSelected: (filePath) {
                       setState(() {
-                        _paymentDetails = _paymentDetails.copyWith(salarySlipPath: filePath);
+                        _paymentDetails = _paymentDetails.copyWith(
+                          salarySlipPath: filePath,
+                        );
                       });
                     },
                   ),
                   const SizedBox(height: 24),
-                  
+
                   // Form 16A field
                   PdfUploadWidget(
                     label: 'Form 16A',
@@ -709,43 +774,57 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                     placeholderText: 'Upload form 16A for reference',
                     onFileSelected: (filePath) {
                       setState(() {
-                        _paymentDetails = _paymentDetails.copyWith(form16APath: filePath);
+                        _paymentDetails = _paymentDetails.copyWith(
+                          form16APath: filePath,
+                        );
                       });
                     },
                   ),
                   SizedBox(height: spacing),
                 ],
-                
+
                 // Additional Notes field
                 CustomTextField(
                   titleText: 'Additional Notes',
                   controller: _additionalNotesController,
-                  hintText: 'Enter any additional notes or special instructions',
+                  hintText:
+                      'Enter any additional notes or special instructions',
                   isMandatory: false,
                   maxLines: 3,
                   borderRadius: 6,
                   maxLength: 150,
                   onChanged: (value) {
                     setState(() {
-                      _paymentDetails = _paymentDetails.copyWith(additionalNotes: value);
+                      _paymentDetails = _paymentDetails.copyWith(
+                        additionalNotes: value,
+                      );
                     });
                   },
                 ),
-
               ],
             ),
-          
+
           SizedBox(height: largeSpacing),
-          
+
           // Action buttons
           ActionButtons(
             onPrevious: widget.onPrevious,
-            onNext: _canProceed() ? () => widget.onNext?.call(_paymentDetails) : null,
+            onNext: _canProceed()
+                ? () {
+                    final details = widget.hidePlotPricing
+                        ? _paymentDetails.copyWith(
+                            pricePerSqYd: '',
+                            totalAmount: '',
+                          )
+                        : _paymentDetails;
+                    widget.onNext?.call(details);
+                  }
+                : null,
             isPreviousEnabled: widget.onPrevious != null,
             isNextEnabled: _canProceed(),
             nextButtonText: widget.nextButtonText,
           ),
-          
+
           SizedBox(height: kIsWeb ? 20 : 20),
         ],
       ),
@@ -759,14 +838,14 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
     // Payment Method is mandatory
     if (_paymentDetails.paymentMethodKey.isEmpty) return false;
 
-   
-
     if (_paymentDetails.paymentMethodKey == PaymentMethod.cheque) {
       // Cannot proceed while Gemini is still analyzing
       if (_isAnalyzingCheque) return false;
 
-      final hasNewChequeImage = _paymentDetails.chequeImageBytes?.isNotEmpty ?? false;
-      final hasExistingChequeImage = _paymentDetails.existingChequeImageUrl?.isNotEmpty ?? false;
+      final hasNewChequeImage =
+          _paymentDetails.chequeImageBytes?.isNotEmpty ?? false;
+      final hasExistingChequeImage =
+          _paymentDetails.existingChequeImageUrl?.isNotEmpty ?? false;
 
       if (!hasNewChequeImage && !hasExistingChequeImage) return false;
 
@@ -786,8 +865,10 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
     }
 
     if (_paymentDetails.paymentMethodKey == PaymentMethod.rtgs) {
-      final hasNewRtgsImage = _paymentDetails.rtgsImageBytes?.isNotEmpty ?? false;
-      final hasExistingRtgsImage = _paymentDetails.existingRtgsImageUrl?.isNotEmpty ?? false;
+      final hasNewRtgsImage =
+          _paymentDetails.rtgsImageBytes?.isNotEmpty ?? false;
+      final hasExistingRtgsImage =
+          _paymentDetails.existingRtgsImageUrl?.isNotEmpty ?? false;
       return hasNewRtgsImage || hasExistingRtgsImage;
     }
 
@@ -810,18 +891,36 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
             _paymentDetails = _paymentDetails.copyWith(
               paymentMethodKey: key,
               paymentMethod: value,
-              chequeNumber: key == PaymentMethod.cheque ? _paymentDetails.chequeNumber : null,
-              chequeDate: key == PaymentMethod.cheque ? _paymentDetails.chequeDate : null,
-              chequeImageName: key == PaymentMethod.cheque ? _paymentDetails.chequeImageName : null,
-              chequeImageBytes: key == PaymentMethod.cheque ? _paymentDetails.chequeImageBytes : null,
-              existingChequeImageUrl: key == PaymentMethod.cheque ? _paymentDetails.existingChequeImageUrl : null,
-              rtgsImageName: key == PaymentMethod.rtgs ? _paymentDetails.rtgsImageName : null,
-              rtgsImageBytes: key == PaymentMethod.rtgs ? _paymentDetails.rtgsImageBytes : null,
-              existingRtgsImageUrl: key == PaymentMethod.rtgs ? _paymentDetails.existingRtgsImageUrl : null,
-              upiTransactionId: key == PaymentMethod.upi ? _paymentDetails.upiTransactionId : null,
+              chequeNumber: key == PaymentMethod.cheque
+                  ? _paymentDetails.chequeNumber
+                  : null,
+              chequeDate: key == PaymentMethod.cheque
+                  ? _paymentDetails.chequeDate
+                  : null,
+              chequeImageName: key == PaymentMethod.cheque
+                  ? _paymentDetails.chequeImageName
+                  : null,
+              chequeImageBytes: key == PaymentMethod.cheque
+                  ? _paymentDetails.chequeImageBytes
+                  : null,
+              existingChequeImageUrl: key == PaymentMethod.cheque
+                  ? _paymentDetails.existingChequeImageUrl
+                  : null,
+              rtgsImageName: key == PaymentMethod.rtgs
+                  ? _paymentDetails.rtgsImageName
+                  : null,
+              rtgsImageBytes: key == PaymentMethod.rtgs
+                  ? _paymentDetails.rtgsImageBytes
+                  : null,
+              existingRtgsImageUrl: key == PaymentMethod.rtgs
+                  ? _paymentDetails.existingRtgsImageUrl
+                  : null,
+              upiTransactionId: key == PaymentMethod.upi
+                  ? _paymentDetails.upiTransactionId
+                  : null,
             );
             _paymentMethodController.text = value;
-            
+
             if (key != PaymentMethod.cheque) {
               _chequeNumberController.clear();
               _chequeDateController.clear();
@@ -896,7 +995,10 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                 onTap: () => _onPaymentTypeSelected(entry.key, entry.value),
                 child: Container(
                   margin: EdgeInsets.only(right: isFirst ? 10 : 0),
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
                     color: isSelected
                         ? AppColors.primaryColor.withValues(alpha: 0.07)
@@ -919,7 +1021,10 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                         visualDensity: VisualDensity.compact,
                         onChanged: (val) {
                           if (val != null) {
-                            _onPaymentTypeSelected(val, PaymentType.getValue(val));
+                            _onPaymentTypeSelected(
+                              val,
+                              PaymentType.getValue(val),
+                            );
                           }
                         },
                       ),
@@ -987,18 +1092,22 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
         );
       },
     );
-    
+
     if (picked != null) {
       setState(() {
         _paymentDetails = _paymentDetails.copyWith(chequeDate: picked);
-        _chequeDateController.text = '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}';
+        _chequeDateController.text =
+            '${picked.day.toString().padLeft(2, '0')}/${picked.month.toString().padLeft(2, '0')}/${picked.year}';
       });
     }
   }
 
   Widget _buildChequeImageUploadSection() {
-    final hasNewChequeImage = _paymentDetails.chequeImageBytes != null && _paymentDetails.chequeImageBytes!.isNotEmpty;
-    final hasExistingChequeImage = _paymentDetails.existingChequeImageUrl != null &&
+    final hasNewChequeImage =
+        _paymentDetails.chequeImageBytes != null &&
+        _paymentDetails.chequeImageBytes!.isNotEmpty;
+    final hasExistingChequeImage =
+        _paymentDetails.existingChequeImageUrl != null &&
         _paymentDetails.existingChequeImageUrl!.isNotEmpty;
     final hasChequeImage = hasNewChequeImage || hasExistingChequeImage;
 
@@ -1036,99 +1145,100 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
             child: _isAnalyzingCheque
                 ? _buildAnalyzingLoader()
                 : hasChequeImage
-                    ? Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: hasNewChequeImage
-                                ? Image.memory(
-                                    Uint8List.fromList(_paymentDetails.chequeImageBytes!),
-                                    width: double.infinity,
-                                    height: 180,
-                                    fit: BoxFit.cover,
-                                  )
-                                : Image.network(
-                                    _paymentDetails.existingChequeImageUrl!,
-                                    width: double.infinity,
-                                    height: 180,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (_, __, ___) => Container(
-                                      width: double.infinity,
-                                      height: 180,
-                                      color: AppColors.textFieldBGColor,
-                                      alignment: Alignment.center,
-                                      child: const Text(
-                                        'Unable to load cheque image',
-                                        style: TextStyle(color: Colors.red),
-                                      ),
-                                    ),
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: hasNewChequeImage
+                            ? Image.memory(
+                                Uint8List.fromList(
+                                  _paymentDetails.chequeImageBytes!,
+                                ),
+                                width: double.infinity,
+                                height: 180,
+                                fit: BoxFit.cover,
+                              )
+                            : Image.network(
+                                _paymentDetails.existingChequeImageUrl!,
+                                width: double.infinity,
+                                height: 180,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => Container(
+                                  width: double.infinity,
+                                  height: 180,
+                                  color: AppColors.textFieldBGColor,
+                                  alignment: Alignment.center,
+                                  child: const Text(
+                                    'Unable to load cheque image',
+                                    style: TextStyle(color: Colors.red),
                                   ),
+                                ),
+                              ),
+                      ),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: _showChequeImageSourceDialog,
+                          icon: const Icon(Icons.refresh, size: 18),
+                          label: const Text('Replace Image'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primaryColor,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
                           ),
-                          const SizedBox(height: 8),
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton.icon(
-                              onPressed: _showChequeImageSourceDialog,
-                              icon: const Icon(Icons.refresh, size: 18),
-                              label: const Text('Replace Image'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primaryColor,
-                                foregroundColor: Colors.white,
-                                elevation: 0,
-                                padding: const EdgeInsets.symmetric(vertical: 14),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ],
+                  )
+                : Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryColor.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          Icons.camera_alt_outlined,
+                          color: AppColors.primaryColor,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Upload cheque image',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.headingTextColor,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Take a photo or choose one from the gallery',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppColors.headingTextColor.withValues(
+                                  alpha: 0.7,
                                 ),
                               ),
                             ),
-                          ),
-                        ],
-                      )
-                    : Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: AppColors.primaryColor.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Icon(
-                              Icons.camera_alt_outlined,
-                              color: AppColors.primaryColor,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Upload cheque image',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.headingTextColor,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Take a photo or choose one from the gallery',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: AppColors.headingTextColor.withValues(alpha: 0.7),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          const Icon(
-                            Icons.upload,
-                            color: AppColors.primaryColor,
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
+                      const SizedBox(width: 8),
+                      const Icon(Icons.upload, color: AppColors.primaryColor),
+                    ],
+                  ),
           ),
         ),
 
@@ -1136,11 +1246,13 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
         if (!_isAnalyzingCheque && _chequeInfo != null) ...[
           const SizedBox(height: 12),
           if (_chequeInfo!.isCheque)
-           // _buildChequeInfoCard(_chequeInfo!)
-           Container()
+            // _buildChequeInfoCard(_chequeInfo!)
+            Container()
           else if (_chequeInfo!.isServerError ||
               _chequeInfo!.status == ChequeAnalysisStatus.unknownError)
-            _buildServerErrorCard(_chequeInfo!.errorMessage ?? 'AI is temporarily unavailable.'),
+            _buildServerErrorCard(
+              _chequeInfo!.errorMessage ?? 'AI is temporarily unavailable.',
+            ),
         ],
 
         // Cheque number field — shown when image present and not analyzing
@@ -1184,7 +1296,11 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
         children: [
           Row(
             children: const [
-              Icon(Icons.warning_amber_rounded, color: Color(0xFFD97706), size: 18),
+              Icon(
+                Icons.warning_amber_rounded,
+                color: Color(0xFFD97706),
+                size: 18,
+              ),
               SizedBox(width: 6),
               Expanded(
                 child: Text(
@@ -1236,7 +1352,10 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                     setState(() => _chequeManualOverride = true);
                   },
                   icon: const Icon(Icons.edit_outlined, size: 16),
-                  label: const Text('Enter Manually', style: TextStyle(fontSize: 13)),
+                  label: const Text(
+                    'Enter Manually',
+                    style: TextStyle(fontSize: 13),
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFD97706),
                     foregroundColor: Colors.white,
@@ -1294,7 +1413,9 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
               height: 20,
               child: CircularProgressIndicator(
                 strokeWidth: 2.5,
-                valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryColor),
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  AppColors.primaryColor,
+                ),
               ),
             ),
             SizedBox(width: 12),
@@ -1360,7 +1481,11 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
               if (info.bankName != null)
                 _infoChip(Icons.account_balance, 'Bank', info.bankName!),
               if (info.branchName != null)
-                _infoChip(Icons.location_on_outlined, 'Branch', info.branchName!),
+                _infoChip(
+                  Icons.location_on_outlined,
+                  'Branch',
+                  info.branchName!,
+                ),
               if (info.date != null)
                 _infoChip(Icons.calendar_today_outlined, 'Date', info.date!),
               if (info.amount != null)
@@ -1370,7 +1495,11 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
               if (info.drawerName != null)
                 _infoChip(Icons.person_2_outlined, 'Drawer', info.drawerName!),
               if (info.accountNumber != null)
-                _infoChip(Icons.account_box_outlined, 'A/C No', info.accountNumber!),
+                _infoChip(
+                  Icons.account_box_outlined,
+                  'A/C No',
+                  info.accountNumber!,
+                ),
               if (info.ifscCode != null)
                 _infoChip(Icons.code, 'IFSC', info.ifscCode!),
               if (info.micrCode != null)
@@ -1430,7 +1559,10 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.camera_alt, color: AppColors.primaryColor),
+              leading: const Icon(
+                Icons.camera_alt,
+                color: AppColors.primaryColor,
+              ),
               title: const Text('Camera'),
               subtitle: const Text('Capture image from camera'),
               onTap: () {
@@ -1439,7 +1571,10 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.photo_library, color: AppColors.primaryColor),
+              leading: const Icon(
+                Icons.photo_library,
+                color: AppColors.primaryColor,
+              ),
               title: const Text('Gallery'),
               subtitle: const Text('Select image from gallery'),
               onTap: () {
@@ -1595,7 +1730,9 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
 
       if (result.chequeNumber != null) {
         _chequeNumberController.text = result.chequeNumber!;
-        _paymentDetails = _paymentDetails.copyWith(chequeNumber: result.chequeNumber);
+        _paymentDetails = _paymentDetails.copyWith(
+          chequeNumber: result.chequeNumber,
+        );
       }
 
       if (result.date != null) {
@@ -1631,7 +1768,10 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK', style: TextStyle(color: AppColors.primaryColor)),
+            child: const Text(
+              'OK',
+              style: TextStyle(color: AppColors.primaryColor),
+            ),
           ),
         ],
       ),
@@ -1639,8 +1779,11 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
   }
 
   Widget _buildRtgsImageUploadSection() {
-    final hasNewRtgsImage = _paymentDetails.rtgsImageBytes != null && _paymentDetails.rtgsImageBytes!.isNotEmpty;
-    final hasExistingRtgsImage = _paymentDetails.existingRtgsImageUrl != null &&
+    final hasNewRtgsImage =
+        _paymentDetails.rtgsImageBytes != null &&
+        _paymentDetails.rtgsImageBytes!.isNotEmpty;
+    final hasExistingRtgsImage =
+        _paymentDetails.existingRtgsImageUrl != null &&
         _paymentDetails.existingRtgsImageUrl!.isNotEmpty;
     final hasRtgsImage = hasNewRtgsImage || hasExistingRtgsImage;
 
@@ -1683,7 +1826,9 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                         borderRadius: BorderRadius.circular(8),
                         child: hasNewRtgsImage
                             ? Image.memory(
-                                Uint8List.fromList(_paymentDetails.rtgsImageBytes!),
+                                Uint8List.fromList(
+                                  _paymentDetails.rtgsImageBytes!,
+                                ),
                                 width: double.infinity,
                                 height: 180,
                                 fit: BoxFit.cover,
@@ -1756,17 +1901,16 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                               'Take a photo or choose one from the gallery',
                               style: TextStyle(
                                 fontSize: 12,
-                                color: AppColors.headingTextColor.withValues(alpha: 0.7),
+                                color: AppColors.headingTextColor.withValues(
+                                  alpha: 0.7,
+                                ),
                               ),
                             ),
                           ],
                         ),
                       ),
                       const SizedBox(width: 8),
-                      const Icon(
-                        Icons.upload,
-                        color: AppColors.primaryColor,
-                      ),
+                      const Icon(Icons.upload, color: AppColors.primaryColor),
                     ],
                   ),
           ),
@@ -1784,7 +1928,10 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.camera_alt, color: AppColors.primaryColor),
+              leading: const Icon(
+                Icons.camera_alt,
+                color: AppColors.primaryColor,
+              ),
               title: const Text('Camera'),
               subtitle: const Text('Capture image from camera'),
               onTap: () {
@@ -1793,7 +1940,10 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.photo_library, color: AppColors.primaryColor),
+              leading: const Icon(
+                Icons.photo_library,
+                color: AppColors.primaryColor,
+              ),
               title: const Text('Gallery'),
               subtitle: const Text('Select image from gallery'),
               onTap: () {

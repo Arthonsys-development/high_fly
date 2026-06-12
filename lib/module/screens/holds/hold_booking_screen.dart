@@ -23,6 +23,21 @@ class _HoldBookingScreenState extends State<HoldBookingScreen> {
   final BookingApiRepository _bookingRepository = BookingApiRepository();
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
 
+  @override
+  void initState() {
+    super.initState();
+    _paymentDetails = PaymentDetails(
+      paymentAmount: widget.hold.aggregatedPlotPrice ?? widget.hold.holdAmount,
+      paymentMethod: '',
+      paymentMethodKey: '',
+      paymentType: PaymentType.getValue(PaymentType.oneTime),
+      paymentTypeKey: PaymentType.oneTime,
+      panNumber: '',
+      aadharNumber: widget.hold.clientAadhar,
+      additionalNotes: '',
+    );
+  }
+
   String _generatePaymentReference() {
     if (_paymentDetails?.paymentMethodKey == 'upi' &&
         (_paymentDetails?.upiTransactionId ?? '').isNotEmpty) {
@@ -33,10 +48,10 @@ class _HoldBookingScreenState extends State<HoldBookingScreen> {
 
   String _generatePaymentDetails() {
     if (_paymentDetails == null) return '';
-    
+
     final paymentMethod = _paymentDetails!.paymentMethod;
     final paymentType = _paymentDetails!.paymentType;
-    
+
     return '$paymentMethod payment for $paymentType booking';
   }
 
@@ -56,8 +71,9 @@ class _HoldBookingScreenState extends State<HoldBookingScreen> {
     });
 
     try {
-      final agentId = await _secureStorage.read(key: SharedPreferenceStrings.id) ?? '';
-      
+      final agentId =
+          await _secureStorage.read(key: SharedPreferenceStrings.id) ?? '';
+
       if (agentId.isEmpty) {
         throw Exception('Agent ID not found');
       }
@@ -82,7 +98,8 @@ class _HoldBookingScreenState extends State<HoldBookingScreen> {
         paymentMode: _paymentDetails!.paymentMethodKey,
         paymentReference: _generatePaymentReference(),
         chequeNumber: _paymentDetails!.chequeNumber ?? '',
-        chequeDate: _paymentDetails!.chequeDate?.toIso8601String().split('T')[0] ?? '',
+        chequeDate:
+            _paymentDetails!.chequeDate?.toIso8601String().split('T')[0] ?? '',
         paymentDetails: _generatePaymentDetails(),
         panCard: _paymentDetails!.panNumber,
         aadharCard: _paymentDetails!.aadharNumber,
@@ -134,10 +151,7 @@ class _HoldBookingScreenState extends State<HoldBookingScreen> {
           errorMessage = errorMessage.substring(11);
         }
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(errorMessage),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -187,4 +201,3 @@ class _HoldBookingScreenState extends State<HoldBookingScreen> {
     );
   }
 }
-

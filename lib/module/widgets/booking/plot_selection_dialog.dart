@@ -31,9 +31,9 @@ class _PlotSelectionDialogState extends State<PlotSelectionDialog> {
   void initState() {
     super.initState();
     _selectedIds = Set<String>.from(widget.selectedPlotIds);
-    _filteredPlots = widget.plots.where((plot) =>
-      plot.status.toLowerCase() == 'available'
-    ).toList();
+    _filteredPlots = widget.plots
+        .where((plot) => plot.status.toLowerCase() == 'available')
+        .toList();
   }
 
   @override
@@ -44,9 +44,9 @@ class _PlotSelectionDialogState extends State<PlotSelectionDialog> {
 
   void _filterPlots(String query) {
     setState(() {
-      final availablePlots = widget.plots.where((plot) =>
-        plot.status.toLowerCase() == 'available'
-      ).toList();
+      final availablePlots = widget.plots
+          .where((plot) => plot.status.toLowerCase() == 'available')
+          .toList();
 
       if (query.isEmpty) {
         _filteredPlots = availablePlots;
@@ -171,9 +171,13 @@ class _PlotSelectionDialogState extends State<PlotSelectionDialog> {
                       if (_selectedIds.isNotEmpty)
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 4),
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
-                            color: AppColors.primaryColor.withValues(alpha: 0.12),
+                            color: AppColors.primaryColor.withValues(
+                              alpha: 0.12,
+                            ),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
@@ -199,10 +203,7 @@ class _PlotSelectionDialogState extends State<PlotSelectionDialog> {
                   TextField(
                     controller: _searchController,
                     onChanged: _filterPlots,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      color: Colors.black,
-                    ),
+                    style: const TextStyle(fontSize: 15, color: Colors.black),
                     decoration: InputDecoration(
                       hintText: 'Search plots...',
                       hintStyle: const TextStyle(
@@ -297,7 +298,9 @@ class _PlotSelectionDialogState extends State<PlotSelectionDialog> {
 
                         return Container(
                           margin: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 4),
+                            horizontal: 16,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: isSelected
                                 ? AppColors.primaryColor.withValues(alpha: 0.08)
@@ -314,9 +317,12 @@ class _PlotSelectionDialogState extends State<PlotSelectionDialog> {
                             value: isSelected,
                             onChanged: (_) => _togglePlot(plot),
                             activeColor: AppColors.primaryColor,
+                            checkColor: Colors.white,
                             controlAffinity: ListTileControlAffinity.leading,
                             contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 4),
+                              horizontal: 12,
+                              vertical: 4,
+                            ),
                             title: Text(
                               'Plot No. ${plot.plotNumber}',
                               style: TextStyle(
@@ -375,8 +381,9 @@ class _PlotSelectionDialogState extends State<PlotSelectionDialog> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryColor,
                     foregroundColor: Colors.white,
-                    disabledBackgroundColor:
-                        AppColors.primaryColor.withValues(alpha: 0.4),
+                    disabledBackgroundColor: AppColors.primaryColor.withValues(
+                      alpha: 0.4,
+                    ),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),

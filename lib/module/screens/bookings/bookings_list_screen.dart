@@ -34,7 +34,7 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
         ref.read(bookingsControllerProvider.notifier).loadBookings();
       }
     });
-    
+
     // Add listener to search controller
     _searchController.addListener(_onSearchChanged);
   }
@@ -66,23 +66,28 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
 
   List<BookingListModel> _getFilteredBookings(List<BookingListModel> bookings) {
     if (_isDisposed || !mounted) return [];
-    
+
     return bookings.where((booking) {
       // Apply search filter
       if (_searchQuery.isNotEmpty) {
         final projectName = booking.project?.name ?? '';
-        final matchesSearch = booking.matchesPlotSearch(_searchQuery) ||
-                             booking.customerName.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-                             booking.customerPhone.contains(_searchQuery) ||
-                             booking.statusDisplay.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-                             projectName.toLowerCase().contains(_searchQuery.toLowerCase());
+        final matchesSearch =
+            booking.matchesPlotSearch(_searchQuery) ||
+            booking.customerName.toLowerCase().contains(
+              _searchQuery.toLowerCase(),
+            ) ||
+            booking.customerPhone.contains(_searchQuery) ||
+            booking.statusDisplay.toLowerCase().contains(
+              _searchQuery.toLowerCase(),
+            ) ||
+            projectName.toLowerCase().contains(_searchQuery.toLowerCase());
         if (!matchesSearch) return false;
       }
-      
+
       // Apply status filter - using statusDisplay
       if (_selectedStatusFilter != null) {
         final statusDisplay = booking.statusDisplay.toLowerCase();
-        
+
         if (_selectedStatusFilter == 'Active') {
           if (statusDisplay != 'active') return false;
         } else if (_selectedStatusFilter == 'Completed/Sold') {
@@ -91,7 +96,7 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
           if (statusDisplay != 'cancelled') return false;
         }
       }
-      
+
       // Apply date filter
       if (_selectedDateFilter != null) {
         try {
@@ -99,9 +104,9 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
           if (raw.contains('+')) {
             raw = raw.split('+')[0];
           }
-          
+
           DateTime? bookingDate;
-          
+
           // Try parsing with the API format first: "dd/MM/yy hh:mm a"
           try {
             bookingDate = DateFormat('dd/MM/yy hh:mm a').parse(raw);
@@ -115,16 +120,24 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
                 bookingDate = DateTime.parse(raw);
               } catch (_) {
                 // Try extracting date part from formats like "dd/MM/yy"
-                final dateMatch = RegExp(r'(\d{2}/\d{2}/\d{2})').firstMatch(raw);
+                final dateMatch = RegExp(
+                  r'(\d{2}/\d{2}/\d{2})',
+                ).firstMatch(raw);
                 if (dateMatch != null) {
                   try {
-                    bookingDate = DateFormat('dd/MM/yy').parse(dateMatch.group(1)!);
+                    bookingDate = DateFormat(
+                      'dd/MM/yy',
+                    ).parse(dateMatch.group(1)!);
                   } catch (_) {
                     // Try with 4-digit year
-                    final dateMatch4 = RegExp(r'(\d{2}/\d{2}/\d{4})').firstMatch(raw);
+                    final dateMatch4 = RegExp(
+                      r'(\d{2}/\d{2}/\d{4})',
+                    ).firstMatch(raw);
                     if (dateMatch4 != null) {
                       try {
-                        bookingDate = DateFormat('dd/MM/yyyy').parse(dateMatch4.group(1)!);
+                        bookingDate = DateFormat(
+                          'dd/MM/yyyy',
+                        ).parse(dateMatch4.group(1)!);
                       } catch (_) {
                         bookingDate = null;
                       }
@@ -134,7 +147,7 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
               }
             }
           }
-          
+
           if (bookingDate != null) {
             // Compare only the date part (ignore time)
             final selectedDateOnly = DateTime(
@@ -147,7 +160,7 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
               bookingDate.month,
               bookingDate.day,
             );
-            
+
             if (bookingDateOnly != selectedDateOnly) {
               return false;
             }
@@ -157,11 +170,13 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
           }
         } catch (e) {
           // If date parsing fails, exclude the booking
-          debugPrint('Date filter parsing error: $e for date: ${booking.bookingDate}');
+          debugPrint(
+            'Date filter parsing error: $e for date: ${booking.bookingDate}',
+          );
           return false;
         }
       }
-      
+
       return true;
     }).toList();
   }
@@ -177,17 +192,20 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
 
   Widget _buildMobileLayout() {
     final bookingsState = ref.watch(bookingsControllerProvider);
-    
+
     if (bookingsState.isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
-    
+
     if (bookingsState.error != null) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text('Error: ${bookingsState.error}', style: const TextStyle(color: Colors.black)),
+            Text(
+              'Error: ${bookingsState.error}',
+              style: const TextStyle(color: Colors.black),
+            ),
             ElevatedButton(
               onPressed: () {
                 if (!_isDisposed && mounted) {
@@ -200,7 +218,7 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
         ),
       );
     }
-    
+
     final filteredBookings = _getFilteredBookings(bookingsState.bookings);
 
     return RefreshIndicator(
@@ -237,7 +255,10 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
                 decoration: InputDecoration(
                   hintText: "Search...",
                   border: InputBorder.none,
-                  prefixIcon: const Icon(Icons.search, color: AppColors.primaryColor),
+                  prefixIcon: const Icon(
+                    Icons.search,
+                    color: AppColors.primaryColor,
+                  ),
                 ),
               ),
             ),
@@ -261,15 +282,31 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
                       dropdownColor: Colors.white,
                       decoration: InputDecoration(
                         hintText: "Status",
-                        hintStyle: const TextStyle(fontSize: 14, color: AppColors.secondaryTextColor),
-                        prefixIcon: const Icon(Icons.filter_list, size: 20, color: AppColors.primaryTextColor),
+                        hintStyle: const TextStyle(
+                          fontSize: 14,
+                          color: AppColors.secondaryTextColor,
+                        ),
+                        prefixIcon: const Icon(
+                          Icons.filter_list,
+                          size: 20,
+                          color: AppColors.primaryTextColor,
+                        ),
                         border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 12,
+                        ),
                       ),
                       items: [
                         const DropdownMenuItem<String>(
                           value: null,
-                          child: Text('All', style: TextStyle(fontSize: 14, color: AppColors.primaryTextColor)),
+                          child: Text(
+                            'All',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: AppColors.primaryTextColor,
+                            ),
+                          ),
                         ),
                         // const DropdownMenuItem<String>(
                         //   value: 'Active',
@@ -277,11 +314,23 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
                         // ),
                         const DropdownMenuItem<String>(
                           value: 'Completed/Sold',
-                          child: Text('Completed/Sold', style: TextStyle(fontSize: 14, color: AppColors.primaryTextColor)),
+                          child: Text(
+                            'Completed/Sold',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: AppColors.primaryTextColor,
+                            ),
+                          ),
                         ),
                         const DropdownMenuItem<String>(
                           value: 'Cancelled',
-                          child: Text('Cancelled', style: TextStyle(fontSize: 14, color: AppColors.primaryTextColor)),
+                          child: Text(
+                            'Cancelled',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: AppColors.primaryTextColor,
+                            ),
+                          ),
                         ),
                       ],
                       onChanged: (value) {
@@ -316,7 +365,8 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
                             return Theme(
                               data: Theme.of(context).copyWith(
                                 colorScheme: ColorScheme.light(
-                                  primary: AppColors.primaryColor, // header & OK button
+                                  primary: AppColors
+                                      .primaryColor, // header & OK button
                                   onPrimary: Colors.white,
                                   surface: Colors.white,
                                   onSurface: Colors.black, // ✅ dialog text
@@ -329,10 +379,15 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
                                 ),
 
                                 // ✅ Input field (Enter Date) text & hint color
-                                inputDecorationTheme: const InputDecorationTheme(
-                                  hintStyle: TextStyle(color: Colors.black54),
-                                  labelStyle: TextStyle(color: Colors.black),
-                                ),
+                                inputDecorationTheme:
+                                    const InputDecorationTheme(
+                                      hintStyle: TextStyle(
+                                        color: Colors.black54,
+                                      ),
+                                      labelStyle: TextStyle(
+                                        color: Colors.black,
+                                      ),
+                                    ),
                               ),
                               child: child!,
                             );
@@ -345,10 +400,17 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
                         }
                       },
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 12,
+                        ),
                         child: Row(
                           children: [
-                            const Icon(Icons.calendar_today, size: 20, color: AppColors.primaryTextColor),
+                            const Icon(
+                              Icons.calendar_today,
+                              size: 20,
+                              color: AppColors.primaryTextColor,
+                            ),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
@@ -366,7 +428,11 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
                             ),
                             if (_selectedDateFilter != null)
                               IconButton(
-                                icon: const Icon(Icons.clear, size: 18, color: AppColors.secondaryTextColor),
+                                icon: const Icon(
+                                  Icons.clear,
+                                  size: 18,
+                                  color: AppColors.secondaryTextColor,
+                                ),
                                 onPressed: () {
                                   setState(() {
                                     _selectedDateFilter = null;
@@ -419,7 +485,7 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
     final bookingsState = ref.watch(bookingsControllerProvider);
     final screenWidth = MediaQuery.of(context).size.width;
     final maxContentWidth = 1400.0;
-    
+
     if (bookingsState.isLoading) {
       return Center(
         child: Column(
@@ -440,7 +506,7 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
         ),
       );
     }
-    
+
     if (bookingsState.error != null) {
       return Center(
         child: Padding(
@@ -448,11 +514,7 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.error_outline,
-                size: 64,
-                color: Colors.red[300],
-              ),
+              Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
               const SizedBox(height: 16),
               Text(
                 'Error loading bookings',
@@ -475,7 +537,9 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
               ElevatedButton.icon(
                 onPressed: () {
                   if (!_isDisposed && mounted) {
-                    ref.read(bookingsControllerProvider.notifier).loadBookings();
+                    ref
+                        .read(bookingsControllerProvider.notifier)
+                        .loadBookings();
                   }
                 },
                 icon: const Icon(Icons.refresh, size: 18),
@@ -497,27 +561,28 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
         ),
       );
     }
-    
+
     final filteredBookings = _getFilteredBookings(bookingsState.bookings);
     final totalBookings = bookingsState.bookings.length;
-    
+
     // Count bookings by status
     final pendingCount = bookingsState.bookings.where((b) {
       final status = b.status.toLowerCase();
       return status == 'pending' || status == 'processing';
     }).length;
-    
+
     final completedCount = bookingsState.bookings.where((b) {
       final status = b.status.toLowerCase();
       return status == 'completed' || status == 'sold';
     }).length;
-    
+
     final cancelledCount = bookingsState.bookings.where((b) {
       final status = b.status.toLowerCase();
       return status == 'cancelled' || status == 'canceled';
     }).length;
-    
-    final otherCount = totalBookings - pendingCount - completedCount - cancelledCount;
+
+    final otherCount =
+        totalBookings - pendingCount - completedCount - cancelledCount;
 
     return RefreshIndicator(
       onRefresh: () async {
@@ -564,7 +629,10 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
                       ],
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 10,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.primaryColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
@@ -631,7 +699,7 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
                         ),
                       ),
                     ],
-    if (cancelledCount > 0) ...[
+                    if (cancelledCount > 0) ...[
                       const SizedBox(width: 20),
                       Expanded(
                         child: _buildStatsCard(
@@ -708,9 +776,11 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
                                     color: AppColors.primaryTextColor,
                                   ),
                                   decoration: InputDecoration(
-                                    hintText: "Search by plot code, customer name, phone...",
+                                    hintText:
+                                        "Search by plot code, customer name, phone...",
                                     hintStyle: TextStyle(
-                                      color: AppColors.secondaryTextColor.withValues(alpha: 0.6),
+                                      color: AppColors.secondaryTextColor
+                                          .withValues(alpha: 0.6),
                                       fontSize: 15,
                                     ),
                                     prefixIcon: const Icon(
@@ -723,7 +793,8 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
                                             icon: const Icon(
                                               Icons.clear,
                                               size: 20,
-                                              color: AppColors.secondaryTextColor,
+                                              color:
+                                                  AppColors.secondaryTextColor,
                                             ),
                                             onPressed: () {
                                               _searchController.clear();
@@ -761,7 +832,8 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
                                 decoration: InputDecoration(
                                   hintText: "Status",
                                   hintStyle: TextStyle(
-                                    color: AppColors.secondaryTextColor.withValues(alpha: 0.6),
+                                    color: AppColors.secondaryTextColor
+                                        .withValues(alpha: 0.6),
                                     fontSize: 15,
                                   ),
                                   prefixIcon: const Icon(
@@ -778,7 +850,13 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
                                 items: [
                                   const DropdownMenuItem<String>(
                                     value: null,
-                                    child: Text('All Status', style: TextStyle(fontSize: 15, color: AppColors.primaryTextColor)),
+                                    child: Text(
+                                      'All Status',
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        color: AppColors.primaryTextColor,
+                                      ),
+                                    ),
                                   ),
                                   // const DropdownMenuItem<String>(
                                   //   value: 'Active',
@@ -786,11 +864,23 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
                                   // ),
                                   const DropdownMenuItem<String>(
                                     value: 'Completed/Sold',
-                                    child: Text('Completed/Sold', style: TextStyle(fontSize: 15, color: AppColors.primaryTextColor)),
+                                    child: Text(
+                                      'Completed/Sold',
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        color: AppColors.primaryTextColor,
+                                      ),
+                                    ),
                                   ),
                                   const DropdownMenuItem<String>(
                                     value: 'Cancelled',
-                                    child: Text('Cancelled', style: TextStyle(fontSize: 15, color: AppColors.primaryTextColor)),
+                                    child: Text(
+                                      'Cancelled',
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        color: AppColors.primaryTextColor,
+                                      ),
+                                    ),
                                   ),
                                 ],
                                 onChanged: (value) {
@@ -818,7 +908,8 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
                                 onTap: () async {
                                   final DateTime? picked = await showDatePicker(
                                     context: context,
-                                    initialDate: _selectedDateFilter ?? DateTime.now(),
+                                    initialDate:
+                                        _selectedDateFilter ?? DateTime.now(),
                                     firstDate: DateTime(2000),
                                     lastDate: DateTime(2100),
                                     builder: (context, child) {
@@ -828,7 +919,8 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
                                             primary: AppColors.primaryColor,
                                             onPrimary: Colors.white,
                                             surface: Colors.white,
-                                            onSurface: AppColors.primaryTextColor,
+                                            onSurface:
+                                                AppColors.primaryTextColor,
                                           ),
                                         ),
                                         child: child!,
@@ -842,7 +934,10 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
                                   }
                                 },
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 14,
+                                  ),
                                   child: Row(
                                     children: [
                                       const Icon(
@@ -855,11 +950,14 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
                                         child: Text(
                                           _selectedDateFilter == null
                                               ? 'Select Date'
-                                              : Utils.formatDate(_selectedDateFilter!),
+                                              : Utils.formatDate(
+                                                  _selectedDateFilter!,
+                                                ),
                                           style: TextStyle(
                                             fontSize: 15,
                                             color: _selectedDateFilter == null
-                                                ? AppColors.secondaryTextColor.withValues(alpha: 0.6)
+                                                ? AppColors.secondaryTextColor
+                                                      .withValues(alpha: 0.6)
                                                 : AppColors.primaryTextColor,
                                           ),
                                           overflow: TextOverflow.ellipsis,
@@ -928,12 +1026,13 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
                           child: GridView.builder(
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
-                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 3,
-                              crossAxisSpacing: 16,
-                              mainAxisSpacing: 16,
-                              childAspectRatio: 1.2,
-                            ),
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 3,
+                                  crossAxisSpacing: 16,
+                                  mainAxisSpacing: 16,
+                                  childAspectRatio: 1.2,
+                                ),
                             itemCount: filteredBookings.length,
                             itemBuilder: (context, index) {
                               final booking = filteredBookings[index];
@@ -1010,11 +1109,7 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
                     color: color.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(
-                    icon,
-                    size: 28,
-                    color: color,
-                  ),
+                  child: Icon(icon, size: 28, color: color),
                 ),
               ],
             ),
@@ -1039,30 +1134,33 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
 
   String _formatStatusDisplay(String statusDisplay) {
     if (statusDisplay.isEmpty) return statusDisplay;
-    
+
     // If it contains "/", capitalize each part separately
     if (statusDisplay.contains('/')) {
-      return statusDisplay.split('/').map((part) {
-        return part.trim().isEmpty 
-            ? part 
-            : part.trim()[0].toUpperCase() + part.trim().substring(1).toLowerCase();
-      }).join('/');
+      return statusDisplay
+          .split('/')
+          .map((part) {
+            return part.trim().isEmpty
+                ? part
+                : part.trim()[0].toUpperCase() +
+                      part.trim().substring(1).toLowerCase();
+          })
+          .join('/');
     }
-    
+
     // Capitalize first letter, rest lowercase
-    return statusDisplay[0].toUpperCase() + statusDisplay.substring(1).toLowerCase();
+    return statusDisplay[0].toUpperCase() +
+        statusDisplay.substring(1).toLowerCase();
   }
 
   Widget _buildBookingCard(BookingListModel booking) {
     final statusColor = _getBookingStatusColor(booking);
-    
+
     return Card(
       color: Colors.white,
       elevation: 2,
       margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: () {
           Navigator.push(
@@ -1098,7 +1196,10 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: statusColor.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(4),
@@ -1124,8 +1225,8 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
               _buildInfoRow('Phone', booking.customerPhone),
               const SizedBox(height: 8),
               _buildInfoRow('Booking Date', booking.bookingDate),
-              const SizedBox(height: 8),
-              _buildInfoRow('Amount', '₹${booking.displayTotalAmount}'),
+              // const SizedBox(height: 8),
+              // _buildInfoRow('Amount', '₹${booking.displayTotalAmount}'),
             ],
           ),
         ),
@@ -1159,4 +1260,3 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
     );
   }
 }
-
