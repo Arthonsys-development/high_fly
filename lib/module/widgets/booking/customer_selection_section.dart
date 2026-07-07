@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
 import '../../../config/constant/const_assets.dart';
 import '../../../data/models/customer_model.dart';
 import '../../../data/repository/customer_api_repository_provider.dart';
@@ -119,6 +120,7 @@ class _CustomerSelectionSectionState extends ConsumerState<CustomerSelectionSect
               borderRadius: 6,
               maxLength: 10,
               keyboardType: TextInputType.phone,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               validator: (value) {
                 // Field is optional, but if provided, validate length
                 if (value != null && value.trim().isNotEmpty && value.trim().length < 10) {

@@ -838,6 +838,9 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
     // Payment Method is mandatory
     if (_paymentDetails.paymentMethodKey.isEmpty) return false;
 
+
+    if (_aadharNumberController.text.trim().isNotEmpty && _aadharNumberController.text.trim().length < 12) return false;
+
     if (_paymentDetails.paymentMethodKey == PaymentMethod.cheque) {
       // Cannot proceed while Gemini is still analyzing
       if (_isAnalyzingCheque) return false;
