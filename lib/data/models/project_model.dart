@@ -141,7 +141,8 @@ class Plot {
         fallback: json['dimensions']?.toString(),
       ),
       facing: (json['facing_display'] ?? json['facing'] ?? '').toString(),
-      remark: (json['remark'] ?? json['status_display'] ?? '').toString(),
+      remark: (json['remark'] ?? json['plot_remark'] ?? json['status_display'] ?? '')
+          .toString(),
       status: (json['status'] ?? '').toString(),
       plc: _parseBool(json['plc']),
       plcApplied:
@@ -176,6 +177,7 @@ class Plot {
       'dimensions': dimensions,
       'facing': facing,
       'remark': remark,
+      'plot_remark': remark,
       'status': status,
       'plc': plc,
       'plcApplied': plcApplied,
@@ -189,6 +191,8 @@ class Plot {
   }
 
   double get effectivePrice => priceWithPlc ?? price;
+
+  String get plotRemark => remark;
 
   /// Sum of [effectivePrice] for each plot (plot card "Combined Total").
   static double combinedEffectiveTotal(List<Plot> plots) {
@@ -209,7 +213,7 @@ class Plot {
   String get displayTextOnPopup {
     final dimensionLabel = dimensions.isNotEmpty
         ? dimensions
-        : '${area.toStringAsFixed(2)}';
+        : area.toStringAsFixed(2);
     return '$dimensionLabel - ${area.toStringAsFixed(2)}';
   }
 

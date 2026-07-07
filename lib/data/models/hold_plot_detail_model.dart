@@ -5,6 +5,7 @@ class HoldPlotDetail {
   final String plotCode;
   final String projectName;
   final String? projectId;
+  final String remark;
   final String sizeSqYd;
   final String totalArea;
   final String price;
@@ -31,6 +32,7 @@ class HoldPlotDetail {
     required this.plotCode,
     required this.projectName,
     this.projectId,
+    this.remark = '',
     required this.sizeSqYd,
     required this.totalArea,
     required this.price,
@@ -61,6 +63,8 @@ class HoldPlotDetail {
       plotCode: json['plot_code']?.toString() ?? '',
       projectName: json['project_name']?.toString() ?? '',
       projectId: json['project_id']?.toString(),
+        remark: (json['remark'] ?? json['plot_remark'] ?? json['status_display'] ?? '')
+          .toString(),
       sizeSqYd: json['size_sq_yd']?.toString() ?? '',
       totalArea: json['total_area']?.toString() ?? '',
       price: json['price']?.toString() ?? '',
@@ -94,6 +98,8 @@ class HoldPlotDetail {
       'id': id,
       'plot_code': plotCode,
       'project_id': projectId ?? this.projectId ?? '',
+      'plot_remark': remark,
+      'remark': remark,
       'total_area': totalArea,
       'price': price,
       'price_with_plc': priceWithPlc,
