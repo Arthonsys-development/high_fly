@@ -13,10 +13,29 @@ import '../models/booking_list_model.dart';
 
 // Conditional import for File - only available on mobile platforms
 import 'dart:io' if (dart.library.html) 'file_stub.dart' show File;
-import 'dart:convert' show jsonEncode;
 
 class BookingApiRepository {
   final ApiClient _apiClient = ApiClient();
+
+  static const String _noInternetMessage =
+      'No internet connection. Please try again later.';
+
+  bool _isNetworkFailure(DioException e) {
+    if (e.type == DioExceptionType.connectionTimeout ||
+        e.type == DioExceptionType.receiveTimeout ||
+        e.type == DioExceptionType.sendTimeout ||
+        e.type == DioExceptionType.connectionError) {
+      return true;
+    }
+
+    final errorText = '${e.message ?? ''} ${e.error ?? ''}'.toLowerCase();
+    return errorText.contains('connection refused') ||
+        errorText.contains('failed host lookup') ||
+        errorText.contains('socketexception') ||
+        errorText.contains('network is unreachable') ||
+        errorText.contains('connection closed') ||
+        errorText.contains('failed to connect');
+  }
 
   /// True when booking create must use multipart (binary file parts).
   bool _createBookingNeedsMultipart(
@@ -555,7 +574,9 @@ class BookingApiRepository {
         throw Exception('Failed to fetch holds: ${response.statusMessage}');
       }
     } on DioException catch (e) {
-      throw Exception('API Error: ${e.message}');
+      throw Exception(_isNetworkFailure(e)
+          ? _noInternetMessage
+          : 'API Error: ${e.message}');
     } catch (e) {
       throw Exception('Unexpected error: $e');
     }
@@ -578,7 +599,9 @@ class BookingApiRepository {
         throw Exception('Failed to fetch bookings: ${response.statusMessage}');
       }
     } on DioException catch (e) {
-      throw Exception('API Error: ${e.message}');
+      throw Exception(_isNetworkFailure(e)
+          ? _noInternetMessage
+          : 'API Error: ${e.message}');
     } catch (e) {
       throw Exception('Unexpected error: $e');
     }

@@ -198,12 +198,15 @@ class _BookingsListScreenState extends ConsumerState<BookingsListScreen>
     }
 
     if (bookingsState.error != null) {
+      final isOfflineError = bookingsState.error ==
+              'No internet connection. Please try again later.' ||
+          bookingsState.error!.contains('No internet connection');
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'Error: ${bookingsState.error}',
+              isOfflineError ? bookingsState.error! : 'Error: ${bookingsState.error}',
               style: const TextStyle(color: Colors.black),
             ),
             ElevatedButton(

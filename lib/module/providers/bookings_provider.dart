@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:highfly/data/repository/booking_api_repository.dart';
 import 'package:highfly/data/models/booking_list_model.dart';
+import 'package:highfly/utils/network_connectivity_helper.dart';
 
 // Bookings State
 class BookingsState {
@@ -32,6 +33,9 @@ class BookingsController extends Notifier<BookingsState> {
   late BookingApiRepository _bookingApiRepository;
   bool _isDisposed = false;
 
+  static const String _noInternetMessage =
+      'No internet connection. Please try again later.';
+
   @override
   BookingsState build() {
     _bookingApiRepository = BookingApiRepository();
@@ -43,6 +47,17 @@ class BookingsController extends Notifier<BookingsState> {
   // Load all bookings from API
   Future<void> loadBookings() async {
     if (_isDisposed) return;
+
+    final hasConnection = await NetworkConnectivityHelper.hasInternetConnection();
+    if (!hasConnection) {
+      if (_isDisposed) return;
+      state = state.copyWith(
+        isLoading: false,
+        error: _noInternetMessage,
+      );
+      return;
+    }
+
     state = state.copyWith(isLoading: true, error: null);
 
     try {
@@ -57,7 +72,9 @@ class BookingsController extends Notifier<BookingsState> {
       if (_isDisposed) return;
       state = state.copyWith(
         isLoading: false,
-        error: 'Error loading bookings: ${e.toString()}',
+        error: e.toString().contains('Network error: No internet connection')
+            ? _noInternetMessage
+            : 'Error loading bookings: ${e.toString()}',
       );
     }
   }

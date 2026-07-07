@@ -185,11 +185,17 @@ class _HoldsListScreenState extends ConsumerState<HoldsListScreen>
     }
     
     if (holdsState.error != null) {
+      final isOfflineError = holdsState.error ==
+              'No internet connection. Please try again later.' ||
+          holdsState.error!.contains('No internet connection');
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text('Error: ${holdsState.error}', style: const TextStyle(color: Colors.black)),
+            Text(
+              isOfflineError ? holdsState.error! : 'Error: ${holdsState.error}',
+              style: const TextStyle(color: Colors.black),
+            ),
             ElevatedButton(
               onPressed: () {
                 if (!_isDisposed && mounted) {

@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:highfly/data/repository/booking_api_repository.dart';
 import 'package:highfly/data/models/hold_list_model.dart';
+import 'package:highfly/utils/network_connectivity_helper.dart';
 
 // Holds State
 class HoldsState {
@@ -32,6 +33,9 @@ class HoldsController extends Notifier<HoldsState> {
   late BookingApiRepository _bookingApiRepository;
   bool _isDisposed = false;
 
+  static const String _noInternetMessage =
+      'No internet connection. Please try again later.';
+
   @override
   HoldsState build() {
     _bookingApiRepository = BookingApiRepository();
@@ -43,6 +47,17 @@ class HoldsController extends Notifier<HoldsState> {
   // Load all holds from API
   Future<void> loadHolds() async {
     if (_isDisposed) return;
+
+    final hasConnection = await NetworkConnectivityHelper.hasInternetConnection();
+    if (!hasConnection) {
+      if (_isDisposed) return;
+      state = state.copyWith(
+        isLoading: false,
+        error: _noInternetMessage,
+      );
+      return;
+    }
+
     state = state.copyWith(isLoading: true, error: null);
 
     try {
@@ -57,7 +72,9 @@ class HoldsController extends Notifier<HoldsState> {
       if (_isDisposed) return;
       state = state.copyWith(
         isLoading: false,
-        error: 'Error loading holds: ${e.toString()}',
+        error: e.toString().contains('Network error: No internet connection')
+            ? _noInternetMessage
+            : 'Error loading holds: ${e.toString()}',
       );
     }
   }
