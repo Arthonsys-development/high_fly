@@ -539,13 +539,13 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
                             'Bank Statement',
                             booking.bankStatement!,
                           ),
-                        if (booking.otherDocuments != null &&
+                        /*if (booking.otherDocuments != null &&
                             booking.otherDocuments!.isNotEmpty)
                           _buildDocumentRow(
                             context,
                             'Other Documents',
                             booking.otherDocuments!,
-                          ),
+                          ),*/
                       ]),
                       SizedBox(height: isDesktopWeb ? 32 : 24),
 
