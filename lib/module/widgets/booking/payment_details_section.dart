@@ -416,6 +416,23 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                         ),
                       ],
                     ),
+                    if (_aadharValidationMessage != null) ...[
+                      const SizedBox(height: 6),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: Padding(
+                          padding: const EdgeInsets.only(right: 4),
+                          child: Text(
+                            _aadharValidationMessage!,
+                            style: const TextStyle(
+                              color: Color(0xFFEF4444),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
 
                     SizedBox(height: spacing),
 
@@ -687,6 +704,23 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                     });
                   },
                 ),
+                if (_aadharValidationMessage != null) ...[
+                  const SizedBox(height: 6),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 4),
+                      child: Text(
+                        _aadharValidationMessage!,
+                        style: const TextStyle(
+                          color: Color(0xFFEF4444),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
 
                 SizedBox(height: spacing),
 
@@ -880,6 +914,14 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
     }
 
     return true;
+  }
+
+  String? get _aadharValidationMessage {
+    final aadhar = _aadharNumberController.text.trim();
+    if (aadhar.isNotEmpty && aadhar.length < 12) {
+      return 'Aadhaar number must be a 12-digit number.';
+    }
+    return null;
   }
 
   void _showPaymentMethodDialog() {
