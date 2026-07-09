@@ -7,6 +7,7 @@ class ActionButtons extends StatelessWidget {
   final VoidCallback? onNext;
   final bool isPreviousEnabled;
   final bool isNextEnabled;
+  final bool isNextVisible;
   final String? nextButtonText;
 
   const ActionButtons({
@@ -15,6 +16,7 @@ class ActionButtons extends StatelessWidget {
     this.onNext,
     this.isPreviousEnabled = false,
     this.isNextEnabled = true,
+    this.isNextVisible = true,
     this.nextButtonText,
   });
 
@@ -32,12 +34,13 @@ class ActionButtons extends StatelessWidget {
           height: buttonHeight,
           child: _buildPreviousButton(),
         ) : Container(),
-        SizedBox(width: buttonSpacing),
-        SizedBox(
-          width: buttonWidth,
-          height: buttonHeight,
-          child: _buildNextButton(),
-        ),
+        if (onPrevious != null && isNextVisible) SizedBox(width: buttonSpacing),
+        if (isNextVisible)
+          SizedBox(
+            width: buttonWidth,
+            height: buttonHeight,
+            child: _buildNextButton(),
+          ),
       ],
     );
   }

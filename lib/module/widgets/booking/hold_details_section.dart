@@ -126,13 +126,24 @@ class _HoldDetailsSectionState extends ConsumerState<HoldDetailsSection> {
   }
 
   String? _validateClientAadhar(String? value) {
-    // if (value == null || value.isEmpty) {
-    //   return 'Aadhar number is required';
-    // }
-    // if (value.length != 12) {
-    //   return 'Aadhar number must be exactly 12 digits';
-    // }
+    final aadhar = value?.trim() ?? '';
+    if (aadhar.isNotEmpty && aadhar.length < 12) {
+      return 'Aadhaar number must be a 12-digit number.';
+    }
     return null;
+  }
+
+  String? get _clientAadharInlineMessage {
+    final aadhar = _clientAadharController.text.trim();
+    if (aadhar.isNotEmpty && aadhar.length < 12) {
+      return 'Aadhaar number must be a 12-digit number.';
+    }
+    return null;
+  }
+
+  bool get _showNextButton {
+    final aadhar = _clientAadharController.text.trim();
+    return aadhar.isEmpty || aadhar.length == 12;
   }
 
   @override
@@ -257,6 +268,23 @@ class _HoldDetailsSectionState extends ConsumerState<HoldDetailsSection> {
                           });
                         },
                       ),
+                      if (_clientAadharInlineMessage != null) ...[
+                        const SizedBox(height: 6),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 4),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              _clientAadharInlineMessage!,
+                              style: const TextStyle(
+                                color: Color(0xFFEF4444),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                       
                       SizedBox(height: spacing),
                       
@@ -329,6 +357,23 @@ class _HoldDetailsSectionState extends ConsumerState<HoldDetailsSection> {
                       });
                     },
                   ),
+                  if (_clientAadharInlineMessage != null) ...[
+                    const SizedBox(height: 6),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 4),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          _clientAadharInlineMessage!,
+                          style: const TextStyle(
+                            color: Color(0xFFEF4444),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                   SizedBox(height: spacing),
                   CustomTextField(
                     titleText: 'Additional Notes',
@@ -352,14 +397,15 @@ class _HoldDetailsSectionState extends ConsumerState<HoldDetailsSection> {
             // Action buttons
             ActionButtons(
               onPrevious: widget.onPrevious,
-              onNext: () {
+              onNext: _showNextButton ? () {
                 // Validate form before proceeding
                 if (_formKey.currentState?.validate() ?? true) {
                   widget.onNext?.call(_holdDetails);
                 }
-              },
+              } : null,
               isPreviousEnabled: widget.onPrevious != null,
-              isNextEnabled: true,
+              isNextEnabled: _showNextButton,
+              isNextVisible: _showNextButton,
               nextButtonText: widget.nextButtonText,
             ),
             
