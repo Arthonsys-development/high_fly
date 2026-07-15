@@ -18,6 +18,9 @@ class PaymentDetails {
   final String? rtgsImageName;
   final List<int>? rtgsImageBytes;
   final String? existingRtgsImageUrl;
+  final String? upiImageName;
+  final List<int>? upiImageBytes;
+  final String? existingUpiImageUrl;
   final String? loanBankName;
   final String? loanBankKey;
   final String? loanAmount;
@@ -45,6 +48,9 @@ class PaymentDetails {
     this.rtgsImageName,
     this.rtgsImageBytes,
     this.existingRtgsImageUrl,
+    this.upiImageName,
+    this.upiImageBytes,
+    this.existingUpiImageUrl,
     this.loanBankName,
     this.loanBankKey,
     this.loanAmount,
@@ -78,6 +84,11 @@ class PaymentDetails {
           ? List<int>.from(json['rtgsImageBytes'] as List)
           : null,
       existingRtgsImageUrl: json['existingRtgsImageUrl'] as String?,
+        upiImageName: json['upiImageName'] as String?,
+        upiImageBytes: json['upiImageBytes'] != null
+          ? List<int>.from(json['upiImageBytes'] as List)
+          : null,
+        existingUpiImageUrl: json['existingUpiImageUrl'] as String?,
       loanBankName: json['loanBankName'] as String?,
       loanBankKey: json['loanBankKey'] as String?,
       loanAmount: json['loanAmount'] as String?,
@@ -108,6 +119,9 @@ class PaymentDetails {
       'rtgsImageName': rtgsImageName,
       'rtgsImageBytes': rtgsImageBytes,
       'existingRtgsImageUrl': existingRtgsImageUrl,
+      'upiImageName': upiImageName,
+      'upiImageBytes': upiImageBytes,
+      'existingUpiImageUrl': existingUpiImageUrl,
       'loanBankName': loanBankName,
       'loanBankKey': loanBankKey,
       'loanAmount': loanAmount,
@@ -137,6 +151,9 @@ class PaymentDetails {
     String? rtgsImageName,
     List<int>? rtgsImageBytes,
     String? existingRtgsImageUrl,
+    String? upiImageName,
+    List<int>? upiImageBytes,
+    String? existingUpiImageUrl,
     String? loanBankName,
     String? loanBankKey,
     String? loanAmount,
@@ -164,6 +181,9 @@ class PaymentDetails {
       rtgsImageName: rtgsImageName ?? this.rtgsImageName,
       rtgsImageBytes: rtgsImageBytes ?? this.rtgsImageBytes,
       existingRtgsImageUrl: existingRtgsImageUrl ?? this.existingRtgsImageUrl,
+      upiImageName: upiImageName ?? this.upiImageName,
+      upiImageBytes: upiImageBytes ?? this.upiImageBytes,
+      existingUpiImageUrl: existingUpiImageUrl ?? this.existingUpiImageUrl,
       loanBankName: loanBankName ?? this.loanBankName,
       loanBankKey: loanBankKey ?? this.loanBankKey,
       loanAmount: loanAmount ?? this.loanAmount,

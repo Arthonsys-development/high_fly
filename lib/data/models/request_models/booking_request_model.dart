@@ -33,6 +33,8 @@ class BookingRequestModel {
   final List<int>? chequeImageBytes;
   final String? rtgsImageName;
   final List<int>? rtgsImageBytes;
+  final String? upiImageName;
+  final List<int>? upiImageBytes;
   final String? loanBankName;
   final String? loanBankKey;
   final String? loanAmount;
@@ -73,6 +75,8 @@ class BookingRequestModel {
     this.chequeImageBytes,
     this.rtgsImageName,
     this.rtgsImageBytes,
+    this.upiImageName,
+    this.upiImageBytes,
     this.loanBankName,
     this.loanBankKey,
     this.loanAmount,
@@ -114,6 +118,7 @@ class BookingRequestModel {
       if (documents != null && documents!.isNotEmpty) 'documents': documents,
       if (chequeImageName != null) 'cheque_copy_name': chequeImageName,
       if (rtgsImageName != null) 'rtgs_image_name': rtgsImageName,
+      if (upiImageName != null) 'upi_image_name': upiImageName,
       if (loanBankName != null && loanBankName!.isNotEmpty) 'loan_bank_name': loanBankName,
       if (loanBankKey != null && loanBankKey!.isNotEmpty) 'loan_bank_key': loanBankKey,
       if (loanAmount != null && loanAmount!.isNotEmpty) 'loan_amount': loanAmount,

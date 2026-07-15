@@ -145,6 +145,8 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
       chequeImageBytes: summary.paymentDetails!.chequeImageBytes,
       rtgsImageName: summary.paymentDetails!.rtgsImageName,
       rtgsImageBytes: summary.paymentDetails!.rtgsImageBytes,
+      upiImageName: summary.paymentDetails!.upiImageName,
+      upiImageBytes: summary.paymentDetails!.upiImageBytes,
       documents: summary.documents,
       loanBankName: summary.paymentDetails!.loanBankName,
       loanBankKey: summary.paymentDetails!.loanBankKey,

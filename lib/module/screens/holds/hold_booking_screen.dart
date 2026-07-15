@@ -118,6 +118,8 @@ class _HoldBookingScreenState extends State<HoldBookingScreen> {
         chequeImageBytes: _paymentDetails!.chequeImageBytes,
         rtgsImageName: _paymentDetails!.rtgsImageName,
         rtgsImageBytes: _paymentDetails!.rtgsImageBytes,
+        upiImageName: _paymentDetails!.upiImageName,
+        upiImageBytes: _paymentDetails!.upiImageBytes,
         holdId: widget.hold.id,
         loanBankName: _paymentDetails!.loanBankName,
         loanBankKey: _paymentDetails!.loanBankKey,

@@ -48,6 +48,9 @@ class BookingApiRepository {
     if (request.rtgsImageBytes != null && request.rtgsImageBytes!.isNotEmpty) {
       return true;
     }
+    if (request.upiImageBytes != null && request.upiImageBytes!.isNotEmpty) {
+      return true;
+    }
     if (documentFiles != null && documentFiles.isNotEmpty) {
       return true;
     }
@@ -248,6 +251,23 @@ class BookingApiRepository {
         );
       }
 
+      if (request.upiImageBytes != null && request.upiImageBytes!.isNotEmpty) {
+        final upiImageName = request.upiImageName ?? 'upi_image.jpg';
+        final upiImageExtension = upiImageName.split('.').last.toLowerCase();
+        String? contentType;
+        if (upiImageExtension == 'jpg' || upiImageExtension == 'jpeg') {
+          contentType = 'image/jpeg';
+        } else if (upiImageExtension == 'png') {
+          contentType = 'image/png';
+        }
+
+        formDataMap['upi_image'] = MultipartFile.fromBytes(
+          request.upiImageBytes!,
+          filename: upiImageName,
+          contentType: contentType != null ? MediaType.parse(contentType) : null,
+        );
+      }
+
       // Drop path-only fields when the real multipart file is attached
       final hasSalarySlipFile =
           formDataMap.containsKey('salary_slip') && formDataMap['salary_slip'] is MultipartFile;
@@ -257,6 +277,8 @@ class BookingApiRepository {
           formDataMap.containsKey('cheque_copy') && formDataMap['cheque_copy'] is MultipartFile;
       final hasRtgsImageFile =
           formDataMap.containsKey('rtgs_image') && formDataMap['rtgs_image'] is MultipartFile;
+        final hasUpiImageFile =
+          formDataMap.containsKey('upi_image') && formDataMap['upi_image'] is MultipartFile;
       if (hasSalarySlipFile) {
         formDataMap.remove('salary_slip_path');
       }
@@ -268,6 +290,9 @@ class BookingApiRepository {
       }
       if (hasRtgsImageFile) {
         formDataMap.remove('rtgs_image_name');
+      }
+      if (hasUpiImageFile) {
+        formDataMap.remove('upi_image_name');
       }
       formDataMap.remove('documents');
 
@@ -758,6 +783,37 @@ class BookingApiRepository {
           formDataMap['rtgs_image'] = MultipartFile.fromBytes(
             rtgsBytes,
             filename: rtgsImageName,
+            contentType: contentType != null ? MediaType.parse(contentType) : null,
+          );
+        }
+      }
+
+      if (updateData['upi_image_bytes'] != null) {
+        final upiBytesRaw = updateData['upi_image_bytes'];
+        final upiImageName = updateData['upi_image_name']?.toString() ?? 'upi_image.jpg';
+
+        formDataMap.remove('upi_image_bytes');
+        formDataMap.remove('upi_image_name');
+
+        List<int>? upiBytes;
+        if (upiBytesRaw is List<int>) {
+          upiBytes = upiBytesRaw;
+        } else if (upiBytesRaw is List) {
+          upiBytes = upiBytesRaw.map((e) => e as int).toList();
+        }
+
+        if (upiBytes != null && upiBytes.isNotEmpty) {
+          final extension = upiImageName.split('.').last.toLowerCase();
+          String? contentType;
+          if (extension == 'jpg' || extension == 'jpeg') {
+            contentType = 'image/jpeg';
+          } else if (extension == 'png') {
+            contentType = 'image/png';
+          }
+
+          formDataMap['upi_image'] = MultipartFile.fromBytes(
+            upiBytes,
+            filename: upiImageName,
             contentType: contentType != null ? MediaType.parse(contentType) : null,
           );
         }

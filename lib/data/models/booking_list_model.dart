@@ -31,6 +31,7 @@ class BookingListModel {
   final String? chequeDate;
   final String? chequeCopy;
   final String? rtgsImage;
+  final String? upiImage;
   final String paymentDetails;
   final String panCard;
   final String aadharCard;
@@ -97,6 +98,7 @@ class BookingListModel {
     this.chequeDate,
     this.chequeCopy,
     this.rtgsImage,
+    this.upiImage,
     required this.paymentDetails,
     required this.panCard,
     required this.aadharCard,
@@ -250,6 +252,7 @@ class BookingListModel {
       chequeDate: json['cheque_date'],
       chequeCopy: json['cheque_copy']?.toString(),
       rtgsImage: json['rtgs_image']?.toString(),
+      upiImage: json['upi_image']?.toString(),
       paymentDetails: json['payment_details'] ?? '',
       panCard: json['pan_card'] ?? '',
       aadharCard: json['aadhar_card'] ?? '',
@@ -323,6 +326,7 @@ class BookingListModel {
       'cheque_date': chequeDate,
       'cheque_copy': chequeCopy,
       'rtgs_image': rtgsImage,
+      'upi_image': upiImage,
       'payment_details': paymentDetails,
       'pan_card': panCard,
       'aadhar_card': aadharCard,

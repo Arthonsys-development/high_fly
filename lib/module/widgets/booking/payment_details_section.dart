@@ -110,6 +110,8 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
         chequeImageBytes: null,
         rtgsImageName: null,
         rtgsImageBytes: null,
+        upiImageName: null,
+        upiImageBytes: null,
       );
       _selectedPaymentTypeKey = PaymentType.oneTime;
     }
@@ -322,6 +324,8 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                       ),
                       SizedBox(height: spacing),
                     ],
+                      _buildUpiImageUploadSection(),
+                      SizedBox(height: spacing),
 
                     // Payment Type radio group (full width)
                     _buildPaymentTypeRadioGroup(borderRadius: 8),
@@ -624,6 +628,8 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                     },
                   ),
                   SizedBox(height: spacing),
+                    _buildUpiImageUploadSection(),
+                    SizedBox(height: spacing),
                 ],
 
                 // Payment Type radio group
@@ -910,7 +916,12 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
     }
 
     if (_paymentDetails.paymentMethodKey == PaymentMethod.upi) {
-      return _upiTransactionIdController.text.trim().isNotEmpty;
+      final hasNewUpiImage =
+        _paymentDetails.upiImageBytes?.isNotEmpty ?? false;
+      final hasExistingUpiImage =
+        _paymentDetails.existingUpiImageUrl?.isNotEmpty ?? false;
+      return _upiTransactionIdController.text.trim().isNotEmpty &&
+        (hasNewUpiImage || hasExistingUpiImage);
     }
 
     return true;
@@ -959,6 +970,15 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                   : null,
               existingRtgsImageUrl: key == PaymentMethod.rtgs
                   ? _paymentDetails.existingRtgsImageUrl
+                  : null,
+                upiImageName: key == PaymentMethod.upi
+                  ? _paymentDetails.upiImageName
+                  : null,
+                upiImageBytes: key == PaymentMethod.upi
+                  ? _paymentDetails.upiImageBytes
+                  : null,
+                existingUpiImageUrl: key == PaymentMethod.upi
+                  ? _paymentDetails.existingUpiImageUrl
                   : null,
               upiTransactionId: key == PaymentMethod.upi
                   ? _paymentDetails.upiTransactionId
@@ -1964,6 +1984,147 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
     );
   }
 
+  Widget _buildUpiImageUploadSection() {
+    final hasNewUpiImage =
+        _paymentDetails.upiImageBytes != null &&
+        _paymentDetails.upiImageBytes!.isNotEmpty;
+    final hasExistingUpiImage =
+        _paymentDetails.existingUpiImageUrl != null &&
+        _paymentDetails.existingUpiImageUrl!.isNotEmpty;
+    final hasUpiImage = hasNewUpiImage || hasExistingUpiImage;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        RichText(
+          text: TextSpan(
+            style: TextStyle(
+              fontSize: kIsWeb ? 15 : 14,
+              fontWeight: FontWeight.w600,
+              color: AppColors.headingTextColor,
+            ),
+            children: const [
+              TextSpan(text: 'UPI Image '),
+              TextSpan(
+                text: '*',
+                style: TextStyle(color: Colors.red),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        InkWell(
+          onTap: _showUpiImageSourceDialog,
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.textFieldBGColor,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: AppColors.dropDownBorderColor),
+            ),
+            child: hasUpiImage
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: hasNewUpiImage
+                            ? Image.memory(
+                                Uint8List.fromList(
+                                  _paymentDetails.upiImageBytes!,
+                                ),
+                                width: double.infinity,
+                                height: 180,
+                                fit: BoxFit.cover,
+                              )
+                            : Image.network(
+                                _paymentDetails.existingUpiImageUrl!,
+                                width: double.infinity,
+                                height: 180,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => Container(
+                                  width: double.infinity,
+                                  height: 180,
+                                  color: AppColors.textFieldBGColor,
+                                  alignment: Alignment.center,
+                                  child: const Text(
+                                    'Unable to load UPI image',
+                                    style: TextStyle(color: Colors.red),
+                                  ),
+                                ),
+                              ),
+                      ),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: _showUpiImageSourceDialog,
+                          icon: const Icon(Icons.refresh, size: 18),
+                          label: const Text('Replace Image'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primaryColor,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
+                : Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryColor.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          Icons.image_outlined,
+                          color: AppColors.primaryColor,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Upload UPI image',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.headingTextColor,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Take a photo or choose one from the gallery',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppColors.headingTextColor.withValues(
+                                  alpha: 0.7,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Icon(Icons.upload, color: AppColors.primaryColor),
+                    ],
+                  ),
+          ),
+        ),
+      ],
+    );
+  }
+
   void _showRtgsImageSourceDialog() {
     showDialog(
       context: context,
@@ -2027,6 +2188,75 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Failed to pick RTGS slip image: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void _showUpiImageSourceDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Upload UPI Image'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(
+                Icons.camera_alt,
+                color: AppColors.primaryColor,
+              ),
+              title: const Text('Camera'),
+              subtitle: const Text('Capture image from camera'),
+              onTap: () {
+                Navigator.of(context).pop();
+                Future.microtask(() => _pickUpiImage(ImageSource.camera));
+              },
+            ),
+            ListTile(
+              leading: const Icon(
+                Icons.photo_library,
+                color: AppColors.primaryColor,
+              ),
+              title: const Text('Gallery'),
+              subtitle: const Text('Select image from gallery'),
+              onTap: () {
+                Navigator.of(context).pop();
+                Future.microtask(() => _pickUpiImage(ImageSource.gallery));
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickUpiImage(ImageSource source) async {
+    try {
+      final pickedImage = await _imagePicker.pickImage(
+        source: source,
+        imageQuality: 85,
+      );
+
+      if (pickedImage == null) return;
+
+      final imageBytes = await pickedImage.readAsBytes();
+      if (!mounted) return;
+
+      setState(() {
+        _paymentDetails = _paymentDetails.copyWith(
+          upiImageName: pickedImage.name,
+          upiImageBytes: imageBytes,
+          existingUpiImageUrl: null,
+        );
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to pick UPI image: $e'),
           backgroundColor: Colors.red,
         ),
       );

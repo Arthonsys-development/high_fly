@@ -80,6 +80,7 @@ class _BookingEditScreenState extends State<BookingEditScreen> {
       chequeDate: _parseChequeDate(widget.booking.chequeDate),
       existingChequeImageUrl: widget.booking.chequeCopy,
       existingRtgsImageUrl: widget.booking.rtgsImage,
+      existingUpiImageUrl: widget.booking.upiImage,
       pricePerSqYd: widget.booking.pricePerSqYd ?? '',
       totalAmount: widget.booking.totalAmount,
       loanBankName: widget.booking.loanBankName,
@@ -148,6 +149,10 @@ class _BookingEditScreenState extends State<BookingEditScreen> {
           'rtgs_image_bytes': _paymentDetails!.rtgsImageBytes!,
         if (_paymentDetails!.rtgsImageName != null && _paymentDetails!.rtgsImageName!.isNotEmpty)
           'rtgs_image_name': _paymentDetails!.rtgsImageName!,
+        if (_paymentDetails!.upiImageBytes != null && _paymentDetails!.upiImageBytes!.isNotEmpty)
+          'upi_image_bytes': _paymentDetails!.upiImageBytes!,
+        if (_paymentDetails!.upiImageName != null && _paymentDetails!.upiImageName!.isNotEmpty)
+          'upi_image_name': _paymentDetails!.upiImageName!,
         
         // File paths (will be converted to MultipartFile in repository)
         if (_paymentDetails!.salarySlipPath != null && _paymentDetails!.salarySlipPath!.isNotEmpty)
