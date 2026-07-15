@@ -467,6 +467,16 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
                               'UPI Transaction ID',
                               booking.paymentReference,
                             ),
+
+                          if (booking.paymentMode.toLowerCase() ==
+                              PaymentMethod.upi &&
+                              booking.upiImage != null &&
+                              booking.upiImage!.isNotEmpty)
+                            _buildChequeCopyRow(
+                              'UPI Image',
+                              booking.upiImage!,
+                            ),
+
                           if (booking.chequeNumber.isNotEmpty)
                             _buildDetailRow(
                               'Cheque Number',
