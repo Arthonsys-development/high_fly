@@ -62,13 +62,13 @@ class PlotDetailsCard extends StatelessWidget {
                   _DetailItem('Project:', selectedProjectName ?? ''),
                   _DetailItem('Dimensions:', plot.dimensions),
                   if (_hasValue(plot.roadWidthFront))
-                    _DetailItem('Road Width Front:', plot.roadWidthFront!),
+                    _DetailItem('Road Width North:', plot.roadWidthFront!),
                   if (_hasValue(plot.roadWidthBack))
-                    _DetailItem('Road Width Back:', plot.roadWidthBack!),
+                    _DetailItem('Road Width South:', plot.roadWidthBack!),
                   if (_hasValue(plot.roadWidthLeft))
-                    _DetailItem('Road Width Left:', plot.roadWidthLeft!),
+                    _DetailItem('Road Width West:', plot.roadWidthLeft!),
                   if (_hasValue(plot.roadWidthRight))
-                    _DetailItem('Road Width Right:', plot.roadWidthRight!),
+                    _DetailItem('Road Width East:', plot.roadWidthRight!),
                   _DetailItem('Area:', '${plot.area.toInt()} sq mtr'),
                   if (hasSaleableSize)
                     _DetailItem(
