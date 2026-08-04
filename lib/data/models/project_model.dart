@@ -71,6 +71,10 @@ class Plot {
   final double? sizeSqYd;
   final double? width;
   final double? length;
+  final String? roadWidthFront;
+  final String? roadWidthBack;
+  final String? roadWidthLeft;
+  final String? roadWidthRight;
   final String dimensions;
   final String facing;
   final String remark;
@@ -95,6 +99,10 @@ class Plot {
     this.sizeSqYd,
     this.width,
     this.length,
+    this.roadWidthFront,
+    this.roadWidthBack,
+    this.roadWidthLeft,
+    this.roadWidthRight,
     required this.dimensions,
     required this.facing,
     this.remark = '',
@@ -135,6 +143,10 @@ class Plot {
           _parseDouble(json['sizeSqYd']) ?? _parseDouble(json['size_sq_yd']),
       width: width,
       length: length,
+      roadWidthFront: _parseText(json['plot_road_width_front']),
+      roadWidthBack: _parseText(json['plot_road_width_back']),
+      roadWidthLeft: _parseText(json['plot_road_width_left']),
+      roadWidthRight: _parseText(json['plot_road_width_right']),
       dimensions: _buildDimensions(
         width: width,
         length: length,
@@ -174,6 +186,10 @@ class Plot {
       'sizeSqYd': sizeSqYd,
       'width': width,
       'length': length,
+      'plot_road_width_front': roadWidthFront,
+      'plot_road_width_back': roadWidthBack,
+      'plot_road_width_left': roadWidthLeft,
+      'plot_road_width_right': roadWidthRight,
       'dimensions': dimensions,
       'facing': facing,
       'remark': remark,
@@ -235,6 +251,12 @@ class Plot {
       return normalized == 'true' || normalized == '1';
     }
     return false;
+  }
+
+  static String? _parseText(dynamic value) {
+    if (value == null) return null;
+    final text = value.toString().trim();
+    return text.isEmpty ? null : text;
   }
 
   static String _buildDimensions({

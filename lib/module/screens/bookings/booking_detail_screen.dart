@@ -271,6 +271,10 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
                               .map(
                                 (p) => p.toPlot(
                                   projectId: booking.project?.id.toString(),
+                                  roadWidthFront: booking.roadWidthFront,
+                                  roadWidthBack: booking.roadWidthBack,
+                                  roadWidthLeft: booking.roadWidthLeft,
+                                  roadWidthRight: booking.roadWidthRight,
                                 ),
                               )
                               .toList(),

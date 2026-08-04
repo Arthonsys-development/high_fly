@@ -14,6 +14,10 @@ class HoldPlotDetail {
   final String? saleableSize;
   final String? width;
   final String? length;
+  final String? roadWidthFront;
+  final String? roadWidthBack;
+  final String? roadWidthLeft;
+  final String? roadWidthRight;
   final String? dimensions;
   final String? facing;
   final String status;
@@ -41,6 +45,10 @@ class HoldPlotDetail {
     this.saleableSize,
     this.width,
     this.length,
+    this.roadWidthFront,
+    this.roadWidthBack,
+    this.roadWidthLeft,
+    this.roadWidthRight,
     this.dimensions,
     this.facing,
     required this.status,
@@ -73,6 +81,10 @@ class HoldPlotDetail {
       saleableSize: json['saleable_size']?.toString(),
       width: json['width']?.toString(),
       length: json['length']?.toString(),
+      roadWidthFront: _parseText(json['plot_road_width_front']),
+      roadWidthBack: _parseText(json['plot_road_width_back']),
+      roadWidthLeft: _parseText(json['plot_road_width_left']),
+      roadWidthRight: _parseText(json['plot_road_width_right']),
       dimensions: json['dimensions']?.toString(),
       facing: json['facing']?.toString(),
       status: json['status']?.toString() ?? '',
@@ -93,6 +105,10 @@ class HoldPlotDetail {
     bool? plcApplied,
     double? plcPercentage,
     String? projectId,
+    String? roadWidthFront,
+    String? roadWidthBack,
+    String? roadWidthLeft,
+    String? roadWidthRight,
   }) {
     return Plot.fromJson({
       'id': id,
@@ -107,6 +123,10 @@ class HoldPlotDetail {
       'size_sq_yd': sizeSqYd,
       'width': width,
       'length': length,
+      'plot_road_width_front': roadWidthFront ?? this.roadWidthFront,
+      'plot_road_width_back': roadWidthBack ?? this.roadWidthBack,
+      'plot_road_width_left': roadWidthLeft ?? this.roadWidthLeft,
+      'plot_road_width_right': roadWidthRight ?? this.roadWidthRight,
       'dimensions': dimensions,
       'facing': facing ?? '',
       'status_display': statusDisplay,
@@ -140,5 +160,11 @@ class HoldPlotDetail {
       return normalized == 'true' || normalized == '1';
     }
     return false;
+  }
+
+  static String? _parseText(dynamic value) {
+    if (value == null) return null;
+    final text = value.toString().trim();
+    return text.isEmpty ? null : text;
   }
 }

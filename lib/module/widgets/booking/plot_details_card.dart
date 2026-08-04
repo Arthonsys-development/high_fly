@@ -61,6 +61,14 @@ class PlotDetailsCard extends StatelessWidget {
                 child: _buildDetailColumn([
                   _DetailItem('Project:', selectedProjectName ?? ''),
                   _DetailItem('Dimensions:', plot.dimensions),
+                  if (_hasValue(plot.roadWidthFront))
+                    _DetailItem('Road Width Front:', plot.roadWidthFront!),
+                  if (_hasValue(plot.roadWidthBack))
+                    _DetailItem('Road Width Back:', plot.roadWidthBack!),
+                  if (_hasValue(plot.roadWidthLeft))
+                    _DetailItem('Road Width Left:', plot.roadWidthLeft!),
+                  if (_hasValue(plot.roadWidthRight))
+                    _DetailItem('Road Width Right:', plot.roadWidthRight!),
                   _DetailItem('Area:', '${plot.area.toInt()} sq mtr'),
                   if (hasSaleableSize)
                     _DetailItem(
@@ -104,9 +112,11 @@ class PlotDetailsCard extends StatelessWidget {
     );
   }
 
+  bool _hasValue(String? value) => value != null && value.trim().isNotEmpty;
+
   Widget _buildMultiPlotCard(BuildContext context, List<Plot> plots) {
     final totalAmount = Plot.formatCombinedTotalAmount(plots);
-    final totalStr = totalAmount.isEmpty ? '' : '₹${totalAmount}';
+    final totalStr = totalAmount.isEmpty ? '' : '₹$totalAmount';
 
     return Container(
       width: double.infinity,
@@ -200,7 +210,7 @@ class PlotDetailsCard extends StatelessWidget {
           plot.plcPercentage! > 0)
         '${plot.plcPercentage!.toStringAsFixed(2)}% PLC',
     ];
-    debugPrint('metaParts=${metaParts}');
+    debugPrint('metaParts=$metaParts');
     debugPrint('plot.plotNumber=${plot.toJson()}');
     debugPrint('plot.plcApplied=${plot.plcApplied}');
     debugPrint('plot.plcPercentage=${plot.plcPercentage}');

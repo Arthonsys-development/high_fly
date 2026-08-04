@@ -68,6 +68,10 @@ class BookingListModel {
   final String? saleableSize;
   final bool plcApplied;
   final double? plcPercentage;
+  final String? roadWidthFront;
+  final String? roadWidthBack;
+  final String? roadWidthLeft;
+  final String? roadWidthRight;
 
   const BookingListModel({
     required this.id,
@@ -135,6 +139,10 @@ class BookingListModel {
     this.saleableSize,
     this.plcApplied = false,
     this.plcPercentage,
+    this.roadWidthFront,
+    this.roadWidthBack,
+    this.roadWidthLeft,
+    this.roadWidthRight,
   });
 
   List<int> get allPlotIds {
@@ -293,6 +301,10 @@ class BookingListModel {
       plcPercentage: json['plc_percentage'] != null
           ? double.tryParse(json['plc_percentage'].toString())
           : null,
+      roadWidthFront: _parseText(json['plot_road_width_front']),
+      roadWidthBack: _parseText(json['plot_road_width_back']),
+      roadWidthLeft: _parseText(json['plot_road_width_left']),
+      roadWidthRight: _parseText(json['plot_road_width_right']),
     );
   }
 
@@ -377,7 +389,17 @@ class BookingListModel {
       if (saleableSize != null) 'saleable_size': saleableSize,
       'plc_applied': plcApplied,
       if (plcPercentage != null) 'plc_percentage': plcPercentage,
+      if (roadWidthFront != null) 'plot_road_width_front': roadWidthFront,
+      if (roadWidthBack != null) 'plot_road_width_back': roadWidthBack,
+      if (roadWidthLeft != null) 'plot_road_width_left': roadWidthLeft,
+      if (roadWidthRight != null) 'plot_road_width_right': roadWidthRight,
     };
+  }
+
+  static String? _parseText(dynamic value) {
+    if (value == null) return null;
+    final text = value.toString().trim();
+    return text.isEmpty ? null : text;
   }
 }
 
