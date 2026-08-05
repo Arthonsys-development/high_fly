@@ -72,6 +72,12 @@ class BookingListModel {
   final String? roadWidthBack;
   final String? roadWidthLeft;
   final String? roadWidthRight;
+  final String? plotPosition;
+  final String? plotShape;
+  final String? currentWorkflowStepStatus;
+  final String? currentWorkflowStepName;
+  final int? currentWorkflowStepNumber;
+  final int? totalWorkflowSteps;
 
   const BookingListModel({
     required this.id,
@@ -143,7 +149,16 @@ class BookingListModel {
     this.roadWidthBack,
     this.roadWidthLeft,
     this.roadWidthRight,
+    this.plotPosition,
+    this.plotShape,
+    this.currentWorkflowStepStatus,
+    this.currentWorkflowStepName,
+    this.currentWorkflowStepNumber,
+    this.totalWorkflowSteps,
   });
+
+  bool get isWorkflowCompleted =>
+      currentWorkflowStepStatus?.toLowerCase() == 'completed';
 
   List<int> get allPlotIds {
     if (plotIds.isNotEmpty) return plotIds;
@@ -305,6 +320,22 @@ class BookingListModel {
       roadWidthBack: _parseText(json['plot_road_width_back']),
       roadWidthLeft: _parseText(json['plot_road_width_left']),
       roadWidthRight: _parseText(json['plot_road_width_right']),
+      plotPosition: _parseText(json['plot_position_display']) ??
+          _parseText(json['plot_position']),
+      plotShape: _parseText(json['plot_shape_display']) ??
+          _parseText(json['plot_shape']),
+      currentWorkflowStepStatus:
+          _parseText(json['current_workflow_step_status']),
+      currentWorkflowStepName:
+          _parseText(json['current_workflow_step_name']),
+      currentWorkflowStepNumber: json['current_workflow_step_number'] is int
+          ? json['current_workflow_step_number'] as int
+          : int.tryParse(
+              json['current_workflow_step_number']?.toString() ?? '',
+            ),
+      totalWorkflowSteps: json['total_workflow_steps'] is int
+          ? json['total_workflow_steps'] as int
+          : int.tryParse(json['total_workflow_steps']?.toString() ?? ''),
     );
   }
 
@@ -393,6 +424,16 @@ class BookingListModel {
       if (roadWidthBack != null) 'plot_road_width_back': roadWidthBack,
       if (roadWidthLeft != null) 'plot_road_width_left': roadWidthLeft,
       if (roadWidthRight != null) 'plot_road_width_right': roadWidthRight,
+      if (plotPosition != null) 'plot_position_display': plotPosition,
+      if (plotShape != null) 'plot_shape_display': plotShape,
+      if (currentWorkflowStepStatus != null)
+        'current_workflow_step_status': currentWorkflowStepStatus,
+      if (currentWorkflowStepName != null)
+        'current_workflow_step_name': currentWorkflowStepName,
+      if (currentWorkflowStepNumber != null)
+        'current_workflow_step_number': currentWorkflowStepNumber,
+      if (totalWorkflowSteps != null)
+        'total_workflow_steps': totalWorkflowSteps,
     };
   }
 
@@ -402,4 +443,3 @@ class BookingListModel {
     return text.isEmpty ? null : text;
   }
 }
-

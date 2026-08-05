@@ -167,7 +167,8 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
           centerTitle: true,
           elevation: 1,
           actions: [
-            if (!_isBookingCancelled())
+            if (!_isBookingCancelled() &&
+                booking.currentWorkflowStepStatus?.toLowerCase() != 'completed')
               IconButton(
                 icon: const Icon(Icons.edit, color: AppColors.primaryColor),
                 onPressed: _isLoading ? null : _navigateToEdit,
