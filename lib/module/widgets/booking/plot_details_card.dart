@@ -61,6 +61,7 @@ class PlotDetailsCard extends StatelessWidget {
                 child: _buildDetailColumn([
                   _DetailItem('Project:', selectedProjectName ?? ''),
                   _DetailItem('Dimensions:', plot.dimensions),
+                  _DetailItem('Size sq yd:', plot.sizeSqYd.toString()),
                   if (_hasValue(plot.roadWidthFront))
                     _DetailItem('Road Width North:', plot.roadWidthFront!),
                   if (_hasValue(plot.roadWidthBack))
