@@ -35,6 +35,11 @@ class PaymentDetailsSection extends StatefulWidget {
   /// When true, plot price/total are not prefilled or submitted.
   final bool hidePlotPricing;
 
+  /// When true (edit mode from BookingDetailScreen), only payment-related fields
+  /// (Payment Method, Payment Slip/image, UPI Transaction ID) are editable.
+  /// All other fields are disabled.
+  final bool isEditMode;
+
   const PaymentDetailsSection({
     super.key,
     required this.title,
@@ -50,6 +55,7 @@ class PaymentDetailsSection extends StatefulWidget {
     this.precomputedTotalAmount,
     this.expectedPayName,
     this.hidePlotPricing = false,
+    this.isEditMode = false,
   });
 
   @override
@@ -261,7 +267,8 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                       keyboardType: TextInputType.number,
                       hintText: 'Enter Booking Amount',
                       borderRadius: 8,
-                      onChanged: (value) {
+                      enabled: !widget.isEditMode,
+                      onChanged: widget.isEditMode ? null : (value) {
                         setState(() {
                           _paymentDetails = _paymentDetails.copyWith(
                             paymentAmount: value,
@@ -288,6 +295,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                         ),
                       ),
                     ),
+                    // (Payment Method is always tappable — even in edit mode)
 
                     SizedBox(height: spacing),
 
@@ -338,7 +346,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                         children: [
                           Expanded(
                             child: GestureDetector(
-                              onTap: _showBankSelectionDialog,
+                              onTap: widget.isEditMode ? null : _showBankSelectionDialog,
                               child: CustomTextField(
                                 titleText: 'Select Bank',
                                 controller: _bankController,
@@ -362,8 +370,9 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                               hintText: 'Enter Loan Amount',
                               isMandatory: false,
                               borderRadius: 8,
+                              enabled: !widget.isEditMode,
                               keyboardType: TextInputType.number,
-                              onChanged: (value) {
+                              onChanged: widget.isEditMode ? null : (value) {
                                 setState(() {
                                   _paymentDetails = _paymentDetails.copyWith(
                                     loanAmount: value,
@@ -390,7 +399,8 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                             isMandatory: false,
                             borderRadius: 8,
                             maxLength: 10,
-                            onChanged: (value) {
+                            enabled: !widget.isEditMode,
+                            onChanged: widget.isEditMode ? null : (value) {
                               setState(() {
                                 _paymentDetails = _paymentDetails.copyWith(
                                   panNumber: value,
@@ -408,8 +418,9 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                             isMandatory: false,
                             borderRadius: 8,
                             maxLength: 12,
+                            enabled: !widget.isEditMode,
                             keyboardType: TextInputType.number,
-                            onChanged: (value) {
+                            onChanged: widget.isEditMode ? null : (value) {
                               setState(() {
                                 _paymentDetails = _paymentDetails.copyWith(
                                   aadharNumber: value,
@@ -447,7 +458,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                         children: [
                           Checkbox(
                             value: _paymentDetails.isSalariedIndividual,
-                            onChanged: (value) {
+                            onChanged: widget.isEditMode ? null : (value) {
                               setState(() {
                                 _paymentDetails = _paymentDetails.copyWith(
                                   isSalariedIndividual: value ?? false,
@@ -498,38 +509,46 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                       const SizedBox(height: 20),
                     ],
 
-                    // Salary Slip field (only visible if Salaried Individual is checked)
+                      // Salary Slip field (only visible if Salaried Individual is checked)
                     if (_paymentDetails.isSalariedIndividual) ...[
-                      PdfUploadWidget(
-                        label: 'Salary Slip',
-                        fileName: _paymentDetails.salarySlipPath,
-                        isRequired: false,
-                        uploadUrl: '/api/documents/upload/',
-                        placeholderText: 'Upload salary slip (PDF only)',
-                        onFileSelected: (filePath) {
-                          setState(() {
-                            _paymentDetails = _paymentDetails.copyWith(
-                              salarySlipPath: filePath,
-                            );
-                          });
-                        },
+                      AbsorbPointer(
+                        absorbing: widget.isEditMode,
+                        child: PdfUploadWidget(
+                          label: 'Salary Slip',
+                          fileName: _paymentDetails.salarySlipPath,
+                          isRequired: false,
+                          uploadUrl: '/api/documents/upload/',
+                          placeholderText: 'Upload salary slip (PDF only)',
+                          onFileSelected: (filePath) {
+                            if (widget.isEditMode) return;
+                            setState(() {
+                              _paymentDetails = _paymentDetails.copyWith(
+                                salarySlipPath: filePath,
+                              );
+                            });
+                          },
+                        ),
                       ),
                       const SizedBox(height: 24),
 
                       // Form 16A field
-                      PdfUploadWidget(
-                        label: 'Form 16A',
-                        fileName: _paymentDetails.form16APath?.split('/').last,
-                        isRequired: false,
-                        uploadUrl: '/api/documents/upload/',
-                        placeholderText: 'Upload form 16A for reference',
-                        onFileSelected: (filePath) {
-                          setState(() {
-                            _paymentDetails = _paymentDetails.copyWith(
-                              form16APath: filePath,
-                            );
-                          });
-                        },
+                      AbsorbPointer(
+                        absorbing: widget.isEditMode,
+                        child: PdfUploadWidget(
+                          label: 'Form 16A',
+                          fileName: _paymentDetails.form16APath?.split('/').last,
+                          isRequired: false,
+                          uploadUrl: '/api/documents/upload/',
+                          placeholderText: 'Upload form 16A for reference',
+                          onFileSelected: (filePath) {
+                            if (widget.isEditMode) return;
+                            setState(() {
+                              _paymentDetails = _paymentDetails.copyWith(
+                                form16APath: filePath,
+                              );
+                            });
+                          },
+                        ),
                       ),
                       SizedBox(height: spacing),
                     ],
@@ -544,7 +563,8 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                       maxLines: 3,
                       borderRadius: 8,
                       maxLength: 150,
-                      onChanged: (value) {
+                      enabled: !widget.isEditMode,
+                      onChanged: widget.isEditMode ? null : (value) {
                         setState(() {
                           _paymentDetails = _paymentDetails.copyWith(
                             additionalNotes: value,
@@ -567,7 +587,8 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                   keyboardType: TextInputType.number,
                   hintText: 'Enter Booking Amount',
                   borderRadius: 6,
-                  onChanged: (value) {
+                  enabled: !widget.isEditMode,
+                  onChanged: widget.isEditMode ? null : (value) {
                     setState(() {
                       _paymentDetails = _paymentDetails.copyWith(
                         paymentAmount: (value.trim().isEmpty) ? '0' : value,
@@ -628,8 +649,8 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                     },
                   ),
                   SizedBox(height: spacing),
-                    _buildUpiImageUploadSection(),
-                    SizedBox(height: spacing),
+                  _buildUpiImageUploadSection(),
+                  SizedBox(height: spacing),
                 ],
 
                 // Payment Type radio group
@@ -639,7 +660,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                 if (_selectedPaymentTypeKey == PaymentType.finance) ...[
                   SizedBox(height: spacing),
                   GestureDetector(
-                    onTap: _showBankSelectionDialog,
+                    onTap: widget.isEditMode ? null : _showBankSelectionDialog,
                     child: CustomTextField(
                       titleText: 'Select Bank',
                       controller: _bankController,
@@ -661,8 +682,9 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                     hintText: 'Enter Loan Amount',
                     isMandatory: false,
                     borderRadius: 6,
+                    enabled: !widget.isEditMode,
                     keyboardType: TextInputType.number,
-                    onChanged: (value) {
+                    onChanged: widget.isEditMode ? null : (value) {
                       setState(() {
                         _paymentDetails = _paymentDetails.copyWith(
                           loanAmount: value,
@@ -682,7 +704,8 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                   isMandatory: false,
                   borderRadius: 6,
                   maxLength: 10,
-                  onChanged: (value) {
+                  enabled: !widget.isEditMode,
+                  onChanged: widget.isEditMode ? null : (value) {
                     setState(() {
                       _paymentDetails = _paymentDetails.copyWith(
                         panNumber: value,
@@ -701,8 +724,9 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                   isMandatory: false,
                   borderRadius: 6,
                   maxLength: 12,
+                  enabled: !widget.isEditMode,
                   keyboardType: TextInputType.number,
-                  onChanged: (value) {
+                  onChanged: widget.isEditMode ? null : (value) {
                     setState(() {
                       _paymentDetails = _paymentDetails.copyWith(
                         aadharNumber: value,
@@ -737,7 +761,7 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                     children: [
                       Checkbox(
                         value: _paymentDetails.isSalariedIndividual,
-                        onChanged: (value) {
+                        onChanged: widget.isEditMode ? null : (value) {
                           setState(() {
                             _paymentDetails = _paymentDetails.copyWith(
                               isSalariedIndividual: value ?? false,
@@ -789,36 +813,44 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
 
                 // Salary Slip field (only visible if Salaried Individual is checked)
                 if (_paymentDetails.isSalariedIndividual) ...[
-                  PdfUploadWidget(
-                    label: 'Salary Slip',
-                    fileName: _paymentDetails.salarySlipPath,
-                    isRequired: false,
-                    uploadUrl: '/api/documents/upload/',
-                    placeholderText: 'Upload salary slip (PDF only)',
-                    onFileSelected: (filePath) {
-                      setState(() {
-                        _paymentDetails = _paymentDetails.copyWith(
-                          salarySlipPath: filePath,
-                        );
-                      });
-                    },
+                  AbsorbPointer(
+                    absorbing: widget.isEditMode,
+                    child: PdfUploadWidget(
+                      label: 'Salary Slip',
+                      fileName: _paymentDetails.salarySlipPath,
+                      isRequired: false,
+                      uploadUrl: '/api/documents/upload/',
+                      placeholderText: 'Upload salary slip (PDF only)',
+                      onFileSelected: (filePath) {
+                        if (widget.isEditMode) return;
+                        setState(() {
+                          _paymentDetails = _paymentDetails.copyWith(
+                            salarySlipPath: filePath,
+                          );
+                        });
+                      },
+                    ),
                   ),
                   const SizedBox(height: 24),
 
                   // Form 16A field
-                  PdfUploadWidget(
-                    label: 'Form 16A',
-                    fileName: _paymentDetails.form16APath?.split('/').last,
-                    isRequired: false,
-                    uploadUrl: '/api/documents/upload/',
-                    placeholderText: 'Upload form 16A for reference',
-                    onFileSelected: (filePath) {
-                      setState(() {
-                        _paymentDetails = _paymentDetails.copyWith(
-                          form16APath: filePath,
-                        );
-                      });
-                    },
+                  AbsorbPointer(
+                    absorbing: widget.isEditMode,
+                    child: PdfUploadWidget(
+                      label: 'Form 16A',
+                      fileName: _paymentDetails.form16APath?.split('/').last,
+                      isRequired: false,
+                      uploadUrl: '/api/documents/upload/',
+                      placeholderText: 'Upload form 16A for reference',
+                      onFileSelected: (filePath) {
+                        if (widget.isEditMode) return;
+                        setState(() {
+                          _paymentDetails = _paymentDetails.copyWith(
+                            form16APath: filePath,
+                          );
+                        });
+                      },
+                    ),
                   ),
                   SizedBox(height: spacing),
                 ],
@@ -833,7 +865,8 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                   maxLines: 3,
                   borderRadius: 6,
                   maxLength: 150,
-                  onChanged: (value) {
+                  enabled: !widget.isEditMode,
+                  onChanged: widget.isEditMode ? null : (value) {
                     setState(() {
                       _paymentDetails = _paymentDetails.copyWith(
                         additionalNotes: value,
@@ -878,6 +911,9 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
     // Payment Method is mandatory
     if (_paymentDetails.paymentMethodKey.isEmpty) return false;
 
+    // In edit mode only the payment method change is allowed —
+    // skip all further validation (slip/image/UPI transaction ID checks).
+    if (widget.isEditMode) return true;
 
     if (_aadharNumberController.text.trim().isNotEmpty && _aadharNumberController.text.trim().length < 12) return false;
 
@@ -1057,7 +1093,9 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
             final isFirst = entry.key == PaymentType.oneTime;
             return Expanded(
               child: GestureDetector(
-                onTap: () => _onPaymentTypeSelected(entry.key, entry.value),
+                onTap: widget.isEditMode
+                    ? null
+                    : () => _onPaymentTypeSelected(entry.key, entry.value),
                 child: Container(
                   margin: EdgeInsets.only(right: isFirst ? 10 : 0),
                   padding: const EdgeInsets.symmetric(
@@ -1084,14 +1122,16 @@ class _PaymentDetailsSectionState extends State<PaymentDetailsSection> {
                         activeColor: AppColors.primaryColor,
                         materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                         visualDensity: VisualDensity.compact,
-                        onChanged: (val) {
-                          if (val != null) {
-                            _onPaymentTypeSelected(
-                              val,
-                              PaymentType.getValue(val),
-                            );
-                          }
-                        },
+                        onChanged: widget.isEditMode
+                            ? null
+                            : (val) {
+                                if (val != null) {
+                                  _onPaymentTypeSelected(
+                                    val,
+                                    PaymentType.getValue(val),
+                                  );
+                                }
+                              },
                       ),
                       const SizedBox(width: 4),
                       Flexible(

@@ -167,12 +167,12 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
           centerTitle: true,
           elevation: 1,
           actions: [
-            // if (!_isBookingCancelled())
-            //   IconButton(
-            //     icon: const Icon(Icons.edit, color: AppColors.primaryColor),
-            //     onPressed: _isLoading ? null : _navigateToEdit,
-            //     tooltip: 'Edit Booking',
-            //   )
+            if (!_isBookingCancelled())
+              IconButton(
+                icon: const Icon(Icons.edit, color: AppColors.primaryColor),
+                onPressed: _isLoading ? null : _navigateToEdit,
+                tooltip: 'Edit Booking',
+              )
           ],
         ),
       ),
