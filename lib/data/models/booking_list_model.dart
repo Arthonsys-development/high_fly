@@ -76,6 +76,7 @@ class BookingListModel {
   final String? plotShape;
   final String? currentWorkflowStepStatus;
   final String? currentWorkflowStepName;
+  final String? confirmBookingAcWorkflowStepStatus;
   final int? currentWorkflowStepNumber;
   final int? totalWorkflowSteps;
 
@@ -153,6 +154,7 @@ class BookingListModel {
     this.plotShape,
     this.currentWorkflowStepStatus,
     this.currentWorkflowStepName,
+    this.confirmBookingAcWorkflowStepStatus,
     this.currentWorkflowStepNumber,
     this.totalWorkflowSteps,
   });
@@ -326,6 +328,8 @@ class BookingListModel {
           _parseText(json['plot_shape']),
       currentWorkflowStepStatus:
           _parseText(json['current_workflow_step_status']),
+      confirmBookingAcWorkflowStepStatus:
+          _parseText(json['confirm_booking_ac_workflow_step_status']),
       currentWorkflowStepName:
           _parseText(json['current_workflow_step_name']),
       currentWorkflowStepNumber: json['current_workflow_step_number'] is int
@@ -428,6 +432,8 @@ class BookingListModel {
       if (plotShape != null) 'plot_shape_display': plotShape,
       if (currentWorkflowStepStatus != null)
         'current_workflow_step_status': currentWorkflowStepStatus,
+      if (confirmBookingAcWorkflowStepStatus != null)
+        'confirm_booking_ac_workflow_step_status': confirmBookingAcWorkflowStepStatus,
       if (currentWorkflowStepName != null)
         'current_workflow_step_name': currentWorkflowStepName,
       if (currentWorkflowStepNumber != null)
