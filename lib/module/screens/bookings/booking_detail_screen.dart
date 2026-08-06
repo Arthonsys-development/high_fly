@@ -272,12 +272,25 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
                               .map(
                                 (p) => p.toPlot(
                                   projectId: booking.project?.id.toString(),
-                                  roadWidthFront: booking.roadWidthFront,
-                                  roadWidthBack: booking.roadWidthBack,
-                                  roadWidthLeft: booking.roadWidthLeft,
-                                  roadWidthRight: booking.roadWidthRight,
-                                  plotPosition: booking.plotPosition,
-                                  plotShape: booking.plotShape,
+                                  // Avoid copying booking-level road data onto every plot.
+                                  roadWidthFront: booking.hasMultiplePlots
+                                      ? null
+                                      : booking.roadWidthFront,
+                                  roadWidthBack: booking.hasMultiplePlots
+                                      ? null
+                                      : booking.roadWidthBack,
+                                  roadWidthLeft: booking.hasMultiplePlots
+                                      ? null
+                                      : booking.roadWidthLeft,
+                                  roadWidthRight: booking.hasMultiplePlots
+                                      ? null
+                                      : booking.roadWidthRight,
+                                  plotPosition: booking.hasMultiplePlots
+                                      ? null
+                                      : booking.plotPosition,
+                                  plotShape: booking.hasMultiplePlots
+                                      ? null
+                                      : booking.plotShape,
                                   plotSize: booking.plotSize,
                                 ),
                               )
