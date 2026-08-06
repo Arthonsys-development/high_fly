@@ -75,6 +75,8 @@ class Plot {
   final String? roadWidthBack;
   final String? roadWidthLeft;
   final String? roadWidthRight;
+  final String? plotPosition;
+  final String? plotShape;
   final String dimensions;
   final String facing;
   final String remark;
@@ -103,6 +105,8 @@ class Plot {
     this.roadWidthBack,
     this.roadWidthLeft,
     this.roadWidthRight,
+    this.plotPosition,
+    this.plotShape,
     required this.dimensions,
     required this.facing,
     this.remark = '',
@@ -147,6 +151,10 @@ class Plot {
       roadWidthBack: _parseText(json['plot_road_width_back']),
       roadWidthLeft: _parseText(json['plot_road_width_left']),
       roadWidthRight: _parseText(json['plot_road_width_right']),
+      plotPosition: _parseText(json['plot_position_display']) ??
+          _parseText(json['plot_position']),
+      plotShape: _parseText(json['plot_shape_display']) ??
+          _parseText(json['plot_shape']),
       dimensions: _buildDimensions(
         width: width,
         length: length,
@@ -190,6 +198,8 @@ class Plot {
       'plot_road_width_back': roadWidthBack,
       'plot_road_width_left': roadWidthLeft,
       'plot_road_width_right': roadWidthRight,
+      'plot_position': plotPosition,
+      'plot_shape': plotShape,
       'dimensions': dimensions,
       'facing': facing,
       'remark': remark,

@@ -217,6 +217,7 @@ class _HoldDetailScreenState extends ConsumerState<HoldDetailScreen> {
                           .map(
                             (p) => p.toPlot(
                               projectId: hold.project?.id.toString(),
+                              plotSize: hold.plotSize,
                             ),
                           )
                           .toList(),

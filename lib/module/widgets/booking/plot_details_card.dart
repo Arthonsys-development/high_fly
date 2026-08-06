@@ -29,6 +29,12 @@ class PlotDetailsCard extends StatelessWidget {
   }
 
   Widget _buildSinglePlotCard(BuildContext context, Plot plot) {
+    final sizeSqYdVal = plot.sizeSqYd;
+    final hasSizeSqYd = sizeSqYdVal != null && sizeSqYdVal > 0;
+    final sizeSqYdStr = hasSizeSqYd
+        ? '${sizeSqYdVal % 1 == 0 ? sizeSqYdVal.toInt() : sizeSqYdVal.toStringAsFixed(2)} sq yd'
+        : '';
+
     final saleableSize = plot.saleableSize;
     final saleableSizeValue = saleableSize ?? 0;
     final hasSaleableSize = saleableSize != null && saleableSize > 0;
@@ -61,7 +67,12 @@ class PlotDetailsCard extends StatelessWidget {
                 child: _buildDetailColumn([
                   _DetailItem('Project:', selectedProjectName ?? ''),
                   _DetailItem('Dimensions:', plot.dimensions),
-                  _DetailItem('Size sq yd:', plot.sizeSqYd.toString()),
+                  if (hasSizeSqYd)
+                    _DetailItem('Size sq yd:', sizeSqYdStr),
+                  if (_hasValue(plot.plotPosition))
+                    _DetailItem('Plot Position:', plot.plotPosition!),
+                  if (_hasValue(plot.plotShape))
+                    _DetailItem('Plot Shape:', plot.plotShape!),
                   if (_hasValue(plot.roadWidthFront))
                     _DetailItem('Road Width North:', plot.roadWidthFront!),
                   if (_hasValue(plot.roadWidthBack))
@@ -74,7 +85,7 @@ class PlotDetailsCard extends StatelessWidget {
                   if (hasSaleableSize)
                     _DetailItem(
                       'Saleable Size:',
-                      '${saleableSizeValue.toStringAsFixed(0)} sq yd',
+                      '${saleableSizeValue % 1 == 0 ? saleableSizeValue.toInt() : saleableSizeValue.toStringAsFixed(2)} sq yd',
                     ),
                   if (!hidePlotPricing && plot.effectivePrice > 0) ...[
                     _DetailItem(
@@ -204,6 +215,8 @@ class PlotDetailsCard extends StatelessWidget {
     final metaParts = <String>[
       if (plot.area > 0) '${plot.area.toStringAsFixed(2)} sq mtr',
       if (plot.facing.trim().isNotEmpty) '${plot.facing} facing',
+      if (_hasValue(plot.plotPosition)) 'Position: ${plot.plotPosition}',
+      if (_hasValue(plot.plotShape)) 'Shape: ${plot.plotShape}',
       if (!hidePlotPricing && plot.effectivePrice > 0)
         '₹${plot.effectivePrice.toStringAsFixed(2)}',
       if (plot.plcApplied &&
@@ -405,6 +418,10 @@ class PlotDetailsCard extends StatelessWidget {
   }
 
   Widget _buildDetailRow(_DetailItem item) {
+    final val = item.value.trim();
+    if (val.isEmpty || val.toLowerCase() == 'null') {
+      return const SizedBox.shrink();
+    }
     return Padding(
       padding: EdgeInsets.only(bottom: kIsWeb ? 16 : 12),
       child: Column(

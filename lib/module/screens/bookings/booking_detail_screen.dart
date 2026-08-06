@@ -276,6 +276,9 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
                                   roadWidthBack: booking.roadWidthBack,
                                   roadWidthLeft: booking.roadWidthLeft,
                                   roadWidthRight: booking.roadWidthRight,
+                                  plotPosition: booking.plotPosition,
+                                  plotShape: booking.plotShape,
+                                  plotSize: booking.plotSize,
                                 ),
                               )
                               .toList(),

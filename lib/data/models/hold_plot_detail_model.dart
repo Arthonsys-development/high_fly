@@ -30,6 +30,10 @@ class HoldPlotDetail {
   final String? sitePlanUrl;
   final String? primaryImage;
   final String? createdAt;
+  final String? plotPosition;
+  final String? plotPositionDisplay;
+  final String? plotShape;
+  final String? plotShapeDisplay;
 
   const HoldPlotDetail({
     required this.id,
@@ -61,7 +65,17 @@ class HoldPlotDetail {
     this.sitePlanUrl,
     this.primaryImage,
     this.createdAt,
+    this.plotPosition,
+    this.plotPositionDisplay,
+    this.plotShape,
+    this.plotShapeDisplay,
   });
+
+  String? get effectivePlotPosition =>
+      _parseText(plotPositionDisplay) ?? _parseText(plotPosition);
+
+  String? get effectivePlotShape =>
+      _parseText(plotShapeDisplay) ?? _parseText(plotShape);
 
   factory HoldPlotDetail.fromJson(Map<String, dynamic> json) {
     return HoldPlotDetail(
@@ -73,7 +87,7 @@ class HoldPlotDetail {
       projectId: json['project_id']?.toString(),
         remark: (json['remark'] ?? json['plot_remark'] ?? json['status_display'] ?? '')
           .toString(),
-      sizeSqYd: json['size_sq_yd']?.toString() ?? '',
+      sizeSqYd: (json['size_sq_yd'] ?? json['plot_size'] ?? json['size'])?.toString() ?? '',
       totalArea: json['total_area']?.toString() ?? '',
       price: json['price']?.toString() ?? '',
       pricePerSqYd: json['price_per_sq_yd']?.toString() ?? '',
@@ -97,6 +111,10 @@ class HoldPlotDetail {
       sitePlanUrl: json['site_plan_url']?.toString(),
       primaryImage: json['primary_image']?.toString(),
       createdAt: json['created_at']?.toString(),
+      plotPosition: _parseText(json['plot_position_display']) ?? _parseText(json['plot_position']),
+      plotPositionDisplay: _parseText(json['plot_position_display']),
+      plotShape: _parseText(json['plot_shape_display']) ?? _parseText(json['plot_shape']),
+      plotShapeDisplay: _parseText(json['plot_shape_display']),
     );
   }
 
@@ -109,7 +127,17 @@ class HoldPlotDetail {
     String? roadWidthBack,
     String? roadWidthLeft,
     String? roadWidthRight,
+    String? plotPosition,
+    String? plotShape,
+    String? plotSize,
   }) {
+    final effectivePosition =
+        effectivePlotPosition ?? _parseText(plotPosition);
+    final effectiveShape =
+        effectivePlotShape ?? _parseText(plotShape);
+    final effectiveSizeSqYd =
+        sizeSqYd.isNotEmpty ? sizeSqYd : (plotSize ?? '');
+
     return Plot.fromJson({
       'id': id,
       'plot_code': plotCode,
@@ -120,13 +148,18 @@ class HoldPlotDetail {
       'price': price,
       'price_with_plc': priceWithPlc,
       'saleable_size': saleableSize,
-      'size_sq_yd': sizeSqYd,
+      'size_sq_yd': effectiveSizeSqYd,
+      'plot_size': effectiveSizeSqYd,
       'width': width,
       'length': length,
       'plot_road_width_front': roadWidthFront ?? this.roadWidthFront,
       'plot_road_width_back': roadWidthBack ?? this.roadWidthBack,
       'plot_road_width_left': roadWidthLeft ?? this.roadWidthLeft,
       'plot_road_width_right': roadWidthRight ?? this.roadWidthRight,
+      'plot_position_display': effectivePosition,
+      'plot_position': effectivePosition,
+      'plot_shape_display': effectiveShape,
+      'plot_shape': effectiveShape,
       'dimensions': dimensions,
       'facing': facing ?? '',
       'status_display': statusDisplay,
