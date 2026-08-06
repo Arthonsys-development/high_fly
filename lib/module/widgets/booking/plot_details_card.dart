@@ -245,10 +245,10 @@ class PlotDetailsCard extends StatelessWidget {
 
   Widget _buildPlotRow(int index, Plot plot) {
     final roadWidthParts = <String>[
-      if (_hasValue(plot.roadWidthFront)) 'Front: ${_withFt(plot.roadWidthFront!)}',
-      if (_hasValue(plot.roadWidthBack)) 'Back: ${_withFt(plot.roadWidthBack!)}',
-      if (_hasValue(plot.roadWidthLeft)) 'Left: ${_withFt(plot.roadWidthLeft!)}',
-      if (_hasValue(plot.roadWidthRight)) 'Right: ${_withFt(plot.roadWidthRight!)}',
+      if (_hasValue(plot.roadWidthFront)) 'East: ${_withFt(plot.roadWidthFront!)}',
+      if (_hasValue(plot.roadWidthBack)) 'West: ${_withFt(plot.roadWidthBack!)}',
+      if (_hasValue(plot.roadWidthLeft)) 'North: ${_withFt(plot.roadWidthLeft!)}',
+      if (_hasValue(plot.roadWidthRight)) 'South: ${_withFt(plot.roadWidthRight!)}',
     ];
     final metaParts = <String>[
       if (plot.dimensions.isNotEmpty) plot.dimensions,
