@@ -6,6 +6,7 @@ import 'package:highfly/config/constant/app_strings.dart';
 import '../../../config/constant/app_colors.dart';
 import '../../../config/constant/const_assets.dart';
 import '../../../data/models/booking_summary_model.dart';
+import '../../../data/models/project_model.dart';
 import '../../../data/models/payment_model.dart';
 import '../../../data/repository/booking_api_repository.dart';
 import '../../../data/models/request_models/booking_request_model.dart';
@@ -302,14 +303,17 @@ class _ReviewConfirmSectionState extends State<ReviewConfirmSection> {
         ),
         if (selectedPlots.length == 1) ...[
           _buildInfoRow('Plot', selectedPlots.first.plotNumber),
-          _buildInfoRow('Area', '${selectedPlots.first.area.toInt()} sq mtr'),
+          _buildInfoRow(
+            'Area',
+            '${Plot.formatMeasure(selectedPlots.first.area)} sq mtr',
+          ),
         ] else ...[
           ...selectedPlots.asMap().entries.map((entry) {
             final idx = entry.key + 1;
             final p = entry.value;
             return _buildInfoRow(
               'Plot $idx',
-              'No. ${p.plotNumber}  |  ${p.area.toInt()} sq mtr',
+              'No. ${p.plotNumber}  |  ${Plot.formatMeasure(p.area)} sq mtr',
             );
           }),
         ],

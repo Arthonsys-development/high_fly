@@ -755,6 +755,8 @@ class Plot {
   final double? sizeSqYd;
   final double price;
   final double? priceWithPlc;
+  final double? pricePerSqYd;
+  final double? pricePerSqYdWithPlc;
   final bool plc;
   final bool plcApplied;
   final double? plcPercentage;
@@ -764,6 +766,13 @@ class Plot {
   final String status;
   final double? width;
   final double? length;
+  final String? roadWidthFront;
+  final String? roadWidthBack;
+  final String? roadWidthLeft;
+  final String? roadWidthRight;
+  final String? jdaPatta;
+  final String? plotPosition;
+  final String? plotShape;
   final String? sitePlanUrl;
   final String? primaryImage;
   final int imagesCount;
@@ -781,6 +790,8 @@ class Plot {
     this.sizeSqYd,
     required this.price,
     this.priceWithPlc,
+    this.pricePerSqYd,
+    this.pricePerSqYdWithPlc,
     this.plc = false,
     this.plcApplied = false,
     this.plcPercentage,
@@ -790,6 +801,13 @@ class Plot {
     required this.status,
     this.width,
     this.length,
+    this.roadWidthFront,
+    this.roadWidthBack,
+    this.roadWidthLeft,
+    this.roadWidthRight,
+    this.jdaPatta,
+    this.plotPosition,
+    this.plotShape,
     this.sitePlanUrl,
     this.primaryImage,
     this.imagesCount = 0,
@@ -826,15 +844,20 @@ class Plot {
     // Map area - prefer total_area, fallback to area
     final area = _parseDouble(json['total_area']) ?? 
                  _parseDouble(json['area']) ?? 0.0;
-    
-    // Build dimensions from width and length if available
+
+    final width = _parseDouble(json['width']);
+    final length = _parseDouble(json['length']);
+
+    // Prefer wl / plot_wl from updated API, then width x length, then dimensions
+    final wlDimensions = _parseText(json['plot_wl']) ?? _parseText(json['wl']);
     String dimensions;
-    if (json['width'] != null && json['length'] != null) {
-      final width = _parseDouble(json['width']) ?? 0.0;
-      final length = _parseDouble(json['length']) ?? 0.0;
-      dimensions = '${width.toStringAsFixed(0)} x ${length.toStringAsFixed(0)}';
+    if (wlDimensions != null) {
+      dimensions = wlDimensions;
+    } else if (width != null && length != null) {
+      dimensions =
+          '${width % 1 == 0 ? width.toStringAsFixed(0) : width.toStringAsFixed(2)} x ${length % 1 == 0 ? length.toStringAsFixed(0) : length.toStringAsFixed(2)}';
     } else {
-      dimensions = json['dimensions'] ?? '';
+      dimensions = json['dimensions']?.toString() ?? '';
     }
     
     // Map facing - prefer facing_display for display, but store both
@@ -853,6 +876,8 @@ class Plot {
       sizeSqYd: _parseDouble(json['size_sq_yd']),
       price: _parseDouble(json['price']) ?? 0.0,
       priceWithPlc: _parseDouble(json['price_with_plc']),
+      pricePerSqYd: _parseDouble(json['price_per_sq_yd']),
+      pricePerSqYdWithPlc: _parseDouble(json['price_per_sq_yd_with_plc']),
       plc: _parseBool(json['plc']),
       plcApplied: _parseBool(json['plc_applied']),
       plcPercentage: _parseDouble(json['plc_percentage']),
@@ -860,8 +885,21 @@ class Plot {
       facing: facing,
       remark: remark,
       status: json['status']?.toString() ?? 'available',
-      width: _parseDouble(json['width']),
-      length: _parseDouble(json['length']),
+      width: width,
+      length: length,
+      roadWidthFront: _parseRoadWidth(json, 'front'),
+      roadWidthBack: _parseRoadWidth(json, 'back'),
+      roadWidthLeft: _parseRoadWidth(json, 'left'),
+      roadWidthRight: _parseRoadWidth(json, 'right'),
+      jdaPatta: _parseText(json['plot_jda_patta']) ?? _parseText(json['jda_patta']),
+      plotPosition: _formatLabel(
+        _parseText(json['plot_position_display']) ??
+            _parseText(json['plot_position']),
+      ),
+      plotShape: _formatLabel(
+        _parseText(json['plot_shape_display']) ??
+            _parseText(json['plot_shape']),
+      ),
       sitePlanUrl: json['site_plan_url']?.toString(),
       primaryImage: json['primary_image']?.toString(),
       imagesCount: json['images_count'] is int 
@@ -895,6 +933,34 @@ class Plot {
     return false;
   }
 
+  static String? _parseText(dynamic value) {
+    if (value == null) return null;
+    final text = value.toString().trim();
+    if (text.isEmpty || text.toLowerCase() == 'null') return null;
+    return text;
+  }
+
+  static String? _formatLabel(String? value) {
+    if (value == null) return null;
+    final words = value
+        .replaceAll('_', ' ')
+        .replaceAll('-', ' ')
+        .split(RegExp(r'\s+'))
+        .where((word) => word.isNotEmpty)
+        .map((word) {
+          if (word.length == 1) return word.toUpperCase();
+          return '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}';
+        })
+        .toList();
+    if (words.isEmpty) return null;
+    return words.join(' ');
+  }
+
+  static String? _parseRoadWidth(Map<String, dynamic> json, String side) {
+    return _parseText(json['plot_road_width_$side']) ??
+        _parseText(json['road_width_$side']);
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -909,17 +975,33 @@ class Plot {
       'size_sq_yd': sizeSqYd,
       'price': price,
       'price_with_plc': priceWithPlc,
+      'price_per_sq_yd': pricePerSqYd,
+      'price_per_sq_yd_with_plc': pricePerSqYdWithPlc,
       'plc': plc,
       'plc_applied': plcApplied,
       'plc_percentage': plcPercentage,
       'width': width,
       'length': length,
       'dimensions': dimensions,
+      'wl': dimensions,
+      'plot_wl': dimensions,
       'facing': facing,
       'facing_display': facing,
       'status': status,
       'status_display': remark,
       'remark': remark,
+      'road_width_front': roadWidthFront,
+      'road_width_back': roadWidthBack,
+      'road_width_left': roadWidthLeft,
+      'road_width_right': roadWidthRight,
+      'plot_road_width_front': roadWidthFront,
+      'plot_road_width_back': roadWidthBack,
+      'plot_road_width_left': roadWidthLeft,
+      'plot_road_width_right': roadWidthRight,
+      'jda_patta': jdaPatta,
+      'plot_jda_patta': jdaPatta,
+      'plot_position': plotPosition,
+      'plot_shape': plotShape,
       'site_plan_url': sitePlanUrl,
       'primary_image': primaryImage,
       'images_count': imagesCount,
@@ -935,9 +1017,12 @@ class Plot {
       id: id.toString(),
       plotNumber: plotNumber,
       projectId: projectId.toString(),
+      projectName: projectName,
       area: area,
       price: price,
       priceWithPlc: priceWithPlc,
+      pricePerSqYd: pricePerSqYd,
+      pricePerSqYdWithPlc: pricePerSqYdWithPlc,
       plc: plc,
       plcApplied: plcApplied,
       plcPercentage: plcPercentage,
@@ -949,8 +1034,16 @@ class Plot {
       status: status,
       width: width,
       length: length,
+      roadWidthFront: roadWidthFront,
+      roadWidthBack: roadWidthBack,
+      roadWidthLeft: roadWidthLeft,
+      roadWidthRight: roadWidthRight,
+      jdaPatta: jdaPatta,
+      plotPosition: plotPosition,
+      plotShape: plotShape,
       sitePlanUrl: sitePlanUrl,
       primaryImage: primaryImage,
+      imagesCount: imagesCount,
       hasActiveHold: hasActiveHold,
       hasActiveBooking: hasActiveBooking,
       createdAt: createdAt,

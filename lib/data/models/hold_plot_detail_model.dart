@@ -95,12 +95,17 @@ class HoldPlotDetail {
       saleableSize: json['saleable_size']?.toString(),
       width: json['width']?.toString(),
       length: json['length']?.toString(),
-      roadWidthFront: _parseText(json['plot_road_width_front']),
-      roadWidthBack: _parseText(json['plot_road_width_back']),
-      roadWidthLeft: _parseText(json['plot_road_width_left']),
-      roadWidthRight: _parseText(json['plot_road_width_right']),
-      dimensions: json['dimensions']?.toString(),
-      facing: json['facing']?.toString(),
+      roadWidthFront: _parseText(json['plot_road_width_front']) ??
+          _parseText(json['road_width_front']),
+      roadWidthBack: _parseText(json['plot_road_width_back']) ??
+          _parseText(json['road_width_back']),
+      roadWidthLeft: _parseText(json['plot_road_width_left']) ??
+          _parseText(json['road_width_left']),
+      roadWidthRight: _parseText(json['plot_road_width_right']) ??
+          _parseText(json['road_width_right']),
+      dimensions: (json['plot_wl'] ?? json['wl'] ?? json['dimensions'])
+          ?.toString(),
+      facing: (json['facing_display'] ?? json['facing'])?.toString(),
       status: json['status']?.toString() ?? '',
       statusDisplay: json['status_display']?.toString() ?? '',
       plc: _parseBool(json['plc']),
@@ -111,10 +116,20 @@ class HoldPlotDetail {
       sitePlanUrl: json['site_plan_url']?.toString(),
       primaryImage: json['primary_image']?.toString(),
       createdAt: json['created_at']?.toString(),
-      plotPosition: _parseText(json['plot_position_display']) ?? _parseText(json['plot_position']),
-      plotPositionDisplay: _parseText(json['plot_position_display']),
-      plotShape: _parseText(json['plot_shape_display']) ?? _parseText(json['plot_shape']),
-      plotShapeDisplay: _parseText(json['plot_shape_display']),
+      plotPosition: _formatLabel(
+        _parseText(json['plot_position_display']) ??
+            _parseText(json['plot_position']),
+      ),
+      plotPositionDisplay: _formatLabel(
+        _parseText(json['plot_position_display']),
+      ),
+      plotShape: _formatLabel(
+        _parseText(json['plot_shape_display']) ??
+            _parseText(json['plot_shape']),
+      ),
+      plotShapeDisplay: _formatLabel(
+        _parseText(json['plot_shape_display']),
+      ),
     );
   }
 
@@ -199,5 +214,21 @@ class HoldPlotDetail {
     if (value == null) return null;
     final text = value.toString().trim();
     return text.isEmpty ? null : text;
+  }
+
+  static String? _formatLabel(String? value) {
+    if (value == null) return null;
+    final words = value
+        .replaceAll('_', ' ')
+        .replaceAll('-', ' ')
+        .split(RegExp(r'\s+'))
+        .where((word) => word.isNotEmpty)
+        .map((word) {
+          if (word.length == 1) return word.toUpperCase();
+          return '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}';
+        })
+        .toList();
+    if (words.isEmpty) return null;
+    return words.join(' ');
   }
 }

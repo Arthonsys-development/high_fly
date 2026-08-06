@@ -31,12 +31,10 @@ class PlotDetailsCard extends StatelessWidget {
   Widget _buildSinglePlotCard(BuildContext context, Plot plot) {
     final sizeSqYdVal = plot.sizeSqYd;
     final hasSizeSqYd = sizeSqYdVal != null && sizeSqYdVal > 0;
-    final sizeSqYdStr = hasSizeSqYd
-        ? '${sizeSqYdVal % 1 == 0 ? sizeSqYdVal.toInt() : sizeSqYdVal.toStringAsFixed(2)} sq yd'
-        : '';
+    final sizeSqYdStr =
+        hasSizeSqYd ? '${Plot.formatMeasure(sizeSqYdVal)} sq yd' : '';
 
     final saleableSize = plot.saleableSize;
-    final saleableSizeValue = saleableSize ?? 0;
     final hasSaleableSize = saleableSize != null && saleableSize > 0;
     final priceWithPlc = plot.priceWithPlc;
     final showPlcBreakup =
@@ -73,20 +71,18 @@ class PlotDetailsCard extends StatelessWidget {
                     _DetailItem('Plot Position:', plot.plotPosition!),
                   if (_hasValue(plot.plotShape))
                     _DetailItem('Plot Shape:', plot.plotShape!),
-                  if (_hasValue(plot.roadWidthFront))
-                    _DetailItem('Road Width North:', plot.roadWidthFront!),
-                  if (_hasValue(plot.roadWidthBack))
-                    _DetailItem('Road Width South:', plot.roadWidthBack!),
-                  if (_hasValue(plot.roadWidthLeft))
-                    _DetailItem('Road Width West:', plot.roadWidthLeft!),
-                  if (_hasValue(plot.roadWidthRight))
-                    _DetailItem('Road Width East:', plot.roadWidthRight!),
-                  _DetailItem('Area:', '${plot.area.toInt()} sq mtr'),
+                  ..._roadWidthItems(plot),
+                  _DetailItem(
+                    'Area:',
+                    '${Plot.formatMeasure(plot.area)} sq mtr',
+                  ),
                   if (hasSaleableSize)
                     _DetailItem(
                       'Saleable Size:',
-                      '${saleableSizeValue % 1 == 0 ? saleableSizeValue.toInt() : saleableSizeValue.toStringAsFixed(2)} sq yd',
+                      '${Plot.formatMeasure(saleableSize)} sq yd',
                     ),
+                  if (_hasValue(plot.jdaPatta))
+                    _DetailItem('JDA Patta:', plot.jdaPatta!),
                   if (!hidePlotPricing && plot.effectivePrice > 0) ...[
                     _DetailItem(
                       showPlcBreakup ? 'Price (with PLC):' : 'Price:',
@@ -97,6 +93,17 @@ class PlotDetailsCard extends StatelessWidget {
                       _DetailItem(
                         'Base Price:',
                         '₹${plot.price.toStringAsFixed(2)}',
+                      ),
+                    if (plot.pricePerSqYdWithPlc != null &&
+                        plot.pricePerSqYdWithPlc! > 0)
+                      _DetailItem(
+                        'Price / sq yd (with PLC):',
+                        '₹${plot.pricePerSqYdWithPlc!.toStringAsFixed(2)}',
+                      )
+                    else if (plot.pricePerSqYd != null && plot.pricePerSqYd! > 0)
+                      _DetailItem(
+                        'Price / sq yd:',
+                        '₹${plot.pricePerSqYd!.toStringAsFixed(2)}',
                       ),
                   ],
                 ]),
@@ -124,7 +131,32 @@ class PlotDetailsCard extends StatelessWidget {
     );
   }
 
-  bool _hasValue(String? value) => value != null && value.trim().isNotEmpty;
+  bool _hasValue(String? value) =>
+      value != null &&
+      value.trim().isNotEmpty &&
+      value.trim().toLowerCase() != 'null';
+
+  List<_DetailItem> _roadWidthItems(Plot plot) {
+    return [
+      if (_hasValue(plot.roadWidthFront))
+        _DetailItem('Road Width Front:', _withFt(plot.roadWidthFront!)),
+      if (_hasValue(plot.roadWidthBack))
+        _DetailItem('Road Width Back:', _withFt(plot.roadWidthBack!)),
+      if (_hasValue(plot.roadWidthLeft))
+        _DetailItem('Road Width Left:', _withFt(plot.roadWidthLeft!)),
+      if (_hasValue(plot.roadWidthRight))
+        _DetailItem('Road Width Right:', _withFt(plot.roadWidthRight!)),
+    ];
+  }
+
+  String _withFt(String value) {
+    final trimmed = value.trim();
+    if (trimmed.toLowerCase().endsWith('(ft)') ||
+        trimmed.toLowerCase().endsWith('ft')) {
+      return trimmed;
+    }
+    return '$trimmed (ft)';
+  }
 
   Widget _buildMultiPlotCard(BuildContext context, List<Plot> plots) {
     final totalAmount = Plot.formatCombinedTotalAmount(plots);
@@ -212,11 +244,19 @@ class PlotDetailsCard extends StatelessWidget {
   }
 
   Widget _buildPlotRow(int index, Plot plot) {
+    final roadWidthParts = <String>[
+      if (_hasValue(plot.roadWidthFront)) 'Front: ${_withFt(plot.roadWidthFront!)}',
+      if (_hasValue(plot.roadWidthBack)) 'Back: ${_withFt(plot.roadWidthBack!)}',
+      if (_hasValue(plot.roadWidthLeft)) 'Left: ${_withFt(plot.roadWidthLeft!)}',
+      if (_hasValue(plot.roadWidthRight)) 'Right: ${_withFt(plot.roadWidthRight!)}',
+    ];
     final metaParts = <String>[
-      if (plot.area > 0) '${plot.area.toStringAsFixed(2)} sq mtr',
+      if (plot.dimensions.isNotEmpty) plot.dimensions,
+      if (plot.area > 0) '${Plot.formatMeasure(plot.area)} sq mtr',
       if (plot.facing.trim().isNotEmpty) '${plot.facing} facing',
       if (_hasValue(plot.plotPosition)) 'Position: ${plot.plotPosition}',
       if (_hasValue(plot.plotShape)) 'Shape: ${plot.plotShape}',
+      if (roadWidthParts.isNotEmpty) 'Road: ${roadWidthParts.join(', ')}',
       if (!hidePlotPricing && plot.effectivePrice > 0)
         '₹${plot.effectivePrice.toStringAsFixed(2)}',
       if (plot.plcApplied &&
@@ -224,11 +264,6 @@ class PlotDetailsCard extends StatelessWidget {
           plot.plcPercentage! > 0)
         '${plot.plcPercentage!.toStringAsFixed(2)}% PLC',
     ];
-    debugPrint('metaParts=$metaParts');
-    debugPrint('plot.plotNumber=${plot.toJson()}');
-    debugPrint('plot.plcApplied=${plot.plcApplied}');
-    debugPrint('plot.plcPercentage=${plot.plcPercentage}');
-    debugPrint('plot.effectivePrice=${plot.effectivePrice}');
     final metaLine = metaParts.join('  |  ');
 
     return Container(
@@ -285,7 +320,17 @@ class PlotDetailsCard extends StatelessWidget {
                 if (plot.saleableSize != null && plot.saleableSize! > 0) ...[
                   const SizedBox(height: 2),
                   Text(
-                    'Saleable: ${plot.saleableSize!.toStringAsFixed(2)} sq yd',
+                    'Saleable: ${Plot.formatMeasure(plot.saleableSize)} sq yd',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textColor,
+                    ),
+                  ),
+                ],
+                if (plot.sizeSqYd != null && plot.sizeSqYd! > 0) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    'Size: ${Plot.formatMeasure(plot.sizeSqYd)} sq yd',
                     style: const TextStyle(
                       fontSize: 12,
                       color: AppColors.textColor,

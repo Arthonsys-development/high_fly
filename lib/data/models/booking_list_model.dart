@@ -318,14 +318,22 @@ class BookingListModel {
       plcPercentage: json['plc_percentage'] != null
           ? double.tryParse(json['plc_percentage'].toString())
           : null,
-      roadWidthFront: _parseText(json['plot_road_width_front']),
-      roadWidthBack: _parseText(json['plot_road_width_back']),
-      roadWidthLeft: _parseText(json['plot_road_width_left']),
-      roadWidthRight: _parseText(json['plot_road_width_right']),
-      plotPosition: _parseText(json['plot_position_display']) ??
-          _parseText(json['plot_position']),
-      plotShape: _parseText(json['plot_shape_display']) ??
-          _parseText(json['plot_shape']),
+      roadWidthFront: _parseText(json['plot_road_width_front']) ??
+          _parseText(json['road_width_front']),
+      roadWidthBack: _parseText(json['plot_road_width_back']) ??
+          _parseText(json['road_width_back']),
+      roadWidthLeft: _parseText(json['plot_road_width_left']) ??
+          _parseText(json['road_width_left']),
+      roadWidthRight: _parseText(json['plot_road_width_right']) ??
+          _parseText(json['road_width_right']),
+      plotPosition: _formatLabel(
+        _parseText(json['plot_position_display']) ??
+            _parseText(json['plot_position']),
+      ),
+      plotShape: _formatLabel(
+        _parseText(json['plot_shape_display']) ??
+            _parseText(json['plot_shape']),
+      ),
       currentWorkflowStepStatus:
           _parseText(json['current_workflow_step_status']),
       confirmBookingAcWorkflowStepStatus:
@@ -451,5 +459,21 @@ class BookingListModel {
     if (value == null) return null;
     final text = value.toString().trim();
     return text.isEmpty ? null : text;
+  }
+
+  static String? _formatLabel(String? value) {
+    if (value == null) return null;
+    final words = value
+        .replaceAll('_', ' ')
+        .replaceAll('-', ' ')
+        .split(RegExp(r'\s+'))
+        .where((word) => word.isNotEmpty)
+        .map((word) {
+          if (word.length == 1) return word.toUpperCase();
+          return '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}';
+        })
+        .toList();
+    if (words.isEmpty) return null;
+    return words.join(' ');
   }
 }
